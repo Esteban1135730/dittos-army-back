@@ -25,7 +25,7 @@ export class TcgDexController {
     return await this.tcgDexService.getSetCards(params.id);
   }
 
-  @Get('card/serach/:id')
+  @Get('card/search/:id')
   async findCardByName(
     @Param() params: any,
   ): Promise<CardResumeDto[] | undefined> {

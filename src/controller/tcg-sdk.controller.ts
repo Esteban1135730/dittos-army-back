@@ -51,7 +51,6 @@ export class TcgSdkController {
       .replace('08', '8')
       .replace('09', '9')
       ;
-    console.log(setName);
     return this.tcgSdkService.getCard(setName);
   }
 }

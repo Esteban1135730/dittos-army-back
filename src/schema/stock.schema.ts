@@ -28,6 +28,15 @@ export class Stock {
   languaje: string;
 
   @Prop()
+  language: string;
+
+  @Prop()
+  holofoil: boolean;
+
+  @Prop()
+  league_card: boolean;
+
+  @Prop()
   card_name: string;
 
   @Prop()

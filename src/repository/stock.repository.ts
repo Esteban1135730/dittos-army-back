@@ -2,7 +2,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Stock, StockDocument, StockSchema } from '../schema/stock.schema';
 import { Injectable } from '@nestjs/common';
 import { Model } from 'mongoose';
-import { StockDto } from 'src/dto/stock.dto';
+import { StockDto } from 'src/Dto/stock.dto';
+
 
 @Injectable()
 export class StockRepository {
@@ -29,5 +30,16 @@ export class StockRepository {
 
   async findByCardId(cardId: string): Promise<Stock[] | null> {
     return this.stockModel.find({ card_id: cardId }).exec();
+  }
+
+  async updateCardState(
+    stockId: string,
+    cardState: string,
+  ): Promise<Stock | null> {
+    return this.stockModel.findByIdAndUpdate(
+      stockId,
+      { card_state: cardState },
+      { new: true },
+    );
   }
 }

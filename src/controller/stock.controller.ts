@@ -1,7 +1,8 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { Stock } from 'src/schema/stock.schema';
 import { StockRepository } from 'src/repository/stock.repository';
-import { StockDto } from 'src/dto/stock.dto';
+import { PvpRepository } from 'src/repository/pvp.repository';
+import { StockDto } from 'src/Dto/stock.dto';
 import { TcgSdkController } from './tcg-sdk.controller';
 import { TCGSdkService } from 'src/service/tcg-sdk.service';
 import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
@@ -10,7 +11,9 @@ import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
 export class StockController {
   constructor(
     private readonly stockRepository: StockRepository,
+    private readonly pvpRepository: PvpRepository,
     private readonly tcgDexService: TCGDexService,
+    private readonly tcgSdkService: TCGSdkService,
   ) {}
 
   @Post()
@@ -26,15 +29,51 @@ export class StockController {
   @Get()
   async listStock(): Promise<Stock[] | null> {
     const stockItems: any[] = await this.stockRepository.findAll();
-    var response: any[] = [];
-    for (var stock of stockItems) {
-      const card = await this.tcgDexService.getCard(stock.card_id);
-      response.push({
+    const cardIds = [...new Set(stockItems.map((s) => s.card_id))];
+    
+    // Crear mapas para cachear resultados
+    const pvpMap = new Map();
+    const cardMap = new Map();
+    
+    // Obtener todos los PVP de una sola consulta
+    try {
+      const pvps = await this.pvpRepository.findByCardIds(cardIds);
+      pvps.forEach((pvp) => {
+        pvpMap.set(pvp.card_id, { pvp: pvp.pvp, pvp_currency: pvp.currency });
+      });
+    } catch (error) {
+      console.log('Error obteniendo PVP:', error);
+    }
+    
+    // Obtener todas las cartas de TCGDex en paralelo
+    const cardPromises = cardIds.map(async (cardId) => {
+      try {
+        const card = await this.tcgDexService.getCard(cardId);
+        if (card) {
+          cardMap.set(cardId, card);
+        }
+      } catch (error) {
+        console.log(`Error obteniendo carta TCGDex para ${cardId}:`, error);
+      }
+    });
+    
+    // Ejecutar todas las promesas en paralelo
+    await Promise.all(cardPromises);
+    
+    // Construir respuesta usando los mapas cacheados
+    const response = stockItems.map((stock) => {
+      const card = cardMap.get(stock.card_id);
+      const pvpData = pvpMap.get(stock.card_id);
+      
+      return {
         ...stock._doc,
         card_name: card ? card?.name : '',
         card_cost: stock.shipment / stock.cards_in_shipmet + stock.unity_cost,
-      });
-    }
+        pvp: pvpData?.pvp,
+        pvp_currency: pvpData?.pvp_currency,
+      };
+    });
+    
     return response;
   }
 
@@ -74,13 +113,24 @@ export class StockController {
         quantity_COP += 1;
       }
     });
-    card_value_EUR = card_value_EUR / quantity_EUR;
-    card_value_COP = card_value_COP / quantity_COP;
+    card_value_EUR = quantity_EUR > 0 ? card_value_EUR / quantity_EUR : 0;
+    card_value_COP = quantity_COP > 0 ? card_value_COP / quantity_COP : 0;
+    
+    // Determinar moneda principal (la que tiene más items)
+    let primaryCurrency = 'EUR';
+    if (quantity_COP > quantity_EUR) {
+      primaryCurrency = 'COP';
+    } else if (quantity_EUR > quantity_COP) {
+      primaryCurrency = 'EUR';
+    } else if (quantity_COP > 0) {
+      primaryCurrency = 'COP';
+    }
 
     return {
       quantity: quantity_COP + quantity_EUR,
       card_value_EUR: card_value_EUR,
       card_value_COP: card_value_COP,
+      primary_currency: primaryCurrency,
     };
   }
 }
