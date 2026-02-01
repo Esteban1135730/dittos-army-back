@@ -26,3 +26,4 @@ export class Sale {
 
 export const SaleSchema = SchemaFactory.createForClass(Sale);
 
+
