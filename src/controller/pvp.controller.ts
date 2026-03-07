@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { Pvp } from 'src/schema/pvp.schema';
 import { PvpRepository } from 'src/repository/pvp.repository';
 import { PvpDto } from 'src/Dto/pvp.dto';
@@ -30,6 +30,11 @@ export class PvpController {
   @Get()
   async getAllPvp(): Promise<Pvp[]> {
     return await this.pvpRepository.findAll();
+  }
+
+  @Delete()
+  async clearAllPvp(): Promise<{ deletedCount: number }> {
+    return await this.pvpRepository.deleteAll();
   }
 }
 

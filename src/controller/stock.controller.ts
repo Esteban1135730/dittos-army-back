@@ -3,8 +3,6 @@ import { Stock } from 'src/schema/stock.schema';
 import { StockRepository } from 'src/repository/stock.repository';
 import { PvpRepository } from 'src/repository/pvp.repository';
 import { StockDto } from 'src/Dto/stock.dto';
-import { TcgSdkController } from './tcg-sdk.controller';
-import { TCGSdkService } from 'src/service/tcg-sdk.service';
 import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
 
 @Controller('stock')
@@ -13,7 +11,6 @@ export class StockController {
     private readonly stockRepository: StockRepository,
     private readonly pvpRepository: PvpRepository,
     private readonly tcgDexService: TCGDexService,
-    private readonly tcgSdkService: TCGSdkService,
   ) {}
 
   @Post()

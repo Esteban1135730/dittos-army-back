@@ -53,5 +53,10 @@ export class PvpRepository {
   async deleteByCardId(cardId: string): Promise<any> {
     return this.pvpModel.deleteOne({ card_id: cardId }).exec();
   }
+
+  async deleteAll(): Promise<{ deletedCount: number }> {
+    const result = await this.pvpModel.deleteMany({}).exec();
+    return { deletedCount: result.deletedCount };
+  }
 }
 
