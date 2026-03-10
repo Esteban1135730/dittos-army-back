@@ -32,6 +32,10 @@ export class StockRepository {
     return this.stockModel.find({ card_id: cardId }).exec();
   }
 
+  async findByCardState(cardState: string): Promise<Stock[]> {
+    return this.stockModel.find({ card_state: cardState }).exec();
+  }
+
   async updateCardState(
     stockId: string,
     cardState: string,

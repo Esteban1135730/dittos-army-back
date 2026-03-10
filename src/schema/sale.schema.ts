@@ -22,6 +22,9 @@ export class Sale {
 
   @Prop({ default: Date.now })
   created_at: Date;
+
+  @Prop({ required: false })
+  cycle_closed_at?: Date;
 }
 
 export const SaleSchema = SchemaFactory.createForClass(Sale);

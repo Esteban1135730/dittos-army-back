@@ -2,16 +2,34 @@ import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common'
 import { Reserva } from 'src/schema/reserva.schema';
 import { ReservaRepository } from 'src/repository/reserva.repository';
 import { StockRepository } from 'src/repository/stock.repository';
+import { PvpRepository } from 'src/repository/pvp.repository';
+import { SaleRepository } from 'src/repository/sale.repository';
 import { ReservaDto } from 'src/Dto/reserva.dto';
 
 const ESTADO_RESERVA = 'reserva';
 const ESTADO_DISPONIBLE = 'disponible';
+const ESTADO_VENDIDA = 'vendida';
+
+function precioToCop(precio: number, currency: string): number {
+  if (currency === 'COP') return precio;
+  if (currency === 'EUR') {
+    const rate = parseFloat(process.env.EUR_TO_COP || '0') || 5000;
+    return Math.round(precio * rate);
+  }
+  if (currency === 'USD') {
+    const rate = parseFloat(process.env.USD_TO_COP || '0') || 4500;
+    return Math.round(precio * rate);
+  }
+  return precio;
+}
 
 @Controller('reserva')
 export class ReservaController {
   constructor(
     private readonly reservaRepository: ReservaRepository,
     private readonly stockRepository: StockRepository,
+    private readonly pvpRepository: PvpRepository,
+    private readonly saleRepository: SaleRepository,
   ) {}
 
   @Post()
@@ -81,5 +99,35 @@ export class ReservaController {
       currency: body.currency ?? reserva.currency,
     });
     return updated ?? { error: 'Error al actualizar' };
+  }
+
+  @Post('client/:clientId/finalizar-venta')
+  async finalizarVenta(@Param('clientId') clientId: string): Promise<{ success: boolean; vendidas?: number; error?: string }> {
+    const reservas = await this.reservaRepository.findByClientId(clientId);
+    if (!reservas || reservas.length === 0) {
+      return { success: false, error: 'El cliente no tiene reservas' };
+    }
+    for (const reserva of reservas) {
+      const stock = await this.stockRepository.findById(reserva.stock_id);
+      if (!stock) {
+        return { success: false, error: `Stock no encontrado: ${reserva.stock_id}` };
+      }
+      const amountCop = precioToCop(reserva.precio, reserva.currency ?? 'COP');
+      await this.saleRepository.create({
+        stock_id: reserva.stock_id,
+        card_id: stock.card_id,
+        type: 'venta',
+        amount_cop: amountCop,
+        notes: `Venta finalizada desde reserva (cliente ${clientId}). Precio original: ${reserva.precio} ${reserva.currency ?? 'COP'}.`,
+      });
+      await this.stockRepository.updateCardState(reserva.stock_id, ESTADO_VENDIDA);
+      await this.pvpRepository.update({
+        card_id: stock.card_id,
+        pvp: reserva.precio,
+        currency: reserva.currency ?? 'COP',
+      });
+      await this.reservaRepository.deleteByStockId(reserva.stock_id);
+    }
+    return { success: true, vendidas: reservas.length };
   }
 }

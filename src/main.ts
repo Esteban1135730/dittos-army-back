@@ -6,8 +6,15 @@ async function bootstrap() {
   
   // Configurar CORS
   app.enableCors({
-    origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5174'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    origin: (origin, callback) => {
+      // Permitir sin origin (p.ej. Postman, misma origen) o cualquier localhost
+      if (!origin || /^https?:\/\/localhost(:\d+)?$/.test(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, true); // en desarrollo permitir todo; en prod restringir
+      }
+    },
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   });

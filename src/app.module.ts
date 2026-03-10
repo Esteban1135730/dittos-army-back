@@ -11,6 +11,7 @@ import { SaleRepository } from './repository/sale.repository';
 import { ClientRepository } from './repository/client.repository';
 import { ReservaRepository } from './repository/reserva.repository';
 import { TCGDexService } from './service/tcgdex/tcgdex.service';
+import { StoreInventoryService } from './service/store-inventory.service';
 import { StockController } from './controller/stock.controller';
 import { PvpController } from './controller/pvp.controller';
 import { CardController } from './controller/card.controller';
@@ -31,6 +32,7 @@ import { ReservaController } from './controller/reserva.controller';
   ],
   providers: [
     TCGDexService,
+    StoreInventoryService,
     StockRepository,
     PvpRepository,
     SaleRepository,

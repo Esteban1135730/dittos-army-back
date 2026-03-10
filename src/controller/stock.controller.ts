@@ -4,6 +4,7 @@ import { StockRepository } from 'src/repository/stock.repository';
 import { PvpRepository } from 'src/repository/pvp.repository';
 import { StockDto } from 'src/Dto/stock.dto';
 import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
+import { StoreInventoryService } from 'src/service/store-inventory.service';
 
 @Controller('stock')
 export class StockController {
@@ -11,6 +12,7 @@ export class StockController {
     private readonly stockRepository: StockRepository,
     private readonly pvpRepository: PvpRepository,
     private readonly tcgDexService: TCGDexService,
+    private readonly storeInventoryService: StoreInventoryService,
   ) {}
 
   @Post()
@@ -21,6 +23,11 @@ export class StockController {
   @Post('update')
   async updateStock(@Body() stockDto: StockDto): Promise<Stock | null> {
     return await this.stockRepository.update(stockDto);
+  }
+
+  @Post('export-store-inventory')
+  async exportStoreInventory(): Promise<{ success: boolean; path?: string; count?: number; error?: string }> {
+    return this.storeInventoryService.exportStoreInventory();
   }
 
   @Get()
