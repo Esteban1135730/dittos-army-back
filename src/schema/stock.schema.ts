@@ -41,6 +41,10 @@ export class Stock {
 
   @Prop()
   currency: string;
+
+  // Notas provenientes del flujo "compras en camino" (novedad/cambio)
+  @Prop({ required: false })
+  incoming_notes?: string;
 }
 
 export const StockSchema = SchemaFactory.createForClass(Stock);

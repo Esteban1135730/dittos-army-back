@@ -10,4 +10,5 @@ export type StockDto = {
   holofoil?: boolean;
   league_card?: boolean;
   currency: string;
+  incoming_notes?: string;
 };

@@ -16,6 +16,11 @@ export class StockRepository {
     return createdStock.save();
   }
 
+  async createMany(stockDtos: StockDto[]): Promise<any[]> {
+    if (!Array.isArray(stockDtos) || stockDtos.length === 0) return [];
+    return this.stockModel.insertMany(stockDtos as any);
+  }
+
   async update(stockDto: StockDto): Promise<Stock | null> {
     return this.stockModel.findByIdAndUpdate(stockDto.id, stockDto);
   }
