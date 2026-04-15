@@ -36,7 +36,7 @@ export class Stock {
   @Prop()
   league_card: boolean;
 
-  @Prop()
+  @Prop({ default: '' })
   card_name: string;
 
   @Prop()
@@ -45,6 +45,10 @@ export class Stock {
   // Notas provenientes del flujo "compras en camino" (novedad/cambio)
   @Prop({ required: false })
   incoming_notes?: string;
+
+  /** Variante del lote entrante: hollow, foil, pokeball, masterball, first edition */
+  @Prop({ type: String, required: false })
+  rareza?: string;
 }
 
 export const StockSchema = SchemaFactory.createForClass(Stock);

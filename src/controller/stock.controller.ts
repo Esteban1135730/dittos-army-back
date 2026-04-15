@@ -3,7 +3,6 @@ import { Stock } from 'src/schema/stock.schema';
 import { StockRepository } from 'src/repository/stock.repository';
 import { PvpRepository } from 'src/repository/pvp.repository';
 import { StockDto } from 'src/Dto/stock.dto';
-import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
 import { StoreInventoryService } from 'src/service/store-inventory.service';
 
 @Controller('stock')
@@ -11,18 +10,23 @@ export class StockController {
   constructor(
     private readonly stockRepository: StockRepository,
     private readonly pvpRepository: PvpRepository,
-    private readonly tcgDexService: TCGDexService,
     private readonly storeInventoryService: StoreInventoryService,
   ) {}
 
   @Post()
   async saveStock(@Body() stockDto: StockDto): Promise<Stock | null> {
-    return await this.stockRepository.create(stockDto);
+    return await this.stockRepository.create({
+      ...stockDto,
+      card_name: stockDto.card_name ?? '',
+    });
   }
 
   @Post('update')
   async updateStock(@Body() stockDto: StockDto): Promise<Stock | null> {
-    return await this.stockRepository.update(stockDto);
+    return await this.stockRepository.update({
+      ...stockDto,
+      card_name: stockDto.card_name ?? '',
+    });
   }
 
   @Post('export-store-inventory')
@@ -30,16 +34,17 @@ export class StockController {
     return this.storeInventoryService.exportStoreInventory();
   }
 
+  @Post('export-store-upcoming')
+  async exportStoreUpcoming(): Promise<{ success: boolean; path?: string; count?: number; error?: string }> {
+    return this.storeInventoryService.exportStoreUpcoming();
+  }
+
   @Get()
   async listStock(): Promise<Stock[] | null> {
     const stockItems: any[] = await this.stockRepository.findAll();
     const cardIds = [...new Set(stockItems.map((s) => s.card_id))];
-    
-    // Crear mapas para cachear resultados
+
     const pvpMap = new Map();
-    const cardMap = new Map();
-    
-    // Obtener todos los PVP de una sola consulta
     try {
       const pvps = await this.pvpRepository.findByCardIds(cardIds);
       pvps.forEach((pvp) => {
@@ -48,30 +53,12 @@ export class StockController {
     } catch (error) {
       console.log('Error obteniendo PVP:', error);
     }
-    
-    // Obtener todas las cartas de TCGDex en paralelo
-    const cardPromises = cardIds.map(async (cardId) => {
-      try {
-        const card = await this.tcgDexService.getCard(cardId);
-        if (card) {
-          cardMap.set(cardId, card);
-        }
-      } catch (error) {
-        console.log(`Error obteniendo carta TCGDex para ${cardId}:`, error);
-      }
-    });
-    
-    // Ejecutar todas las promesas en paralelo
-    await Promise.all(cardPromises);
-    
-    // Construir respuesta usando los mapas cacheados
+
     const response = stockItems.map((stock) => {
-      const card = cardMap.get(stock.card_id);
       const pvpData = pvpMap.get(stock.card_id);
-      
       return {
         ...stock._doc,
-        card_name: card ? card?.name : '',
+        card_name: stock.card_name ?? '',
         card_cost: stock.shipment / stock.cards_in_shipmet + stock.unity_cost,
         pvp: pvpData?.pvp,
         pvp_currency: pvpData?.pvp_currency,
@@ -85,10 +72,9 @@ export class StockController {
   async getStock(@Param() params: any): Promise<any | null> {
     const findCard = (await this.stockRepository.findById(params.id)) as any;
     if (findCard != undefined) {
-      const card = await this.tcgDexService.getCard(findCard.card_id);
       return {
         ...findCard._doc,
-        card_name: card ? card?.name : '',
+        card_name: findCard.card_name ?? '',
         card_cost:
           findCard.shipment / findCard.cards_in_shipmet + findCard.unity_cost,
       };

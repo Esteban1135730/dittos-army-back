@@ -10,8 +10,17 @@ import {
   CreateIncomingRoundDto,
   ReviewIncomingRoundDto,
 } from 'src/Dto/incoming.dto';
+
+const INCOMING_ITEM_RAREZA_VALUES = new Set([
+  'hollow',
+  'foil',
+  'pokeball',
+  'masterball',
+  'first edition',
+]);
 import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
 import { StockRepository } from 'src/repository/stock.repository';
+import { StockDto } from 'src/Dto/stock.dto';
 
 type BatchItemDecision = {
   batchItemId: string;
@@ -47,7 +56,7 @@ export class IncomingController {
     }
     const purchaseDate = new Date(body.purchase_date);
     if (Number.isNaN(purchaseDate.getTime())) {
-      throw new Error('purchase_date inválido');
+      throw new Error('purchase_date inv?lido');
     }
 
     for (const it of items) {
@@ -57,16 +66,23 @@ export class IncomingController {
       if (it.eur_total_lot == null || it.eur_total_lot <= 0) {
         throw new Error('eur_total_lot es requerido y debe ser > 0');
       }
+      const rz =
+        it.rareza == null || String(it.rareza).trim() === ''
+          ? null
+          : String(it.rareza).trim();
+      if (rz != null && !INCOMING_ITEM_RAREZA_VALUES.has(rz)) {
+        throw new Error('rareza inválida');
+      }
     }
 
     const total_eur_cards_cost = items.reduce((sum, it) => sum + it.eur_total_lot, 0);
     if (total_eur_cards_cost <= 0) {
-      throw new Error('total_eur_cards_cost calculado inválido');
+      throw new Error('total_eur_cards_cost calculado inv?lido');
     }
 
     const real_euro_rate_cop_per_eur = body.total_cop_cards_cost / total_eur_cards_cost;
     if (!Number.isFinite(real_euro_rate_cop_per_eur) || real_euro_rate_cop_per_eur <= 0) {
-      throw new Error('real_euro_rate_cop_per_eur calculado inválido');
+      throw new Error('real_euro_rate_cop_per_eur calculado inv?lido');
     }
 
     const batch = await this.incomingBatchRepository.create({
@@ -90,7 +106,7 @@ export class IncomingController {
             });
           }
         } catch {
-          // dejar vacío si falla la API
+          // dejar vac?o si falla la API
         }
       }),
     );
@@ -99,6 +115,10 @@ export class IncomingController {
       const eur_unit_price = it.eur_total_lot / it.quantity;
       const unit_cost_cop = eur_unit_price * real_euro_rate_cop_per_eur;
       const card = cardMap.get(it.card_id);
+      const rarezaNorm =
+        it.rareza == null || String(it.rareza).trim() === ''
+          ? undefined
+          : String(it.rareza).trim();
 
       return {
         batch_id: batch._id.toString(),
@@ -109,8 +129,9 @@ export class IncomingController {
         eur_unit_price,
         unit_cost_cop,
         remaining_quantity: it.quantity,
-        card_name: card?.name ?? '',
-        image_url: card?.image ?? '',
+        card_name: (card?.name && String(card.name).trim()) || (it.card_name && String(it.card_name).trim()) || '',
+        image_url: (card?.image && String(card.image).trim()) || (it.image_url && String(it.image_url).trim()) || '',
+        rareza: rarezaNorm,
         created_at: new Date(),
       };
     });
@@ -166,7 +187,7 @@ export class IncomingController {
     const batchItems = await this.incomingBatchItemRepository.findByBatchId(batchId);
     const batchItemIds = new Set(batchItems.map((it) => it._id.toString()));
 
-    // Bloquear eliminación si existe una tanda global abierta que use items de este batch.
+    // Bloquear eliminaci?n si existe una tanda global abierta que use items de este batch.
     const openShipRounds = await this.incomingShipRoundRepository.listOpenRounds();
     for (const round of openShipRounds) {
       const roundItems = await this.incomingShipRoundItemRepository.findByRoundId(
@@ -177,7 +198,7 @@ export class IncomingController {
         return {
           success: false,
           message:
-            'No se puede eliminar: el batch está incluido en una tanda global abierta',
+            'No se puede eliminar: el batch est? incluido en una tanda global abierta',
         };
       }
     }
@@ -226,7 +247,7 @@ export class IncomingController {
     if (body.purchase_date != null) {
       const parsed = new Date(body.purchase_date);
       if (Number.isNaN(parsed.getTime())) {
-        return { success: false, message: 'purchase_date inválido' };
+        return { success: false, message: 'purchase_date inv?lido' };
       }
       updateData.purchase_date = parsed;
     }
@@ -280,6 +301,7 @@ export class IncomingController {
       eur_total_lot: it.eur_total_lot,
       eur_unit_price: it.eur_unit_price,
       unit_cost_cop: it.unit_cost_cop,
+      rareza: it.rareza ?? null,
     }));
   }
 
@@ -323,6 +345,7 @@ export class IncomingController {
           quantity_ordered: it.quantity_ordered,
           remaining_quantity: it.remaining_quantity,
           unit_cost_cop: it.unit_cost_cop,
+          rareza: it.rareza ?? null,
           arrived_quantity,
           novedad_quantity,
           novedad_notes,
@@ -338,7 +361,7 @@ export class IncomingController {
   ): Promise<{ round_id: string }> {
     const batch = await this.incomingBatchRepository.findById(batchId);
     if (!batch) throw new Error('Batch no encontrado');
-    if (batch.status !== 'open') throw new Error('El batch no está abierto');
+    if (batch.status !== 'open') throw new Error('El batch no est? abierto');
 
     const shipping_total_cop = body?.shipping_total_cop;
     if (shipping_total_cop == null || shipping_total_cop <= 0) {
@@ -365,7 +388,7 @@ export class IncomingController {
     const round = await this.incomingRoundRepository.findById(roundId);
     if (!round) throw new Error('Round no encontrada');
     if (round.batch_id !== batchId) throw new Error('Round no pertenece al batch');
-    if (round.status !== 'reviewing') throw new Error('Round ya está finalizada');
+    if (round.status !== 'reviewing') throw new Error('Round ya est? finalizada');
 
     const batchItems = await this.incomingBatchItemRepository.findByBatchId(batchId);
     if (!Array.isArray(body.decisions)) {
@@ -393,10 +416,10 @@ export class IncomingController {
       const novedad_notes = (d.novedad_notes ?? '').toString();
 
       if (!Number.isFinite(arrived_quantity) || arrived_quantity < 0) {
-        throw new Error('arrived_quantity inválido');
+        throw new Error('arrived_quantity inv?lido');
       }
       if (!Number.isFinite(novedad_quantity) || novedad_quantity < 0) {
-        throw new Error('novedad_quantity inválido');
+        throw new Error('novedad_quantity inv?lido');
       }
       if (arrived_quantity > it.remaining_quantity) {
         throw new Error('arrived_quantity no puede superar remaining_quantity');
@@ -440,7 +463,7 @@ export class IncomingController {
     if (!round) throw new Error('Round no encontrada');
     if (!batch) throw new Error('Batch no encontrada');
     if (round.batch_id !== batchId) throw new Error('Round no pertenece al batch');
-    if (round.status !== 'reviewing') throw new Error('Round no está en estado reviewing');
+    if (round.status !== 'reviewing') throw new Error('Round no est? en estado reviewing');
 
     const roundItems = await this.incomingRoundItemRepository.findByRoundId(roundId);
     const decisionsMap = new Map<string, any>();
@@ -466,7 +489,7 @@ export class IncomingController {
 
     const shipping_total_cop = round.shipping_total_cop;
 
-    const stockDtos: any[] = [];
+    const stockDtos: StockDto[] = [];
     for (const it of batchItems) {
       const d = decisionsMap.get(it._id.toString());
       const arrived_quantity = Number(d?.arrived_quantity ?? 0);
@@ -474,9 +497,12 @@ export class IncomingController {
       const novedad_notes = (d?.novedad_notes ?? '').toString();
       if (arrived_quantity <= 0) continue;
 
+      const rarezaStock =
+        it.rareza != null && String(it.rareza).trim() !== '' ? String(it.rareza).trim() : undefined;
       for (let i = 0; i < arrived_quantity; i++) {
         stockDtos.push({
           card_id: it.card_id,
+          card_name: it.card_name ?? '',
           shipment: shipping_total_cop,
           unity_cost: it.unit_cost_cop,
           cards_in_shipmet: arrivedTotalQuantity,
@@ -485,6 +511,7 @@ export class IncomingController {
           language: it.language,
           currency: 'COP',
           incoming_notes: i < novedad_quantity ? novedad_notes : '',
+          rareza: rarezaStock,
         });
       }
     }
@@ -498,7 +525,7 @@ export class IncomingController {
         const arrived_quantity = Number(d?.arrived_quantity ?? 0);
         const newRemaining = it.remaining_quantity - arrived_quantity;
         if (newRemaining < 0) {
-          throw new Error('remaining_quantity quedó negativo');
+          throw new Error('remaining_quantity qued? negativo');
         }
         await this.incomingBatchItemRepository.updateRemainingQuantity(it._id.toString(), newRemaining);
       }),

@@ -1,6 +1,11 @@
+/**
+ * Entrada HTTP para crear/actualizar stock.
+ * `card_name` debe enviarse siempre (cadena vacía solo para datos legados / migraciones).
+ */
 export type StockDto = {
   id?: string;
   card_id: string;
+  card_name: string;
   shipment: number;
   unity_cost: number;
   cards_in_shipmet: number;
@@ -11,4 +16,6 @@ export type StockDto = {
   league_card?: boolean;
   currency: string;
   incoming_notes?: string;
+  /** Variante (pokeball reverse, first edition, etc.) copiada desde compra en camino */
+  rareza?: string;
 };

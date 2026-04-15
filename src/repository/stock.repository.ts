@@ -12,17 +12,30 @@ export class StockRepository {
   ) {}
 
   async create(stockDto: StockDto): Promise<Stock> {
-    const createdStock = new this.stockModel(stockDto);
+    const createdStock = new this.stockModel({
+      ...stockDto,
+      card_name: stockDto.card_name ?? '',
+    });
     return createdStock.save();
   }
 
   async createMany(stockDtos: StockDto[]): Promise<any[]> {
     if (!Array.isArray(stockDtos) || stockDtos.length === 0) return [];
-    return this.stockModel.insertMany(stockDtos as any);
+    const normalized = stockDtos.map((d) => ({
+      ...d,
+      card_name: d.card_name ?? '',
+    }));
+    return this.stockModel.insertMany(normalized as any);
   }
 
   async update(stockDto: StockDto): Promise<Stock | null> {
-    return this.stockModel.findByIdAndUpdate(stockDto.id, stockDto);
+    const { id, ...rest } = stockDto;
+    if (!id) return null;
+    return this.stockModel.findByIdAndUpdate(
+      id,
+      { ...rest, card_name: rest.card_name ?? '' },
+      { new: true },
+    );
   }
 
   async findAll(): Promise<Stock[]> {

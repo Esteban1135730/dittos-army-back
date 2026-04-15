@@ -4,6 +4,7 @@ import { IncomingShipRoundItemRepository } from 'src/repository/incoming-ship-ro
 import { IncomingBatchItemRepository } from 'src/repository/incoming-batch-item.repository';
 import { IncomingBatchRepository } from 'src/repository/incoming-batch.repository';
 import { StockRepository } from 'src/repository/stock.repository';
+import { StockDto } from 'src/Dto/stock.dto';
 import {
   ReviewIncomingShipRoundDto,
 } from 'src/Dto/incoming-ship-round.dto';
@@ -113,6 +114,7 @@ export class IncomingShipRoundController {
           quantity_ordered: 0,
           remaining_quantity: 0,
           unit_cost_cop: 0,
+          rareza: null,
           arrived_quantity: ri.arrived_quantity ?? 0,
           novedad_quantity: ri.novedad_quantity ?? 0,
           novedad_notes: ri.novedad_notes ?? '',
@@ -128,6 +130,7 @@ export class IncomingShipRoundController {
         quantity_ordered: bi.quantity_ordered,
         remaining_quantity: bi.remaining_quantity,
         unit_cost_cop: bi.unit_cost_cop,
+        rareza: bi.rareza ?? null,
         arrived_quantity: ri.arrived_quantity ?? 0,
         novedad_quantity: ri.novedad_quantity ?? 0,
         novedad_notes: ri.novedad_notes ?? '',
@@ -244,7 +247,7 @@ export class IncomingShipRoundController {
 
     const shipping_total_cop = round.shipping_total_cop;
 
-    const stockDtos: any[] = [];
+    const stockDtos: StockDto[] = [];
     for (const pair of itemsWithDecisions) {
       const arrived_quantity = Number(pair.ri.arrived_quantity ?? 0);
       const novedad_quantity = Number(pair.ri.novedad_quantity ?? 0);
@@ -252,9 +255,12 @@ export class IncomingShipRoundController {
       if (arrived_quantity <= 0) continue;
 
       const bi = pair.bi;
+      const rarezaStock =
+        bi.rareza != null && String(bi.rareza).trim() !== '' ? String(bi.rareza).trim() : undefined;
       for (let i = 0; i < arrived_quantity; i++) {
         stockDtos.push({
           card_id: bi.card_id,
+          card_name: bi.card_name ?? '',
           shipment: shipping_total_cop,
           unity_cost: bi.unit_cost_cop,
           cards_in_shipmet: arrivedTotalQuantity,
@@ -263,6 +269,7 @@ export class IncomingShipRoundController {
           language: bi.language,
           currency: 'COP',
           incoming_notes: i < novedad_quantity ? novedad_notes : '',
+          rareza: rarezaStock,
         });
       }
     }

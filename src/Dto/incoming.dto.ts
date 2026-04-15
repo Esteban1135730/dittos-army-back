@@ -4,6 +4,11 @@ export type IncomingBatchItemInput = {
   quantity: number;
   // TOTAL EUR del lote para esa cantidad (SIN envío)
   eur_total_lot: number;
+  /** Opcional; null o ausente = sin rareza */
+  rareza?: string | null;
+  /** Si TCGdex no resuelve el card_id, se conservan estos valores en el ítem */
+  card_name?: string;
+  image_url?: string;
 };
 
 export type CreateIncomingBatchDto = {
