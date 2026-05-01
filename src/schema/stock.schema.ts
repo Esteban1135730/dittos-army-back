@@ -46,7 +46,7 @@ export class Stock {
   @Prop({ required: false })
   incoming_notes?: string;
 
-  /** Variante del lote entrante: hollow, foil, pokeball, masterball, first edition */
+  /** Variante del lote / manual: hollow, foil, pokeball, masterball, first edition, holofoil, league card */
   @Prop({ type: String, required: false })
   rareza?: string;
 }

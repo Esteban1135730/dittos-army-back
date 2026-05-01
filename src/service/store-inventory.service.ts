@@ -6,6 +6,11 @@ import { PvpRepository } from '../repository/pvp.repository';
 import { IncomingBatchRepository } from '../repository/incoming-batch.repository';
 import { IncomingBatchItemRepository } from '../repository/incoming-batch-item.repository';
 import { TCGDexService } from './tcgdex/tcgdex.service';
+import {
+  effectiveOperationalRarezaFromStock,
+  groupPvpsByCardId,
+  resolvePvpForLine,
+} from '../utils/pvp-resolve';
 
 const EXCLUDED_STATES = new Set(['vendida', 'propiedad', 'reserva']);
 
@@ -83,14 +88,17 @@ export class StoreInventoryService {
       }
 
       const cardIds = [...new Set(filtered.map((s) => s.card_id))];
-      const pvpMap = new Map<string, { pvp: number; pvp_currency: string }>();
+      const pvpByCard = new Map<
+        string,
+        { card_id: string; rareza?: string | null; pvp: number; currency: string }[]
+      >();
       const cardMap = new Map<string, { name: string; image: string }>();
 
       try {
         const pvps = await this.pvpRepository.findByCardIds(cardIds);
-        pvps.forEach((pvp) => {
-          pvpMap.set(pvp.card_id, { pvp: pvp.pvp, pvp_currency: pvp.currency });
-        });
+        for (const [cid, list] of groupPvpsByCardId(pvps)) {
+          pvpByCard.set(cid, list);
+        }
       } catch (e) {
         console.warn('StoreInventory: error loading PVP', e);
       }
@@ -113,7 +121,9 @@ export class StoreInventoryService {
 
       const enriched = filtered.map((stock) => {
         const card = cardMap.get(stock.card_id);
-        const pvpData = pvpMap.get(stock.card_id);
+        const list = pvpByCard.get(stock.card_id) ?? [];
+        const rzLine = effectiveOperationalRarezaFromStock(stock);
+        const pvpData = resolvePvpForLine(list, rzLine);
         return {
           ...stock._doc,
           card_name: card?.name ?? stock.card_name ?? '',
@@ -140,12 +150,10 @@ export class StoreInventoryService {
       for (const item of enriched) {
         const cardId = item.card_id;
         const lang = (item.language || 'en').toString().trim().toLowerCase() || 'en';
-        const displayRareza =
-          item.rareza != null && String(item.rareza).trim() !== ''
-            ? String(item.rareza).trim()
-            : null;
-        const key = inventoryLineKey(cardId, lang, displayRareza);
-        const pvpData = pvpMap.get(cardId);
+        const rzEff = effectiveOperationalRarezaFromStock(item as any);
+        const key = inventoryLineKey(cardId, lang, rzEff);
+        const list = pvpByCard.get(cardId) ?? [];
+        const pvpData = resolvePvpForLine(list, rzEff);
         const pvpCop =
           pvpData != null
             ? this.pvpToCop(pvpData.pvp, pvpData.pvp_currency)
@@ -165,7 +173,7 @@ export class StoreInventoryService {
             pvp: pvpCop,
             image,
             quantity: 1,
-            rareza: displayRareza,
+            rareza: rzEff,
           });
         }
       }

@@ -1,30 +1,41 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+} from '@nestjs/common';
 import { Pvp } from 'src/schema/pvp.schema';
 import { PvpRepository } from 'src/repository/pvp.repository';
-import { PvpDto } from 'src/Dto/pvp.dto';
+import { PvpCardRowDto, PvpDto } from 'src/Dto/pvp.dto';
+import {
+  isValidOperationalRareza,
+  normalizeOperationalRareza,
+} from 'src/constants/item-rareza';
+import { PvpCardRowsService } from 'src/service/pvp-card-rows.service';
 
 @Controller('pvp')
 export class PvpController {
-  constructor(private readonly pvpRepository: PvpRepository) {}
+  constructor(
+    private readonly pvpRepository: PvpRepository,
+    private readonly pvpCardRowsService: PvpCardRowsService,
+  ) {}
 
   @Post()
   async createOrUpdatePvp(@Body() pvpDto: PvpDto): Promise<Pvp | null> {
-    try {
-      // Validar que los campos requeridos estén presentes
-      if (!pvpDto.card_id || !pvpDto.pvp || !pvpDto.currency) {
-        throw new Error('card_id, pvp y currency son requeridos');
-      }
-      
-      // Si ya existe un PVP para esta carta, lo actualiza; si no, lo crea
-      return await this.pvpRepository.update(pvpDto);
-    } catch (error) {
-      throw error;
+    const rz = normalizeOperationalRareza(pvpDto.rareza);
+    if (!isValidOperationalRareza(rz)) {
+      throw new BadRequestException('rareza inválida');
     }
-  }
-
-  @Get(':card_id')
-  async getPvpByCardId(@Param() params: any): Promise<Pvp | null> {
-    return await this.pvpRepository.findByCardId(params.card_id);
+    if (!pvpDto.card_id || pvpDto.pvp == null || !pvpDto.currency) {
+      throw new BadRequestException('card_id, pvp y currency son requeridos');
+    }
+    if (typeof pvpDto.pvp === 'number' && pvpDto.pvp <= 0) {
+      throw new BadRequestException('pvp debe ser mayor a cero');
+    }
+    return await this.pvpRepository.update({ ...pvpDto, rareza: rz });
   }
 
   @Get()
@@ -32,9 +43,13 @@ export class PvpController {
     return await this.pvpRepository.findAll();
   }
 
+  @Get(':card_id')
+  async getPvpByCardId(@Param() params: { card_id: string }): Promise<PvpCardRowDto[]> {
+    return await this.pvpCardRowsService.buildRowsForCard(params.card_id);
+  }
+
   @Delete()
   async clearAllPvp(): Promise<{ deletedCount: number }> {
     return await this.pvpRepository.deleteAll();
   }
 }
-

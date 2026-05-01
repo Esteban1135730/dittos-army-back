@@ -9,6 +9,7 @@ import {
   ReviewIncomingShipRoundDto,
 } from 'src/Dto/incoming-ship-round.dto';
 import { CreateIncomingShipRoundDto } from 'src/Dto/incoming-ship-round.dto';
+import { normalizeOperationalRareza } from 'src/constants/item-rareza';
 
 
 @Controller('incoming/ship-round')
@@ -255,8 +256,7 @@ export class IncomingShipRoundController {
       if (arrived_quantity <= 0) continue;
 
       const bi = pair.bi;
-      const rarezaStock =
-        bi.rareza != null && String(bi.rareza).trim() !== '' ? String(bi.rareza).trim() : undefined;
+      const rarezaStock = normalizeOperationalRareza(bi.rareza) ?? undefined;
       for (let i = 0; i < arrived_quantity; i++) {
         stockDtos.push({
           card_id: bi.card_id,

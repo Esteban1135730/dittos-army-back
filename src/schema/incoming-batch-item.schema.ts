@@ -42,7 +42,7 @@ export class IncomingBatchItem {
   @Prop()
   image_url?: string;
 
-  /** Variante opcional (hollow, foil, pokeball, masterball, first edition); ausente o null = sin rareza */
+  /** Variante opcional (hollow, foil, pokeball, masterball, first edition, holofoil, league card); ausente o null = sin rareza */
   @Prop({ type: String, required: false })
   rareza?: string;
 

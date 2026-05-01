@@ -5,6 +5,7 @@ import { StockRepository } from 'src/repository/stock.repository';
 import { PvpRepository } from 'src/repository/pvp.repository';
 import { SaleRepository } from 'src/repository/sale.repository';
 import { ReservaDto } from 'src/Dto/reserva.dto';
+import { effectiveOperationalRarezaFromStock } from 'src/utils/pvp-resolve';
 
 const ESTADO_RESERVA = 'reserva';
 const ESTADO_DISPONIBLE = 'disponible';
@@ -125,6 +126,7 @@ export class ReservaController {
         card_id: stock.card_id,
         pvp: reserva.precio,
         currency: reserva.currency ?? 'COP',
+        rareza: effectiveOperationalRarezaFromStock(stock as any),
       });
       await this.reservaRepository.deleteByStockId(reserva.stock_id);
     }

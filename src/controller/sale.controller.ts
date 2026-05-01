@@ -2,6 +2,10 @@ import { Body, Controller, Get, Post, Put, Delete, Param } from '@nestjs/common'
 import { SaleRepository } from 'src/repository/sale.repository';
 import { StockRepository } from 'src/repository/stock.repository';
 import { PvpRepository } from 'src/repository/pvp.repository';
+import {
+  effectiveOperationalRarezaFromStock,
+  resolvePvpForLine,
+} from 'src/utils/pvp-resolve';
 import { SaleDocument } from 'src/schema/sale.schema';
 import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
 
@@ -270,17 +274,21 @@ export class SaleController {
     if (stock.card_state !== 'vendida') {
       return { success: false, message: 'La carta no está marcada como vendida en stock' };
     }
-    const pvp = await this.pvpRepository.findByCardId(stock.card_id);
-    if (!pvp || pvp.pvp == null) {
+    const pvps = await this.pvpRepository.findAllByCardId(stock.card_id);
+    const resolved = resolvePvpForLine(
+      pvps,
+      effectiveOperationalRarezaFromStock(stock as any),
+    );
+    if (!resolved) {
       return { success: false, message: 'No hay PVP asignado para esta carta' };
     }
-    const amountCop = pvpToCop(pvp.pvp, pvp.currency ?? 'COP');
+    const amountCop = pvpToCop(resolved.pvp, resolved.pvp_currency ?? 'COP');
     await this.saleRepository.create({
       stock_id: body.stock_id,
       card_id: stock.card_id,
       type: 'venta',
       amount_cop: amountCop,
-      notes: `Registrado desde consistencia (venta al PVP: ${pvp.pvp} ${pvp.currency ?? 'COP'})`,
+      notes: `Registrado desde consistencia (venta al PVP: ${resolved.pvp} ${resolved.pvp_currency ?? 'COP'})`,
     });
     return { success: true };
   }

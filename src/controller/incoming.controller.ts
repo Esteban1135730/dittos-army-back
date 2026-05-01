@@ -11,13 +11,10 @@ import {
   ReviewIncomingRoundDto,
 } from 'src/Dto/incoming.dto';
 
-const INCOMING_ITEM_RAREZA_VALUES = new Set([
-  'hollow',
-  'foil',
-  'pokeball',
-  'masterball',
-  'first edition',
-]);
+import {
+  INCOMING_ITEM_RAREZA_VALUES,
+  normalizeOperationalRareza,
+} from 'src/constants/item-rareza';
 import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
 import { StockRepository } from 'src/repository/stock.repository';
 import { StockDto } from 'src/Dto/stock.dto';
@@ -66,10 +63,7 @@ export class IncomingController {
       if (it.eur_total_lot == null || it.eur_total_lot <= 0) {
         throw new Error('eur_total_lot es requerido y debe ser > 0');
       }
-      const rz =
-        it.rareza == null || String(it.rareza).trim() === ''
-          ? null
-          : String(it.rareza).trim();
+      const rz = normalizeOperationalRareza(it.rareza);
       if (rz != null && !INCOMING_ITEM_RAREZA_VALUES.has(rz)) {
         throw new Error('rareza inválida');
       }
@@ -115,10 +109,7 @@ export class IncomingController {
       const eur_unit_price = it.eur_total_lot / it.quantity;
       const unit_cost_cop = eur_unit_price * real_euro_rate_cop_per_eur;
       const card = cardMap.get(it.card_id);
-      const rarezaNorm =
-        it.rareza == null || String(it.rareza).trim() === ''
-          ? undefined
-          : String(it.rareza).trim();
+      const rarezaNorm = normalizeOperationalRareza(it.rareza) ?? undefined;
 
       return {
         batch_id: batch._id.toString(),
@@ -497,8 +488,7 @@ export class IncomingController {
       const novedad_notes = (d?.novedad_notes ?? '').toString();
       if (arrived_quantity <= 0) continue;
 
-      const rarezaStock =
-        it.rareza != null && String(it.rareza).trim() !== '' ? String(it.rareza).trim() : undefined;
+      const rarezaStock = normalizeOperationalRareza(it.rareza) ?? undefined;
       for (let i = 0; i < arrived_quantity; i++) {
         stockDtos.push({
           card_id: it.card_id,

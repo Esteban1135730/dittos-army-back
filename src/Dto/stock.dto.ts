@@ -16,6 +16,6 @@ export type StockDto = {
   league_card?: boolean;
   currency: string;
   incoming_notes?: string;
-  /** Variante (pokeball reverse, first edition, etc.) copiada desde compra en camino */
-  rareza?: string;
+  /** Variante operativa (mismo catálogo que incoming / PVP); null en update = sin variante */
+  rareza?: string | null;
 };

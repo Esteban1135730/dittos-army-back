@@ -1,9 +1,19 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { Stock } from 'src/schema/stock.schema';
 import { StockRepository } from 'src/repository/stock.repository';
 import { PvpRepository } from 'src/repository/pvp.repository';
 import { StockDto } from 'src/Dto/stock.dto';
 import { StoreInventoryService } from 'src/service/store-inventory.service';
+import {
+  effectiveOperationalRarezaFromStock,
+  groupPvpsByCardId,
+  resolvePvpForLine,
+  stockLineRareza,
+} from 'src/utils/pvp-resolve';
+import {
+  isValidOperationalRareza,
+  normalizeOperationalRareza,
+} from 'src/constants/item-rareza';
 
 @Controller('stock')
 export class StockController {
@@ -13,20 +23,36 @@ export class StockController {
     private readonly storeInventoryService: StoreInventoryService,
   ) {}
 
+  private validatedRareza(stockDto: StockDto): string | null {
+    const rz = normalizeOperationalRareza(stockDto.rareza);
+    if (!isValidOperationalRareza(rz)) {
+      throw new BadRequestException('rareza inválida');
+    }
+    return rz;
+  }
+
   @Post()
   async saveStock(@Body() stockDto: StockDto): Promise<Stock | null> {
-    return await this.stockRepository.create({
-      ...stockDto,
+    const rz = this.validatedRareza(stockDto);
+    const { rareza: _drop, ...rest } = stockDto as StockDto & { rareza?: string };
+    const payload: StockDto = {
+      ...rest,
       card_name: stockDto.card_name ?? '',
-    });
+    };
+    if (rz != null) {
+      payload.rareza = rz;
+    }
+    return await this.stockRepository.create(payload);
   }
 
   @Post('update')
   async updateStock(@Body() stockDto: StockDto): Promise<Stock | null> {
+    const rz = this.validatedRareza(stockDto);
     return await this.stockRepository.update({
       ...stockDto,
       card_name: stockDto.card_name ?? '',
-    });
+      rareza: rz === null ? null : rz,
+    } as StockDto);
   }
 
   @Post('export-store-inventory')
@@ -44,18 +70,22 @@ export class StockController {
     const stockItems: any[] = await this.stockRepository.findAll();
     const cardIds = [...new Set(stockItems.map((s) => s.card_id))];
 
-    const pvpMap = new Map();
+    const pvpByCard = new Map<string, { card_id: string; rareza?: string | null; pvp: number; currency: string }[]>();
     try {
       const pvps = await this.pvpRepository.findByCardIds(cardIds);
-      pvps.forEach((pvp) => {
-        pvpMap.set(pvp.card_id, { pvp: pvp.pvp, pvp_currency: pvp.currency });
-      });
+      for (const [cid, list] of groupPvpsByCardId(pvps)) {
+        pvpByCard.set(cid, list);
+      }
     } catch (error) {
       console.log('Error obteniendo PVP:', error);
     }
 
     const response = stockItems.map((stock) => {
-      const pvpData = pvpMap.get(stock.card_id);
+      const list = pvpByCard.get(stock.card_id) ?? [];
+      const pvpData = resolvePvpForLine(
+        list,
+        effectiveOperationalRarezaFromStock(stock),
+      );
       return {
         ...stock._doc,
         card_name: stock.card_name ?? '',

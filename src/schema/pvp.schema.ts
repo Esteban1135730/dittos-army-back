@@ -8,6 +8,10 @@ export class Pvp {
   @Prop({ required: true })
   card_id: string;
 
+  /** null / ausente = PVP base por carta */
+  @Prop({ type: String, required: false, default: null })
+  rareza?: string | null;
+
   @Prop({ required: true })
   pvp: number;
 
@@ -22,5 +26,7 @@ export class Pvp {
 }
 
 export const PvpSchema = SchemaFactory.createForClass(Pvp);
+
+PvpSchema.index({ card_id: 1, rareza: 1 }, { unique: true, name: 'pvp_card_id_rareza_unique' });
 
 
