@@ -38,6 +38,17 @@ export class SaleRepository {
       .exec();
   }
 
+  async findVentasByClientId(
+    clientId: string,
+    opts: { limit: number },
+  ): Promise<SaleDocument[]> {
+    return this.saleModel
+      .find({ type: 'venta', client_id: clientId })
+      .sort({ created_at: -1 })
+      .limit(opts.limit)
+      .exec();
+  }
+
   async closeCurrentCycle(): Promise<number> {
     const closedAt = new Date();
     const result = await this.saleModel
@@ -50,6 +61,33 @@ export class SaleRepository {
       )
       .exec();
     return result.modifiedCount;
+  }
+
+  /**
+   * Marca una sola venta como cerrada en el ciclo (histórico).
+   * Idempotente: si ya tenía cycle_closed_at, devuelve already_closed.
+   */
+  async finalizeCycleForSale(
+    saleId: string,
+  ): Promise<'updated' | 'already_closed' | 'wrong_type' | 'not_found'> {
+    const sale = await this.saleModel.findById(saleId).exec();
+    if (!sale) {
+      return 'not_found';
+    }
+    if (sale.type !== 'venta') {
+      return 'wrong_type';
+    }
+    if (sale.cycle_closed_at != null) {
+      return 'already_closed';
+    }
+    const closedAt = new Date();
+    await this.saleModel
+      .updateOne(
+        { _id: saleId, type: 'venta' },
+        { $set: { cycle_closed_at: closedAt } },
+      )
+      .exec();
+    return 'updated';
   }
 
   async reopenSale(id: string): Promise<boolean> {

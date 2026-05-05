@@ -20,6 +20,10 @@ export class Sale {
   @Prop()
   notes: string;
 
+  /** Cliente MongoDB (hex); solo ventas finalizadas desde reserva / flujos que lo rellenen. */
+  @Prop({ required: false })
+  client_id?: string;
+
   @Prop({ default: Date.now })
   created_at: Date;
 

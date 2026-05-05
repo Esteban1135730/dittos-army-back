@@ -11,8 +11,17 @@ export class ClientRepository {
   ) {}
 
   async create(dto: ClientDto): Promise<Client> {
+    const notasTrim = dto.notas?.trim();
     const created = new this.clientModel({
-      ...dto,
+      nombre: dto.nombre,
+      tienda_entrega: dto.tienda_entrega,
+      celular: dto.celular,
+      metodo_contacto: dto.metodo_contacto,
+      facebook_usuario:
+        dto.metodo_contacto === 'facebook'
+          ? dto.facebook_usuario?.trim() || undefined
+          : null,
+      notas: notasTrim ? notasTrim : undefined,
       created_at: new Date(),
       updated_at: new Date(),
     });
@@ -31,7 +40,18 @@ export class ClientRepository {
     return this.clientModel
       .findByIdAndUpdate(
         id,
-        { ...dto, updated_at: new Date() },
+        {
+          nombre: dto.nombre,
+          tienda_entrega: dto.tienda_entrega,
+          celular: dto.celular,
+          metodo_contacto: dto.metodo_contacto,
+          facebook_usuario:
+            dto.metodo_contacto === 'facebook'
+              ? dto.facebook_usuario?.trim() || undefined
+              : null,
+          notas: dto.notas?.trim() ? dto.notas.trim() : null,
+          updated_at: new Date(),
+        },
         { new: true },
       )
       .exec();

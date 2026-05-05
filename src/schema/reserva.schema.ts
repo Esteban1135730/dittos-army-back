@@ -17,11 +17,12 @@ export class Reserva {
   @Prop({ default: 'COP' })
   currency: string;
 
-  @Prop({ default: Date.now })
-  created_at: Date;
+  /** Fecha de creación; las nuevas reservas la rellena el repositorio. Opcional en documentos antiguos. */
+  @Prop({ type: Date, required: false })
+  created_at?: Date;
 
-  @Prop({ default: Date.now })
-  updated_at: Date;
+  @Prop({ type: Date, required: false })
+  updated_at?: Date;
 }
 
 export const ReservaSchema = SchemaFactory.createForClass(Reserva);

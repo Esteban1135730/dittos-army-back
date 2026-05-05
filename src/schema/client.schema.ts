@@ -17,8 +17,16 @@ export class Client {
   @Prop({ required: false })
   celular?: string;
 
+  /** Nombre de usuario de Facebook (solo texto); obligatorio en validación si `metodo_contacto` es facebook. */
+  @Prop({ required: false })
+  facebook_usuario?: string;
+
   @Prop({ required: true, enum: CONTACT_METHODS })
   metodo_contacto: ContactMethod;
+
+  /** Notas internas del operador (preferencias, acuerdos, etc.). */
+  @Prop({ required: false })
+  notas?: string;
 
   @Prop({ default: Date.now })
   created_at: Date;

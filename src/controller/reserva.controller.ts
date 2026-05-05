@@ -119,6 +119,7 @@ export class ReservaController {
         card_id: stock.card_id,
         type: 'venta',
         amount_cop: amountCop,
+        client_id: clientId,
         notes: `Venta finalizada desde reserva (cliente ${clientId}). Precio original: ${reserva.precio} ${reserva.currency ?? 'COP'}.`,
       });
       await this.stockRepository.updateCardState(reserva.stock_id, ESTADO_VENDIDA);

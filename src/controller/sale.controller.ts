@@ -1,5 +1,16 @@
-import { Body, Controller, Get, Post, Put, Delete, Param } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Query,
+} from '@nestjs/common';
+import { isValidObjectId } from 'mongoose';
 import { SaleRepository } from 'src/repository/sale.repository';
+import { ClientRepository } from 'src/repository/client.repository';
 import { StockRepository } from 'src/repository/stock.repository';
 import { PvpRepository } from 'src/repository/pvp.repository';
 import {
@@ -26,6 +37,7 @@ function pvpToCop(pvp: number, currency: string): number {
 export class SaleController {
   constructor(
     private readonly saleRepository: SaleRepository,
+    private readonly clientRepository: ClientRepository,
     private readonly stockRepository: StockRepository,
     private readonly pvpRepository: PvpRepository,
     private readonly tcgDexService: TCGDexService,
@@ -212,6 +224,33 @@ export class SaleController {
     return { success: true, closedCount };
   }
 
+  @Post('finalize-cycle/:id')
+  async finalizeCycleForSale(
+    @Param('id') id: string,
+  ): Promise<{ success: boolean; closed?: boolean; message?: string }> {
+    if (!isValidObjectId(id)) {
+      return { success: false, message: 'ID de venta inválido' };
+    }
+    const result = await this.saleRepository.finalizeCycleForSale(id);
+    if (result === 'not_found') {
+      return { success: false, message: 'Venta no encontrada' };
+    }
+    if (result === 'wrong_type') {
+      return {
+        success: false,
+        message: 'Solo se puede finalizar el ciclo de ventas de tipo venta',
+      };
+    }
+    if (result === 'already_closed') {
+      return {
+        success: true,
+        closed: false,
+        message: 'La venta ya estaba en histórico',
+      };
+    }
+    return { success: true, closed: true };
+  }
+
   @Get('history')
   async getSalesHistory() {
     const sales = await this.saleRepository.findHistoricalVentas();
@@ -258,6 +297,37 @@ export class SaleController {
     );
 
     return salesWithStockInfo.filter((sale) => sale !== null);
+  }
+
+  @Get('by-client/:clientId')
+  async listVentasByCliente(
+    @Param('clientId') clientId: string,
+    @Query('limit') limitRaw?: string,
+  ) {
+    if (!isValidObjectId(clientId)) {
+      return { success: false, message: 'clientId inválido' };
+    }
+    const client = await this.clientRepository.findById(clientId);
+    if (!client) {
+      return { success: false, message: 'Cliente no encontrado' };
+    }
+    let limit = parseInt(String(limitRaw ?? '50'), 10);
+    if (Number.isNaN(limit) || limit < 1) limit = 50;
+    limit = Math.min(Math.max(limit, 1), 200);
+    const sales = await this.saleRepository.findVentasByClientId(clientId, {
+      limit,
+    });
+    return sales.map((sale) => ({
+      _id: (sale as any)._id.toString(),
+      stock_id: sale.stock_id,
+      card_id: sale.card_id,
+      type: sale.type,
+      amount_cop: sale.amount_cop,
+      notes: sale.notes ?? '',
+      created_at: sale.created_at,
+      cycle_closed_at: (sale as any).cycle_closed_at ?? null,
+      client_id: sale.client_id,
+    }));
   }
 
   @Post('register-from-stock-with-pvp')

@@ -10,6 +10,7 @@ import {
 import { Client } from 'src/schema/client.schema';
 import { ClientRepository } from 'src/repository/client.repository';
 import { ClientDto } from 'src/Dto/client.dto';
+import { getClientContactValidationError } from 'src/utils/client-contact';
 
 @Controller('client')
 export class ClientController {
@@ -30,6 +31,10 @@ export class ClientController {
     if (!dto.nombre || !dto.tienda_entrega || !dto.metodo_contacto) {
       throw new Error('nombre, tienda_entrega y metodo_contacto son requeridos');
     }
+    const contactErr = getClientContactValidationError(dto);
+    if (contactErr) {
+      throw new Error(contactErr);
+    }
     return this.clientRepository.create(dto);
   }
 
@@ -38,6 +43,10 @@ export class ClientController {
     @Param('id') id: string,
     @Body() dto: ClientDto,
   ): Promise<Client | null> {
+    const contactErr = getClientContactValidationError(dto);
+    if (contactErr) {
+      throw new Error(contactErr);
+    }
     return this.clientRepository.update(id, dto);
   }
 
