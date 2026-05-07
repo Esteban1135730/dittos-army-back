@@ -16,6 +16,7 @@ import { IncomingRoundRepository } from './repository/incoming-round.repository'
 import { IncomingRoundItemRepository } from './repository/incoming-round-item.repository';
 import { TCGDexService } from './service/tcgdex/tcgdex.service';
 import { StoreInventoryService } from './service/store-inventory.service';
+import { OpenedSealedStockService } from './service/opened-sealed-stock.service';
 import { PvpCardRowsService } from './service/pvp-card-rows.service';
 import { StockController } from './controller/stock.controller';
 import { PvpController } from './controller/pvp.controller';
@@ -50,6 +51,7 @@ import { IncomingShipRoundItemRepository } from './repository/incoming-ship-roun
   providers: [
     TCGDexService,
     StoreInventoryService,
+    OpenedSealedStockService,
     PvpCardRowsService,
     StockRepository,
     PvpRepository,

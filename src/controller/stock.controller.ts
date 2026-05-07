@@ -1,9 +1,20 @@
-import { BadRequestException, Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+} from '@nestjs/common';
 import { Stock } from 'src/schema/stock.schema';
 import { StockRepository } from 'src/repository/stock.repository';
 import { PvpRepository } from 'src/repository/pvp.repository';
 import { StockDto } from 'src/Dto/stock.dto';
+import { FromOpenedSealedBodyDto } from 'src/Dto/from-opened-sealed.dto';
 import { StoreInventoryService } from 'src/service/store-inventory.service';
+import { OpenedSealedStockService } from 'src/service/opened-sealed-stock.service';
 import {
   effectiveOperationalRarezaFromStock,
   groupPvpsByCardId,
@@ -21,6 +32,7 @@ export class StockController {
     private readonly stockRepository: StockRepository,
     private readonly pvpRepository: PvpRepository,
     private readonly storeInventoryService: StoreInventoryService,
+    private readonly openedSealedStockService: OpenedSealedStockService,
   ) {}
 
   private validatedRareza(stockDto: StockDto): string | null {
@@ -63,6 +75,12 @@ export class StockController {
   @Post('export-store-upcoming')
   async exportStoreUpcoming(): Promise<{ success: boolean; path?: string; count?: number; error?: string }> {
     return this.storeInventoryService.exportStoreUpcoming();
+  }
+
+  @Post('from-opened-sealed')
+  @HttpCode(HttpStatus.CREATED)
+  async fromOpenedSealed(@Body() body: FromOpenedSealedBodyDto) {
+    return this.openedSealedStockService.createFromOpenedSealed(body);
   }
 
   @Get()
