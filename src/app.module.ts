@@ -5,11 +5,13 @@ import { Stock, StockSchema } from './schema/stock.schema';
 import { Pvp, PvpSchema } from './schema/pvp.schema';
 import { Client, ClientSchema } from './schema/client.schema';
 import { Reserva, ReservaSchema } from './schema/reserva.schema';
+import { ReservaIncoming, ReservaIncomingSchema } from './schema/reserva-incoming.schema';
 import { PvpRepository } from './repository/pvp.repository';
 import { Sale, SaleSchema } from './schema/sale.schema';
 import { SaleRepository } from './repository/sale.repository';
 import { ClientRepository } from './repository/client.repository';
 import { ReservaRepository } from './repository/reserva.repository';
+import { ReservaIncomingRepository } from './repository/reserva-incoming.repository';
 import { IncomingBatchRepository } from './repository/incoming-batch.repository';
 import { IncomingBatchItemRepository } from './repository/incoming-batch-item.repository';
 import { IncomingRoundRepository } from './repository/incoming-round.repository';
@@ -18,6 +20,7 @@ import { TCGDexService } from './service/tcgdex/tcgdex.service';
 import { StoreInventoryService } from './service/store-inventory.service';
 import { OpenedSealedStockService } from './service/opened-sealed-stock.service';
 import { PvpCardRowsService } from './service/pvp-card-rows.service';
+import { IncomingReservationService } from './service/incoming-reservation.service';
 import { StockController } from './controller/stock.controller';
 import { PvpController } from './controller/pvp.controller';
 import { CardController } from './controller/card.controller';
@@ -53,11 +56,13 @@ import { IncomingShipRoundItemRepository } from './repository/incoming-ship-roun
     StoreInventoryService,
     OpenedSealedStockService,
     PvpCardRowsService,
+    IncomingReservationService,
     StockRepository,
     PvpRepository,
     SaleRepository,
     ClientRepository,
     ReservaRepository,
+    ReservaIncomingRepository,
     IncomingBatchRepository,
     IncomingBatchItemRepository,
     IncomingRoundRepository,
@@ -75,6 +80,7 @@ import { IncomingShipRoundItemRepository } from './repository/incoming-ship-roun
       { name: Sale.name, schema: SaleSchema },
       { name: Client.name, schema: ClientSchema },
       { name: Reserva.name, schema: ReservaSchema },
+      { name: ReservaIncoming.name, schema: ReservaIncomingSchema },
       { name: IncomingBatch.name, schema: IncomingBatchSchema },
       { name: IncomingBatchItem.name, schema: IncomingBatchItemSchema },
       { name: IncomingRound.name, schema: IncomingRoundSchema },

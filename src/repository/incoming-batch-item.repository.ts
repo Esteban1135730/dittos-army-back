@@ -29,6 +29,10 @@ export class IncomingBatchItemRepository {
     return this.itemModel.find({ _id: { $in: ids } }).exec();
   }
 
+  async findById(id: string): Promise<IncomingBatchItemDocument | null> {
+    return this.itemModel.findById(id).exec();
+  }
+
   async updateRemainingQuantity(
     batchItemId: string,
     remainingQuantity: number,

@@ -105,6 +105,7 @@ export class OpenedSealedStockService {
       language,
       currency: 'COP',
       incoming_notes,
+      tags: [],
     };
     if (rz != null) {
       dto.rareza = rz;

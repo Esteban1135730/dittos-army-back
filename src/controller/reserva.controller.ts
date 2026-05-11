@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { Reserva } from 'src/schema/reserva.schema';
 import { ReservaRepository } from 'src/repository/reserva.repository';
 import { StockRepository } from 'src/repository/stock.repository';
@@ -6,6 +17,7 @@ import { PvpRepository } from 'src/repository/pvp.repository';
 import { SaleRepository } from 'src/repository/sale.repository';
 import { ReservaDto } from 'src/Dto/reserva.dto';
 import { effectiveOperationalRarezaFromStock } from 'src/utils/pvp-resolve';
+import { IncomingReservationService } from 'src/service/incoming-reservation.service';
 
 const ESTADO_RESERVA = 'reserva';
 const ESTADO_DISPONIBLE = 'disponible';
@@ -31,7 +43,67 @@ export class ReservaController {
     private readonly stockRepository: StockRepository,
     private readonly pvpRepository: PvpRepository,
     private readonly saleRepository: SaleRepository,
+    private readonly incomingReservationService: IncomingReservationService,
   ) {}
+
+  @Post('incoming')
+  async createReservaIncoming(
+    @Body()
+    body: {
+      client_id?: string;
+      batch_item_id?: string;
+      card_id?: string;
+      language?: string;
+      rareza?: string | null;
+      quantity?: number;
+    },
+  ): Promise<Record<string, unknown>> {
+    const client_id = body?.client_id?.trim();
+    const quantity = body?.quantity;
+    if (!client_id || quantity == null) {
+      throw new BadRequestException('client_id y quantity son requeridos');
+    }
+    const batch_item_id = body?.batch_item_id?.trim();
+    if (batch_item_id) {
+      return this.incomingReservationService.addQuantity(client_id, batch_item_id, Number(quantity));
+    }
+    const card_id = body?.card_id?.trim();
+    const language = body?.language?.trim();
+    if (card_id && language != null && language !== '') {
+      return this.incomingReservationService.addQuantityByCardVariant(
+        client_id,
+        card_id,
+        language,
+        body.rareza,
+        Number(quantity),
+      );
+    }
+    throw new BadRequestException(
+      'Indica batch_item_id o bien card_id + language (y rareza opcional) para reservar por variante',
+    );
+  }
+
+  @Get('incoming')
+  async listReservaIncoming(@Query('client_id') clientId?: string) {
+    return this.incomingReservationService.listIncoming(clientId?.trim() || undefined);
+  }
+
+  @Patch('incoming/:id')
+  async patchReservaIncoming(
+    @Param('id') id: string,
+    @Body() body: { quantity?: number },
+  ) {
+    if (body?.quantity == null) {
+      throw new BadRequestException('quantity es requerido');
+    }
+    return this.incomingReservationService.setAbsoluteQuantity(id, Number(body.quantity));
+  }
+
+  @Delete('incoming/:id')
+  async deleteReservaIncoming(@Param('id') id: string): Promise<{ success: boolean }> {
+    const ok = await this.incomingReservationService.deleteById(id);
+    return { success: ok };
+  }
 
   @Post()
   async create(@Body() dto: ReservaDto): Promise<Reserva | { error: string }> {

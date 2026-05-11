@@ -49,6 +49,10 @@ export class Stock {
   /** Variante del lote / manual: hollow, foil, pokeball, masterball, first edition, holofoil, league card */
   @Prop({ type: String, required: false })
   rareza?: string;
+
+  /** Etiquetas de filtro operativo (vintage, bulk, jugable); independientes de rareza y card_state */
+  @Prop({ type: [String], default: [] })
+  tags?: string[];
 }
 
 export const StockSchema = SchemaFactory.createForClass(Stock);

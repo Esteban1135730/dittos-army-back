@@ -25,6 +25,7 @@ import {
   isValidOperationalRareza,
   normalizeOperationalRareza,
 } from 'src/constants/item-rareza';
+import { normalizeStockTagsInput } from 'src/constants/stock-tags';
 
 @Controller('stock')
 export class StockController {
@@ -43,10 +44,18 @@ export class StockController {
     return rz;
   }
 
+  private payloadWithNormalizedTags(stockDto: StockDto): StockDto {
+    const tags = normalizeStockTagsInput(stockDto.tags);
+    const { tags: _t, ...rest } = stockDto;
+    return { ...rest, tags };
+  }
+
   @Post()
   async saveStock(@Body() stockDto: StockDto): Promise<Stock | null> {
     const rz = this.validatedRareza(stockDto);
-    const { rareza: _drop, ...rest } = stockDto as StockDto & { rareza?: string };
+    const { rareza: _drop, ...rest } = this.payloadWithNormalizedTags(
+      stockDto,
+    ) as StockDto & { rareza?: string };
     const payload: StockDto = {
       ...rest,
       card_name: stockDto.card_name ?? '',
@@ -60,8 +69,9 @@ export class StockController {
   @Post('update')
   async updateStock(@Body() stockDto: StockDto): Promise<Stock | null> {
     const rz = this.validatedRareza(stockDto);
+    const normalized = this.payloadWithNormalizedTags(stockDto);
     return await this.stockRepository.update({
-      ...stockDto,
+      ...normalized,
       card_name: stockDto.card_name ?? '',
       rareza: rz === null ? null : rz,
     } as StockDto);
@@ -107,6 +117,7 @@ export class StockController {
       return {
         ...stock._doc,
         card_name: stock.card_name ?? '',
+        tags: Array.isArray(stock.tags) ? stock.tags : [],
         card_cost: stock.shipment / stock.cards_in_shipmet + stock.unity_cost,
         pvp: pvpData?.pvp,
         pvp_currency: pvpData?.pvp_currency,
@@ -123,6 +134,7 @@ export class StockController {
       return {
         ...findCard._doc,
         card_name: findCard.card_name ?? '',
+        tags: Array.isArray(findCard.tags) ? findCard.tags : [],
         card_cost:
           findCard.shipment / findCard.cards_in_shipmet + findCard.unity_cost,
       };

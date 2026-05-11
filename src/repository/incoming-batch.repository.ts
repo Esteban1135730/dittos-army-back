@@ -27,6 +27,11 @@ export class IncomingBatchRepository {
     return this.batchModel.findById(id).exec();
   }
 
+  async findByIds(ids: string[]): Promise<IncomingBatchDocument[]> {
+    if (!ids.length) return [];
+    return this.batchModel.find({ _id: { $in: ids } }).exec();
+  }
+
   async findOpenBatches(): Promise<IncomingBatchDocument[]> {
     return this.batchModel.find({ status: 'open' }).sort({ created_at: -1 }).exec();
   }

@@ -18,6 +18,7 @@ import {
 import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
 import { StockRepository } from 'src/repository/stock.repository';
 import { StockDto } from 'src/Dto/stock.dto';
+import { IncomingReservationService } from 'src/service/incoming-reservation.service';
 
 type BatchItemDecision = {
   batchItemId: string;
@@ -37,6 +38,7 @@ export class IncomingController {
     private readonly incomingShipRoundItemRepository: IncomingShipRoundItemRepository,
     private readonly tcgDexService: TCGDexService,
     private readonly stockRepository: StockRepository,
+    private readonly incomingReservationService: IncomingReservationService,
   ) {}
 
   @Post('batch')
@@ -293,6 +295,7 @@ export class IncomingController {
       eur_unit_price: it.eur_unit_price,
       unit_cost_cop: it.unit_cost_cop,
       rareza: it.rareza ?? null,
+      created_at: it.created_at,
     }));
   }
 
@@ -481,6 +484,7 @@ export class IncomingController {
     const shipping_total_cop = round.shipping_total_cop;
 
     const stockDtos: StockDto[] = [];
+    const batchItemIdsMeta: string[] = [];
     for (const it of batchItems) {
       const d = decisionsMap.get(it._id.toString());
       const arrived_quantity = Number(d?.arrived_quantity ?? 0);
@@ -489,6 +493,7 @@ export class IncomingController {
       if (arrived_quantity <= 0) continue;
 
       const rarezaStock = normalizeOperationalRareza(it.rareza) ?? undefined;
+      const bid = it._id.toString();
       for (let i = 0; i < arrived_quantity; i++) {
         stockDtos.push({
           card_id: it.card_id,
@@ -503,10 +508,15 @@ export class IncomingController {
           incoming_notes: i < novedad_quantity ? novedad_notes : '',
           rareza: rarezaStock,
         });
+        batchItemIdsMeta.push(bid);
       }
     }
 
     const createdStocks = await this.stockRepository.createMany(stockDtos);
+    await this.incomingReservationService.materializeForNewStockLines(
+      createdStocks as any,
+      batchItemIdsMeta,
+    );
 
     // Actualizar remaining_quantity del batch
     await Promise.all(

@@ -5,6 +5,7 @@ import { IncomingBatchItemRepository } from 'src/repository/incoming-batch-item.
 import { IncomingBatchRepository } from 'src/repository/incoming-batch.repository';
 import { StockRepository } from 'src/repository/stock.repository';
 import { StockDto } from 'src/Dto/stock.dto';
+import { IncomingReservationService } from 'src/service/incoming-reservation.service';
 import {
   ReviewIncomingShipRoundDto,
 } from 'src/Dto/incoming-ship-round.dto';
@@ -20,6 +21,7 @@ export class IncomingShipRoundController {
     private readonly incomingBatchItemRepository: IncomingBatchItemRepository,
     private readonly incomingBatchRepository: IncomingBatchRepository,
     private readonly stockRepository: StockRepository,
+    private readonly incomingReservationService: IncomingReservationService,
   ) {}
 
   @Post()
@@ -103,6 +105,13 @@ export class IncomingShipRoundController {
     const batchItemMap = new Map<string, any>();
     batchItems.forEach((bi) => batchItemMap.set(bi._id.toString(), bi));
 
+    const uniqueBatchIds = [...new Set(batchItems.map((bi) => bi.batch_id.toString()))];
+    const batchDocs = await this.incomingBatchRepository.findByIds(uniqueBatchIds);
+    const batchMap = new Map<string, { purchase_date: Date }>();
+    batchDocs.forEach((b) =>
+      batchMap.set(b._id.toString(), { purchase_date: b.purchase_date }),
+    );
+
     const items = roundItems.map((ri) => {
       const bi = batchItemMap.get(ri.batch_item_id);
       if (!bi) {
@@ -119,8 +128,12 @@ export class IncomingShipRoundController {
           arrived_quantity: ri.arrived_quantity ?? 0,
           novedad_quantity: ri.novedad_quantity ?? 0,
           novedad_notes: ri.novedad_notes ?? '',
+          batch_purchase_date: null as Date | null,
+          item_created_at: null as Date | null,
         };
       }
+
+      const bmeta = batchMap.get(bi.batch_id.toString());
 
       return {
         batch_item_id: ri.batch_item_id,
@@ -135,6 +148,8 @@ export class IncomingShipRoundController {
         arrived_quantity: ri.arrived_quantity ?? 0,
         novedad_quantity: ri.novedad_quantity ?? 0,
         novedad_notes: ri.novedad_notes ?? '',
+        batch_purchase_date: bmeta?.purchase_date ?? null,
+        item_created_at: bi.created_at ?? null,
       };
     });
 
@@ -243,12 +258,15 @@ export class IncomingShipRoundController {
     }
 
     if (arrivedTotalQuantity <= 0) {
-      throw new Error('No hay cartas arribadas para convertir a stock en esta tanda');
+      throw new Error(
+        'No hay cartas arribadas registradas en esta tanda para pasar a stock. Usa "Guardar revisión" antes de finalizar, o revisa que las cantidades arribadas sigan siendo válidas.',
+      );
     }
 
     const shipping_total_cop = round.shipping_total_cop;
 
     const stockDtos: StockDto[] = [];
+    const batchItemIdsMeta: string[] = [];
     for (const pair of itemsWithDecisions) {
       const arrived_quantity = Number(pair.ri.arrived_quantity ?? 0);
       const novedad_quantity = Number(pair.ri.novedad_quantity ?? 0);
@@ -257,6 +275,7 @@ export class IncomingShipRoundController {
 
       const bi = pair.bi;
       const rarezaStock = normalizeOperationalRareza(bi.rareza) ?? undefined;
+      const bid = bi._id.toString();
       for (let i = 0; i < arrived_quantity; i++) {
         stockDtos.push({
           card_id: bi.card_id,
@@ -271,10 +290,15 @@ export class IncomingShipRoundController {
           incoming_notes: i < novedad_quantity ? novedad_notes : '',
           rareza: rarezaStock,
         });
+        batchItemIdsMeta.push(bid);
       }
     }
 
     const createdStocks = await this.stockRepository.createMany(stockDtos);
+    await this.incomingReservationService.materializeForNewStockLines(
+      createdStocks as any,
+      batchItemIdsMeta,
+    );
 
     // Actualizar remaining_quantity en cada batch_item
     for (const pair of itemsWithDecisions) {
