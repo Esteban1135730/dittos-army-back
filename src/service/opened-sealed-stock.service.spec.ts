@@ -71,8 +71,8 @@ describe('OpenedSealedStockService.createFromOpenedSealed', () => {
     expect(dtos[0].currency).toBe('COP');
     expect(dtos[0].incoming_notes).toContain('Apertura sellado');
     expect(dtos[0].incoming_notes).toContain('Test sobres');
-    expect(dtos[0].tags).toEqual([]);
-    expect(dtos[1].tags).toEqual([]);
+    expect(dtos[0].tags).toBeUndefined();
+    expect(dtos[1].tags).toBeUndefined();
   });
 
   it('rechaza product_cost_cop no entero', async () => {

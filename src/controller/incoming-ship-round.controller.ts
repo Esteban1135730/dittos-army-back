@@ -57,6 +57,45 @@ export class IncomingShipRoundController {
     return { round_id: round._id.toString(), included_items: roundItems.length };
   }
 
+  /** Incorpora al round en revisión los batch_item en camino que no estaban en el snapshot inicial. */
+  @Post(':roundId/sync-missing-items')
+  async syncMissingShipRoundItems(
+    @Param('roundId') roundId: string,
+  ): Promise<{ added: number; round_id: string }> {
+    const round = await this.shipRoundRepository.findById(roundId);
+    if (!round) throw new Error('Ship round no encontrada');
+    if (round.status !== 'reviewing') {
+      throw new Error('Solo se pueden incorporar líneas en tandas en revisión');
+    }
+
+    const roundItems = await this.shipRoundItemRepository.findByRoundId(roundId);
+    const existingIds = new Set(roundItems.map((ri) => ri.batch_item_id));
+
+    const allInRoute =
+      await this.incomingBatchItemRepository.findByRemainingQuantityGreaterThanZero();
+
+    const toAdd = allInRoute.filter((bi) => !existingIds.has(bi._id.toString()));
+
+    if (toAdd.length === 0) {
+      return { added: 0, round_id: round._id.toString() };
+    }
+
+    const now = new Date();
+    const newRoundItems = toAdd.map((it) => ({
+      ship_round_id: roundId,
+      batch_item_id: it._id.toString(),
+      arrived_quantity: 0,
+      novedad_quantity: 0,
+      novedad_notes: '',
+      created_at: now,
+      updated_at: now,
+    }));
+
+    await this.shipRoundItemRepository.createMany(newRoundItems);
+
+    return { added: newRoundItems.length, round_id: round._id.toString() };
+  }
+
   @Get('open')
   async listOpenRounds(): Promise<
     Array<{

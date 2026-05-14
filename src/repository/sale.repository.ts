@@ -112,6 +112,10 @@ export class SaleRepository {
     return this.saleModel.findById(id).exec();
   }
 
+  async findOneByStockId(stockId: string): Promise<SaleDocument | null> {
+    return this.saleModel.findOne({ stock_id: stockId }).exec();
+  }
+
   async update(id: string, data: Partial<Sale>): Promise<SaleDocument | null> {
     return this.saleModel.findByIdAndUpdate(id, data, { new: true }).exec();
   }

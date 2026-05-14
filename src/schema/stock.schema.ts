@@ -50,7 +50,7 @@ export class Stock {
   @Prop({ type: String, required: false })
   rareza?: string;
 
-  /** Etiquetas de filtro operativo (vintage, bulk, jugable); independientes de rareza y card_state */
+  /** @deprecated En runtime los tags viven en `card_stock_tags` por `card_id`. Puede existir en documentos legacy hasta migrar. */
   @Prop({ type: [String], default: [] })
   tags?: string[];
 }

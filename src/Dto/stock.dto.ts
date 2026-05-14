@@ -18,6 +18,6 @@ export type StockDto = {
   incoming_notes?: string;
   /** Variante operativa (mismo catálogo que incoming / PVP); null en update = sin variante */
   rareza?: string | null;
-  /** Tags de clasificación; catálogo cerrado en backend */
+  /** Tags de clasificación (catálogo cerrado); se persisten por `card_id`, no por línea de stock. */
   tags?: string[];
 };

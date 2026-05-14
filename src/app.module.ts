@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { StockRepository } from './repository/stock.repository';
+import { CardStockTagRepository } from './repository/card-stock-tag.repository';
 import { Stock, StockSchema } from './schema/stock.schema';
+import { CardStockTag, CardStockTagSchema } from './schema/card-stock-tag.schema';
 import { Pvp, PvpSchema } from './schema/pvp.schema';
 import { Client, ClientSchema } from './schema/client.schema';
 import { Reserva, ReservaSchema } from './schema/reserva.schema';
@@ -58,6 +60,7 @@ import { IncomingShipRoundItemRepository } from './repository/incoming-ship-roun
     PvpCardRowsService,
     IncomingReservationService,
     StockRepository,
+    CardStockTagRepository,
     PvpRepository,
     SaleRepository,
     ClientRepository,
@@ -76,6 +79,7 @@ import { IncomingShipRoundItemRepository } from './repository/incoming-ship-roun
     ),
     MongooseModule.forFeature([
       { name: Stock.name, schema: StockSchema },
+      { name: CardStockTag.name, schema: CardStockTagSchema },
       { name: Pvp.name, schema: PvpSchema },
       { name: Sale.name, schema: SaleSchema },
       { name: Client.name, schema: ClientSchema },

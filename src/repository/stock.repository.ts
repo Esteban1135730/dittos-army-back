@@ -12,8 +12,11 @@ export class StockRepository {
   ) {}
 
   async create(stockDto: StockDto): Promise<Stock> {
+    const { tags: _tags, id: _id, ...rest } = stockDto as StockDto & {
+      tags?: string[];
+    };
     const createdStock = new this.stockModel({
-      ...stockDto,
+      ...rest,
       card_name: stockDto.card_name ?? '',
     });
     return createdStock.save();
@@ -21,15 +24,22 @@ export class StockRepository {
 
   async createMany(stockDtos: StockDto[]): Promise<any[]> {
     if (!Array.isArray(stockDtos) || stockDtos.length === 0) return [];
-    const normalized = stockDtos.map((d) => ({
-      ...d,
-      card_name: d.card_name ?? '',
-    }));
+    const normalized = stockDtos.map((d) => {
+      const { tags: _tags, id: _id, ...rest } = d as StockDto & {
+        tags?: string[];
+      };
+      return {
+        ...rest,
+        card_name: d.card_name ?? '',
+      };
+    });
     return this.stockModel.insertMany(normalized as any);
   }
 
   async update(stockDto: StockDto): Promise<Stock | null> {
-    const { id, ...rest } = stockDto;
+    const { id, tags: _tags, ...rest } = stockDto as StockDto & {
+      tags?: string[];
+    };
     if (!id) return null;
     return this.stockModel.findByIdAndUpdate(
       id,
@@ -63,5 +73,10 @@ export class StockRepository {
       { card_state: cardState },
       { new: true },
     );
+  }
+
+  async deleteById(id: string): Promise<boolean> {
+    const result = await this.stockModel.findByIdAndDelete(id).exec();
+    return result != null;
   }
 }
