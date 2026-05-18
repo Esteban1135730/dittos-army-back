@@ -11,6 +11,7 @@ import {
   groupPvpsByCardId,
   resolvePvpForLine,
 } from '../utils/pvp-resolve';
+import { storeCardMetaFromDto, type StoreCardExportMeta } from '../utils/store-card-meta';
 
 const EXCLUDED_STATES = new Set(['vendida', 'propiedad', 'reserva']);
 
@@ -31,6 +32,8 @@ export type StoreInventoryItem = {
   image: string;
   status: 'available';
   rareza?: string | null;
+  expansion?: string;
+  card_number?: string;
 };
 
 /** Cartas en compras abiertas con unidades pendientes (compras en camino), para la tienda pública */
@@ -42,6 +45,8 @@ export type StoreUpcomingItem = {
   quantity: number;
   image: string;
   rareza: string | null;
+  expansion?: string;
+  card_number?: string;
 };
 
 @Injectable()
@@ -92,7 +97,7 @@ export class StoreInventoryService {
         string,
         { card_id: string; rareza?: string | null; pvp: number; currency: string }[]
       >();
-      const cardMap = new Map<string, { name: string; image: string }>();
+      const cardMap = new Map<string, StoreCardExportMeta>();
 
       try {
         const pvps = await this.pvpRepository.findByCardIds(cardIds);
@@ -108,10 +113,7 @@ export class StoreInventoryService {
           try {
             const card = await this.tcgDexService.getCard(cardId);
             if (card) {
-              cardMap.set(cardId, {
-                name: card.name,
-                image: card.image || card.images?.small || card.images?.large || '',
-              });
+              cardMap.set(cardId, storeCardMetaFromDto(card));
             }
           } catch (e) {
             console.warn(`StoreInventory: error loading card ${cardId}`, e);
@@ -144,6 +146,8 @@ export class StoreInventoryService {
           image: string;
           quantity: number;
           rareza: string | null;
+          expansion?: string;
+          card_number?: string;
         }
       >();
 
@@ -166,6 +170,7 @@ export class StoreInventoryService {
           const existing = byLine.get(key)!;
           existing.quantity += 1;
         } else {
+          const meta = cardMap.get(cardId);
           byLine.set(key, {
             card_id: cardId,
             name,
@@ -174,6 +179,8 @@ export class StoreInventoryService {
             image,
             quantity: 1,
             rareza: rzEff,
+            ...(meta?.expansion ? { expansion: meta.expansion } : {}),
+            ...(meta?.card_number ? { card_number: meta.card_number } : {}),
           });
         }
       }
@@ -189,6 +196,8 @@ export class StoreInventoryService {
           image: data.image,
           status: 'available' as const,
           ...(data.rareza != null ? { rareza: data.rareza } : {}),
+          ...(data.expansion ? { expansion: data.expansion } : {}),
+          ...(data.card_number ? { card_number: data.card_number } : {}),
         }),
       );
 
@@ -230,27 +239,14 @@ export class StoreInventoryService {
         (it) => openIds.has(String(it.batch_id)) && (it.remaining_quantity ?? 0) > 0,
       );
 
-      const cardIdsNeedingMeta = [
-        ...new Set(
-          filtered
-            .filter((it) => {
-              const n = (it.card_name ?? '').trim();
-              const img = (it.image_url ?? '').trim();
-              return !n || !img;
-            })
-            .map((it) => it.card_id),
-        ),
-      ];
-      const cardMap = new Map<string, { name: string; image: string }>();
+      const cardIds = [...new Set(filtered.map((it) => it.card_id))];
+      const cardMap = new Map<string, StoreCardExportMeta>();
       await Promise.all(
-        cardIdsNeedingMeta.map(async (cardId) => {
+        cardIds.map(async (cardId) => {
           try {
             const card = await this.tcgDexService.getCard(cardId);
             if (card) {
-              cardMap.set(cardId, {
-                name: card.name || '',
-                image: card.image || card.images?.small || card.images?.large || '',
-              });
+              cardMap.set(cardId, storeCardMetaFromDto(card));
             }
           } catch {
             // ignorar
@@ -266,6 +262,8 @@ export class StoreInventoryService {
         quantity: number;
         image: string;
         rareza: string | null;
+        expansion?: string;
+        card_number?: string;
       };
       const byKey = new Map<string, Agg>();
 
@@ -289,6 +287,7 @@ export class StoreInventoryService {
           }
           if (!existing.image && image) existing.image = image;
         } else {
+          const meta = cardMap.get(it.card_id);
           byKey.set(key, {
             id: key,
             card_id: it.card_id,
@@ -297,6 +296,8 @@ export class StoreInventoryService {
             quantity: qty,
             image,
             rareza: rz,
+            ...(meta?.expansion ? { expansion: meta.expansion } : {}),
+            ...(meta?.card_number ? { card_number: meta.card_number } : {}),
           });
         }
       }
