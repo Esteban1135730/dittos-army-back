@@ -21,7 +21,8 @@
     "script:backfill-stock-names": "ts-node -r tsconfig-paths/register scripts/backfill-stock-card-names.ts",
     "script:backfill-stock-names:dry": "ts-node -r tsconfig-paths/register scripts/backfill-stock-card-names.ts --dry-run",
     "script:migrate-stock-rareza": "ts-node -r tsconfig-paths/register scripts/migrate-stock-rareza-from-flags.ts",
-    "script:migrate-stock-rareza:dry": "ts-node -r tsconfig-paths/register scripts/migrate-stock-rareza-from-flags.ts --dry-run"
+    "script:migrate-stock-rareza:dry": "ts-node -r tsconfig-paths/register scripts/migrate-stock-rareza-from-flags.ts --dry-run",
+    "script:db-init": "ts-node -r tsconfig-paths/register scripts/ensure-mongodb-collections.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

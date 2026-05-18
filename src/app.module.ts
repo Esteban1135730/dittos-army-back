@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { StockRepository } from './repository/stock.repository';
 import { Stock, StockSchema } from './schema/stock.schema';
@@ -35,6 +35,15 @@ import { IncomingShipRoundItem, IncomingShipRoundItemSchema } from './schema/inc
 import { IncomingShipRoundController } from './controller/incoming-ship-round.controller';
 import { IncomingShipRoundRepository } from './repository/incoming-ship-round.repository';
 import { IncomingShipRoundItemRepository } from './repository/incoming-ship-round-item.repository';
+import { IntegrationsModule } from './integrations/integrations.module';
+import { BillingFactusService } from './service/billing-factus.service';
+import { ElectronicInvoiceRepository } from './repository/electronic-invoice.repository';
+import {
+  ElectronicInvoice,
+  ElectronicInvoiceSchema,
+} from './schema/electronic-invoice.schema';
+import { FactusBillingController } from './controller/factus-billing.controller';
+import { CorrelationIdMiddleware } from './middleware/correlation-id.middleware';
 
 @Module({
   controllers: [
@@ -47,6 +56,7 @@ import { IncomingShipRoundItemRepository } from './repository/incoming-ship-roun
     ReservaController,
     IncomingController,
     IncomingShipRoundController,
+    FactusBillingController,
   ],
   providers: [
     TCGDexService,
@@ -64,10 +74,17 @@ import { IncomingShipRoundItemRepository } from './repository/incoming-ship-roun
     IncomingRoundItemRepository,
     IncomingShipRoundRepository,
     IncomingShipRoundItemRepository,
+    BillingFactusService,
+    ElectronicInvoiceRepository,
   ],
   imports: [
+    IntegrationsModule,
     MongooseModule.forRoot(
-      'mongodb+srv://pabloangola97:aaySea7SeIvobAlb@local-database.r04uoca.mongodb.net',
+      process.env.MONGODB_URI || 'mongodb://localhost:27017/ditto-army',
+      {
+        family: 4,
+        serverSelectionTimeoutMS: 60_000,
+      },
     ),
     MongooseModule.forFeature([
       { name: Stock.name, schema: StockSchema },
@@ -81,7 +98,12 @@ import { IncomingShipRoundItemRepository } from './repository/incoming-ship-roun
       { name: IncomingRoundItem.name, schema: IncomingRoundItemSchema },
       { name: IncomingShipRound.name, schema: IncomingShipRoundSchema },
       { name: IncomingShipRoundItem.name, schema: IncomingShipRoundItemSchema },
+      { name: ElectronicInvoice.name, schema: ElectronicInvoiceSchema },
     ]),
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+  }
+}
