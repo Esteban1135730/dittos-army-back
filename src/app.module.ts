@@ -23,6 +23,7 @@ import { StoreInventoryService } from './service/store-inventory.service';
 import { OpenedSealedStockService } from './service/opened-sealed-stock.service';
 import { PvpCardRowsService } from './service/pvp-card-rows.service';
 import { IncomingReservationService } from './service/incoming-reservation.service';
+import { StoreWhatsAppReservationImportService } from './service/store-whatsapp-reservation-import.service';
 import { StockController } from './controller/stock.controller';
 import { PvpController } from './controller/pvp.controller';
 import { CardController } from './controller/card.controller';
@@ -59,6 +60,7 @@ import { IncomingShipRoundItemRepository } from './repository/incoming-ship-roun
     OpenedSealedStockService,
     PvpCardRowsService,
     IncomingReservationService,
+    StoreWhatsAppReservationImportService,
     StockRepository,
     CardStockTagRepository,
     PvpRepository,

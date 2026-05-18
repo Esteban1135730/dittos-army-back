@@ -18,23 +18,12 @@ import { SaleRepository } from 'src/repository/sale.repository';
 import { ReservaDto } from 'src/Dto/reserva.dto';
 import { effectiveOperationalRarezaFromStock } from 'src/utils/pvp-resolve';
 import { IncomingReservationService } from 'src/service/incoming-reservation.service';
+import { StoreWhatsAppReservationImportService } from 'src/service/store-whatsapp-reservation-import.service';
+import { precioToCop } from 'src/utils/precio-to-cop';
 
 const ESTADO_RESERVA = 'reserva';
 const ESTADO_DISPONIBLE = 'disponible';
 const ESTADO_VENDIDA = 'vendida';
-
-function precioToCop(precio: number, currency: string): number {
-  if (currency === 'COP') return precio;
-  if (currency === 'EUR') {
-    const rate = parseFloat(process.env.EUR_TO_COP || '0') || 5000;
-    return Math.round(precio * rate);
-  }
-  if (currency === 'USD') {
-    const rate = parseFloat(process.env.USD_TO_COP || '0') || 4500;
-    return Math.round(precio * rate);
-  }
-  return precio;
-}
 
 @Controller('reserva')
 export class ReservaController {
@@ -44,7 +33,30 @@ export class ReservaController {
     private readonly pvpRepository: PvpRepository,
     private readonly saleRepository: SaleRepository,
     private readonly incomingReservationService: IncomingReservationService,
+    private readonly storeWhatsAppImportService: StoreWhatsAppReservationImportService,
   ) {}
+
+  @Post('import-store-whatsapp/preview')
+  async previewImportStoreWhatsApp(
+    @Body() body: { client_id?: string; message?: string },
+  ) {
+    const client_id = body?.client_id?.trim();
+    const message = body?.message ?? '';
+    if (!client_id) {
+      throw new BadRequestException('client_id es requerido');
+    }
+    return this.storeWhatsAppImportService.preview(client_id, message);
+  }
+
+  @Post('import-store-whatsapp')
+  async importStoreWhatsApp(@Body() body: { client_id?: string; message?: string }) {
+    const client_id = body?.client_id?.trim();
+    const message = body?.message ?? '';
+    if (!client_id) {
+      throw new BadRequestException('client_id es requerido');
+    }
+    return this.storeWhatsAppImportService.import(client_id, message);
+  }
 
   @Post('incoming')
   async createReservaIncoming(
