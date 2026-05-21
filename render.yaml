@@ -1,0 +1,27 @@
+# Render Blueprint — plan Free (sin GCP).
+# Conecta el repo https://github.com/pabloangola/dittos-army-back en render.com
+# Rama sugerida: esteban
+
+services:
+  - type: web
+    name: ditto-army-back
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /client
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: CORS_ALLOW_ONRENDER
+        value: "true"
+      - key: MONGODB_URI
+        sync: false
+      - key: FRONTEND_ORIGIN
+        sync: false
+      - key: FACTUS_BASE_URL
+        value: https://api-sandbox.factus.com.co
+      - key: FACTUS_API_TOKEN
+        sync: false

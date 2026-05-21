@@ -80,6 +80,10 @@ export class ElectronicInvoice {
   @Prop()
   factus_document_id?: string;
 
+  /** Número Factus (ej. SETP990003745) — requerido para GET /v2/bills/:number */
+  @Prop()
+  factus_bill_number?: string;
+
   @Prop()
   soap_tracking_id?: string;
 

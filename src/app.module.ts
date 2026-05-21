@@ -36,6 +36,7 @@ import { IncomingShipRoundController } from './controller/incoming-ship-round.co
 import { IncomingShipRoundRepository } from './repository/incoming-ship-round.repository';
 import { IncomingShipRoundItemRepository } from './repository/incoming-ship-round-item.repository';
 import { IntegrationsModule } from './integrations/integrations.module';
+import { BillingBillableItemsService } from './service/billing-billable-items.service';
 import { BillingFactusService } from './service/billing-factus.service';
 import { ElectronicInvoiceRepository } from './repository/electronic-invoice.repository';
 import {
@@ -75,6 +76,7 @@ import { CorrelationIdMiddleware } from './middleware/correlation-id.middleware'
     IncomingShipRoundRepository,
     IncomingShipRoundItemRepository,
     BillingFactusService,
+    BillingBillableItemsService,
     ElectronicInvoiceRepository,
   ],
   imports: [

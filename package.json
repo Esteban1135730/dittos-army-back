@@ -30,6 +30,7 @@
     "@nestjs/mongoose": "^11.0.3",
     "@nestjs/platform-express": "^11.0.1",
     "@tcgdex/sdk": "^2.7.0",
+    "dotenv": "^17.4.2",
     "flatted": "^3.3.3",
     "lodash": "^4.17.21",
     "mongoose": "^8.15.1",

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import * as dns from 'node:dns';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -12,13 +13,19 @@ async function bootstrap() {
   const frontendOrigin = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
   
   // Configurar CORS
+  const allowedOrigins = frontendOrigin
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+  const allowOnrender = process.env.CORS_ALLOW_ONRENDER === 'true';
+
   app.enableCors({
     origin: (origin, callback) => {
-      // Permitir sin origin (p.ej. Postman, misma origen) o cualquier localhost
       if (
         !origin ||
         /^https?:\/\/localhost(:\d+)?$/.test(origin) ||
-        origin === frontendOrigin
+        allowedOrigins.includes(origin) ||
+        (allowOnrender && /\.onrender\.com$/i.test(origin))
       ) {
         callback(null, true);
       } else {

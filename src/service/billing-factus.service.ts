@@ -91,6 +91,7 @@ export class BillingFactusService {
         internalReference: invoice.internal_reference,
       },
       correlationId,
+      invoice.external_id,
     );
 
     const soapResult = await this.soapAdapterService.submitInvoiceSoap(
@@ -104,6 +105,7 @@ export class BillingFactusService {
 
     return this.electronicInvoiceRepository.updateById(invoiceId, {
       factus_document_id: submitResult.providerDocumentId,
+      factus_bill_number: submitResult.factusNumber,
       soap_tracking_id: soapResult.trackingId,
       status: submitResult.providerStatus,
       error_message: undefined,
@@ -120,13 +122,17 @@ export class BillingFactusService {
       return invoice;
     }
 
-    const providerStatus = await this.factusService.getInvoiceStatus(
+    const statusResult = await this.factusService.getInvoiceStatus(
       invoice.factus_document_id,
       correlationId,
+      invoice.factus_bill_number,
     );
 
     return this.electronicInvoiceRepository.updateById(invoiceId, {
-      status: providerStatus,
+      status: statusResult.providerStatus,
+      ...(statusResult.factusNumber
+        ? { factus_bill_number: statusResult.factusNumber }
+        : {}),
     });
   }
 }
