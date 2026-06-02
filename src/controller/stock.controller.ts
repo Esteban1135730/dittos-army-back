@@ -22,6 +22,7 @@ import { StockDto } from 'src/Dto/stock.dto';
 import { FromOpenedSealedBodyDto } from 'src/Dto/from-opened-sealed.dto';
 import { StoreInventoryService } from 'src/service/store-inventory.service';
 import { OpenedSealedStockService } from 'src/service/opened-sealed-stock.service';
+import { StockScanService } from 'src/service/stock-scan.service';
 import {
   effectiveOperationalRarezaFromStock,
   groupPvpsByCardId,
@@ -34,6 +35,20 @@ import {
 } from 'src/constants/item-rareza';
 import { normalizeStockTagsInput } from 'src/constants/stock-tags';
 
+const ALLOWED_STOCK_LANGUAGES = new Set([
+  'es',
+  'en',
+  'fr',
+  'de',
+  'it',
+  'pt',
+  'ja',
+  'ko',
+  'zh',
+  'zh-cn',
+  'otro',
+]);
+
 @Controller('stock')
 export class StockController {
   constructor(
@@ -44,6 +59,7 @@ export class StockController {
     private readonly openedSealedStockService: OpenedSealedStockService,
     private readonly reservaRepository: ReservaRepository,
     private readonly saleRepository: SaleRepository,
+    private readonly stockScanService: StockScanService,
   ) {}
 
   private validatedRareza(stockDto: StockDto): string | null {
@@ -52,6 +68,20 @@ export class StockController {
       throw new BadRequestException('rareza inválida');
     }
     return rz;
+  }
+
+  private normalizeAndValidateLanguage(language?: string): string | undefined {
+    if (language === undefined || language === null) {
+      return undefined;
+    }
+    const normalized = language.trim().toLowerCase();
+    if (normalized === '') {
+      return undefined;
+    }
+    if (!ALLOWED_STOCK_LANGUAGES.has(normalized)) {
+      throw new BadRequestException('language inválido');
+    }
+    return normalized;
   }
 
   /** Tags persistidos por `card_id` (colección `card_stock_tags`), no en cada línea de stock. */
@@ -69,6 +99,7 @@ export class StockController {
   @Post()
   async saveStock(@Body() stockDto: StockDto): Promise<Stock | null> {
     const rz = this.validatedRareza(stockDto);
+    const language = this.normalizeAndValidateLanguage(stockDto.language);
     let normalizedTags: string[] | undefined;
     if (stockDto.tags !== undefined) {
       normalizedTags = normalizeStockTagsInput(stockDto.tags);
@@ -80,6 +111,9 @@ export class StockController {
       ...rest,
       card_name: stockDto.card_name ?? '',
     };
+    if (language !== undefined) {
+      payload.language = language;
+    }
     if (rz != null) {
       payload.rareza = rz;
     }
@@ -96,6 +130,7 @@ export class StockController {
   @Post('update')
   async updateStock(@Body() stockDto: StockDto): Promise<Stock | null> {
     const rz = this.validatedRareza(stockDto);
+    const language = this.normalizeAndValidateLanguage(stockDto.language);
     let normalizedTags: string[] | undefined;
     if (stockDto.tags !== undefined) {
       normalizedTags = normalizeStockTagsInput(stockDto.tags);
@@ -104,6 +139,7 @@ export class StockController {
     const updated = await this.stockRepository.update({
       ...withoutTags,
       card_name: stockDto.card_name ?? '',
+      language,
       rareza: rz === null ? null : rz,
     } as StockDto);
     if (updated && normalizedTags !== undefined && stockDto.card_id) {
@@ -129,6 +165,22 @@ export class StockController {
   @HttpCode(HttpStatus.CREATED)
   async fromOpenedSealed(@Body() body: FromOpenedSealedBodyDto) {
     return this.openedSealedStockService.createFromOpenedSealed(body);
+  }
+
+  @Get('barcode-export')
+  async exportStockBarcodes() {
+    return this.stockScanService.listBarcodeExportRows();
+  }
+
+  /** @deprecated Usar GET /stock/barcode-export */
+  @Get('qr-export')
+  async exportStockQr() {
+    return this.stockScanService.listBarcodeExportRows();
+  }
+
+  @Get(':id/scan')
+  async scanStockLine(@Param('id') id: string) {
+    return this.stockScanService.getScanView(id);
   }
 
   @Get()

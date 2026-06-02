@@ -7,6 +7,13 @@ import { StoreInventoryService } from 'src/service/store-inventory.service';
 import { OpenedSealedStockService } from 'src/service/opened-sealed-stock.service';
 import { ReservaRepository } from 'src/repository/reserva.repository';
 import { SaleRepository } from 'src/repository/sale.repository';
+import { StockScanService } from 'src/service/stock-scan.service';
+
+const stockScanMock = {
+  listBarcodeExportRows: jest.fn(),
+  listQrExportRows: jest.fn(),
+  getScanView: jest.fn(),
+};
 
 describe('StockController.listStock (tags por card_id)', () => {
   it('prioriza tags de card_stock_tags sobre tags legacy en el documento', async () => {
@@ -53,6 +60,7 @@ describe('StockController.listStock (tags por card_id)', () => {
         { provide: OpenedSealedStockService, useValue: {} },
         { provide: ReservaRepository, useValue: {} },
         { provide: SaleRepository, useValue: {} },
+        { provide: StockScanService, useValue: stockScanMock },
       ],
     }).compile();
 
@@ -106,6 +114,7 @@ describe('StockController.listStock (tags por card_id)', () => {
         { provide: OpenedSealedStockService, useValue: {} },
         { provide: ReservaRepository, useValue: {} },
         { provide: SaleRepository, useValue: {} },
+        { provide: StockScanService, useValue: stockScanMock },
       ],
     }).compile();
 

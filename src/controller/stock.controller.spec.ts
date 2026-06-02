@@ -8,6 +8,7 @@ import { OpenedSealedStockService } from 'src/service/opened-sealed-stock.servic
 import { ReservaRepository } from 'src/repository/reserva.repository';
 import { SaleRepository } from 'src/repository/sale.repository';
 import { CardStockTagRepository } from 'src/repository/card-stock-tag.repository';
+import { StockScanService } from 'src/service/stock-scan.service';
 
 describe('StockController.deleteStock', () => {
   const validId = '507f1f77bcf86cd799439011';
@@ -58,6 +59,14 @@ describe('StockController.deleteStock', () => {
         { provide: OpenedSealedStockService, useValue: {} },
         { provide: ReservaRepository, useValue: reservaRepository },
         { provide: SaleRepository, useValue: saleRepository },
+        {
+          provide: StockScanService,
+          useValue: {
+            listBarcodeExportRows: jest.fn(),
+            listQrExportRows: jest.fn(),
+            getScanView: jest.fn(),
+          },
+        },
       ],
     }).compile();
 

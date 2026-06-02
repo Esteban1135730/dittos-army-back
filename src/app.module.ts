@@ -19,6 +19,8 @@ import { IncomingBatchItemRepository } from './repository/incoming-batch-item.re
 import { IncomingRoundRepository } from './repository/incoming-round.repository';
 import { IncomingRoundItemRepository } from './repository/incoming-round-item.repository';
 import { TCGDexService } from './service/tcgdex/tcgdex.service';
+import { SetNameHomologsService } from './service/tcgdex/set-name-homologs.service';
+import { LocalCardImagesService } from './service/tcgdex/local-card-images.service';
 import { StoreInventoryService } from './service/store-inventory.service';
 import { OpenedSealedStockService } from './service/opened-sealed-stock.service';
 import { PvpCardRowsService } from './service/pvp-card-rows.service';
@@ -41,6 +43,9 @@ import { IncomingShipRoundItem, IncomingShipRoundItemSchema } from './schema/inc
 import { IncomingShipRoundController } from './controller/incoming-ship-round.controller';
 import { IncomingShipRoundRepository } from './repository/incoming-ship-round.repository';
 import { IncomingShipRoundItemRepository } from './repository/incoming-ship-round-item.repository';
+import { CardTraderController } from './controller/cardtrader.controller';
+import { CardTraderService } from './service/cardtrader/cardtrader.service';
+import { StockScanService } from './service/stock-scan.service';
 
 @Module({
   controllers: [
@@ -53,8 +58,11 @@ import { IncomingShipRoundItemRepository } from './repository/incoming-ship-roun
     ReservaController,
     IncomingController,
     IncomingShipRoundController,
+    CardTraderController,
   ],
   providers: [
+    SetNameHomologsService,
+    LocalCardImagesService,
     TCGDexService,
     StoreInventoryService,
     OpenedSealedStockService,
@@ -74,6 +82,8 @@ import { IncomingShipRoundItemRepository } from './repository/incoming-ship-roun
     IncomingRoundItemRepository,
     IncomingShipRoundRepository,
     IncomingShipRoundItemRepository,
+    CardTraderService,
+    StockScanService,
   ],
   imports: [
     MongooseModule.forRoot(
