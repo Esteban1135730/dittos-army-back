@@ -167,14 +167,14 @@ export class StockController {
     return this.openedSealedStockService.createFromOpenedSealed(body);
   }
 
-  @Get('barcode-export')
-  async exportStockBarcodes() {
-    return this.stockScanService.listBarcodeExportRows();
-  }
-
-  /** @deprecated Usar GET /stock/barcode-export */
   @Get('qr-export')
   async exportStockQr() {
+    return this.stockScanService.listQrExportRows();
+  }
+
+  /** @deprecated Usar GET /stock/qr-export */
+  @Get('barcode-export')
+  async exportStockBarcodes() {
     return this.stockScanService.listBarcodeExportRows();
   }
 

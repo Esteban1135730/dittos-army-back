@@ -101,6 +101,123 @@ export class SaleController {
     return { success: true };
   }
 
+  @Post('sell-batch')
+  async sellBatch(
+    @Body()
+    body: {
+      items?: Array<{
+        stock_id: string;
+        amount_cop: number;
+        notes?: string;
+      }>;
+    },
+  ) {
+    const items = body.items ?? [];
+    if (items.length === 0) {
+      return {
+        success: false,
+        sold_count: 0,
+        results: [],
+        message: 'items es requerido y no puede estar vacío',
+      };
+    }
+
+    const results: Array<{
+      stock_id: string;
+      success: boolean;
+      message?: string;
+    }> = [];
+
+    for (const item of items) {
+      const stockId = item.stock_id?.trim() ?? '';
+      if (!stockId || !isValidObjectId(stockId)) {
+        results.push({
+          stock_id: stockId || '(vacío)',
+          success: false,
+          message: 'stock_id inválido',
+        });
+        continue;
+      }
+      if (item.amount_cop == null || item.amount_cop <= 0) {
+        results.push({
+          stock_id: stockId,
+          success: false,
+          message: 'amount_cop debe ser mayor a 0',
+        });
+        continue;
+      }
+
+      const stock = await this.stockRepository.findById(stockId);
+      if (!stock) {
+        results.push({
+          stock_id: stockId,
+          success: false,
+          message: 'Stock no encontrado',
+        });
+        continue;
+      }
+
+      const cardState = (stock as { card_state?: string }).card_state ?? '';
+      if (cardState === 'vendida') {
+        results.push({
+          stock_id: stockId,
+          success: false,
+          message: 'La carta ya está vendida',
+        });
+        continue;
+      }
+      if (cardState === 'reserva') {
+        results.push({
+          stock_id: stockId,
+          success: false,
+          message: 'La carta está reservada',
+        });
+        continue;
+      }
+      if (cardState === 'propiedad') {
+        results.push({
+          stock_id: stockId,
+          success: false,
+          message: 'La carta está en propiedad',
+        });
+        continue;
+      }
+      if (cardState !== 'disponible' && cardState !== 'en_stock_colombia') {
+        results.push({
+          stock_id: stockId,
+          success: false,
+          message: 'Estado de stock no vendible',
+        });
+        continue;
+      }
+
+      try {
+        await this.saleRepository.create({
+          stock_id: stockId,
+          card_id: stock.card_id,
+          type: 'venta',
+          amount_cop: Math.round(item.amount_cop),
+          notes: item.notes ?? 'Venta asistida QR',
+        });
+        await this.stockRepository.updateCardState(stockId, 'vendida');
+        results.push({ stock_id: stockId, success: true });
+      } catch {
+        results.push({
+          stock_id: stockId,
+          success: false,
+          message: 'Error al registrar la venta',
+        });
+      }
+    }
+
+    const sold_count = results.filter((r) => r.success).length;
+    return {
+      success: sold_count > 0,
+      sold_count,
+      results,
+    };
+  }
+
   @Get('dashboard')
   async getSalesDashboard() {
     const sales = await this.saleRepository.findActiveVentas();

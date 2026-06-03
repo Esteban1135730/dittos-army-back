@@ -16,6 +16,12 @@ describe('stock-barcode-payload', () => {
     expect(parseStockBarcodePayload(validId)).toBe(validId);
   });
 
+  it('tolera layout teclado ES en pistola QR (Ñ y apostrofe)', () => {
+    expect(parseStockBarcodePayload(`DA'STOCKÑ691e97501c83b1923bfc6e63`)).toBe(
+      '691e97501c83b1923bfc6e63',
+    );
+  });
+
   it('rechaza payload inválido', () => {
     expect(parseStockBarcodePayload('no-es-id')).toBeNull();
   });

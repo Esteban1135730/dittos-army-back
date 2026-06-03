@@ -1,24 +1,39 @@
 import { isValidObjectId } from 'mongoose';
 
-/** Prefijo en Code 128 (pistola láser y lectores 1D). */
-export const STOCK_BARCODE_PREFIX = 'DA-STOCK:';
+/** Prefijo en QR de stock (pistola QR y cámara). */
+export const STOCK_QR_PREFIX = 'DA-STOCK:';
 
-export function encodeStockBarcodePayload(stockId: string): string {
-  return `${STOCK_BARCODE_PREFIX}${stockId.trim()}`;
+/** Pistola en modo teclado (US→ES): `:`→Ñ, `-`→' */
+const LOOSE_STOCK_QR_RE = /DA[-_' ]?STOCK[:\u00D1;]?([a-f0-9]{24})/i;
+
+export function encodeStockQrPayload(stockId: string): string {
+  return `${STOCK_QR_PREFIX}${stockId.trim()}`;
 }
 
-export function parseStockBarcodePayload(raw: string): string | null {
+function normalizeQrWedgeInput(raw: string): string {
+  return raw.trim().replace(/Ñ/g, ':').replace(/[''´`]/g, '-');
+}
+
+export function parseStockQrPayload(raw: string): string | null {
   const trimmed = raw.trim();
   if (!trimmed) return null;
-  if (trimmed.startsWith(STOCK_BARCODE_PREFIX)) {
-    const id = trimmed.slice(STOCK_BARCODE_PREFIX.length).trim();
+
+  const normalized = normalizeQrWedgeInput(trimmed);
+  if (normalized.startsWith(STOCK_QR_PREFIX)) {
+    const id = normalized.slice(STOCK_QR_PREFIX.length).trim();
     return isValidObjectId(id) ? id : null;
   }
+
+  const loose = LOOSE_STOCK_QR_RE.exec(trimmed) ?? LOOSE_STOCK_QR_RE.exec(normalized);
+  if (loose?.[1] && isValidObjectId(loose[1])) {
+    return loose[1];
+  }
+
   return isValidObjectId(trimmed) ? trimmed : null;
 }
 
-/** @deprecated Usar encodeStockBarcodePayload */
-export const encodeStockQrPayload = encodeStockBarcodePayload;
-/** @deprecated Usar parseStockBarcodePayload */
-export const parseStockQrPayload = parseStockBarcodePayload;
-export const STOCK_QR_PREFIX = STOCK_BARCODE_PREFIX;
+/** @deprecated Usar encodeStockQrPayload */
+export const encodeStockBarcodePayload = encodeStockQrPayload;
+/** @deprecated Usar parseStockQrPayload */
+export const parseStockBarcodePayload = parseStockQrPayload;
+export const STOCK_BARCODE_PREFIX = STOCK_QR_PREFIX;

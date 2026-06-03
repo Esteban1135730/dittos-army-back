@@ -46,6 +46,8 @@ import { IncomingShipRoundItemRepository } from './repository/incoming-ship-roun
 import { CardTraderController } from './controller/cardtrader.controller';
 import { CardTraderService } from './service/cardtrader/cardtrader.service';
 import { StockScanService } from './service/stock-scan.service';
+import { DashboardController } from './controller/dashboard.controller';
+import { DashboardOverviewService } from './service/dashboard-overview.service';
 
 @Module({
   controllers: [
@@ -59,6 +61,7 @@ import { StockScanService } from './service/stock-scan.service';
     IncomingController,
     IncomingShipRoundController,
     CardTraderController,
+    DashboardController,
   ],
   providers: [
     SetNameHomologsService,
@@ -84,6 +87,7 @@ import { StockScanService } from './service/stock-scan.service';
     IncomingShipRoundItemRepository,
     CardTraderService,
     StockScanService,
+    DashboardOverviewService,
   ],
   imports: [
     MongooseModule.forRoot(
