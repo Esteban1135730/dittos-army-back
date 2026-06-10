@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { existsSync } from 'fs';
@@ -21,7 +22,7 @@ async function bootstrap() {
   if (imagesDir && existsSync(imagesDir)) {
     app.useStaticAssets(imagesDir, { prefix: '/card-images/' });
   }
-  
+
   // Configurar CORS
   app.enableCors({
     origin: (origin, callback) => {
@@ -36,7 +37,7 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   });
-  
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

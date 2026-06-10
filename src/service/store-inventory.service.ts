@@ -11,13 +11,22 @@ import {
   groupPvpsByCardId,
   resolvePvpForLine,
 } from '../utils/pvp-resolve';
-import { storeCardMetaFromDto, type StoreCardExportMeta } from '../utils/store-card-meta';
+import {
+  storeCardMetaFromDto,
+  type StoreCardExportMeta,
+} from '../utils/store-card-meta';
 
 const EXCLUDED_STATES = new Set(['vendida', 'propiedad', 'reserva']);
 
-function inventoryLineKey(cardId: string, lang: string, rareza: string | undefined | null): string {
+function inventoryLineKey(
+  cardId: string,
+  lang: string,
+  rareza: string | undefined | null,
+): string {
   const v =
-    rareza == null || String(rareza).trim() === '' ? '' : String(rareza).trim().toLowerCase();
+    rareza == null || String(rareza).trim() === ''
+      ? ''
+      : String(rareza).trim().toLowerCase();
   return `${cardId}::${lang}::${v}`;
 }
 
@@ -80,12 +89,20 @@ export class StoreInventoryService {
   }> {
     const outputPath =
       process.env.STORE_INVENTORY_PATH ||
-      path.join(process.cwd(), '..', 'dittos-army-store', 'public', 'inventory.json');
+      path.join(
+        process.cwd(),
+        '..',
+        'dittos-army-store',
+        'public',
+        'inventory.json',
+      );
 
     try {
       const stockItems: any[] = await this.stockRepository.findAll();
       const filtered = stockItems.filter(
-        (s) => s.card_state != null && !EXCLUDED_STATES.has(String(s.card_state).toLowerCase()),
+        (s) =>
+          s.card_state != null &&
+          !EXCLUDED_STATES.has(String(s.card_state).toLowerCase()),
       );
       if (filtered.length === 0) {
         await this.writeInventory(outputPath, []);
@@ -95,7 +112,12 @@ export class StoreInventoryService {
       const cardIds = [...new Set(filtered.map((s) => s.card_id))];
       const pvpByCard = new Map<
         string,
-        { card_id: string; rareza?: string | null; pvp: number; currency: string }[]
+        {
+          card_id: string;
+          rareza?: string | null;
+          pvp: number;
+          currency: string;
+        }[]
       >();
       const cardMap = new Map<string, StoreCardExportMeta>();
 
@@ -132,7 +154,11 @@ export class StoreInventoryService {
           image_url: stock.image_url || card?.image || '',
           pvp: pvpData?.pvp,
           pvp_currency: pvpData?.pvp_currency,
-          language: (stock.language || stock.languaje || 'en').toString().trim().toLowerCase() || 'en',
+          language:
+            (stock.language || stock.languaje || 'en')
+              .toString()
+              .trim()
+              .toLowerCase() || 'en',
         };
       });
 
@@ -153,8 +179,9 @@ export class StoreInventoryService {
 
       for (const item of enriched) {
         const cardId = item.card_id;
-        const lang = (item.language || 'en').toString().trim().toLowerCase() || 'en';
-        const rzEff = effectiveOperationalRarezaFromStock(item as any);
+        const lang =
+          (item.language || 'en').toString().trim().toLowerCase() || 'en';
+        const rzEff = effectiveOperationalRarezaFromStock(item);
         const key = inventoryLineKey(cardId, lang, rzEff);
         const list = pvpByCard.get(cardId) ?? [];
         const pvpData = resolvePvpForLine(list, rzEff);
@@ -205,12 +232,18 @@ export class StoreInventoryService {
       return { success: true, path: outputPath, count: inventory.length };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error('StoreInventoryService.exportStoreInventory error:', message);
+      console.error(
+        'StoreInventoryService.exportStoreInventory error:',
+        message,
+      );
       return { success: false, error: message };
     }
   }
 
-  private async writeInventory(filePath: string, data: StoreInventoryItem[]): Promise<void> {
+  private async writeInventory(
+    filePath: string,
+    data: StoreInventoryItem[],
+  ): Promise<void> {
     const dir = path.dirname(filePath);
     await fs.mkdir(dir, { recursive: true });
     await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
@@ -224,7 +257,13 @@ export class StoreInventoryService {
   }> {
     const outputPath =
       process.env.STORE_UPCOMING_PATH ||
-      path.join(process.cwd(), '..', 'dittos-army-store', 'public', 'upcoming.json');
+      path.join(
+        process.cwd(),
+        '..',
+        'dittos-army-store',
+        'public',
+        'upcoming.json',
+      );
 
     try {
       const openBatches = await this.incomingBatchRepository.findOpenBatches();
@@ -234,9 +273,11 @@ export class StoreInventoryService {
         return { success: true, path: outputPath, count: 0 };
       }
 
-      const pending = await this.incomingBatchItemRepository.findByRemainingQuantityGreaterThanZero();
+      const pending =
+        await this.incomingBatchItemRepository.findByRemainingQuantityGreaterThanZero();
       const filtered = pending.filter(
-        (it) => openIds.has(String(it.batch_id)) && (it.remaining_quantity ?? 0) > 0,
+        (it) =>
+          openIds.has(String(it.batch_id)) && (it.remaining_quantity ?? 0) > 0,
       );
 
       const cardIds = [...new Set(filtered.map((it) => it.card_id))];
@@ -270,11 +311,17 @@ export class StoreInventoryService {
       for (const it of filtered) {
         const meta = cardMap.get(it.card_id);
         const name =
-          (it.card_name && String(it.card_name).trim()) || meta?.name || it.card_id;
+          (it.card_name && String(it.card_name).trim()) ||
+          meta?.name ||
+          it.card_id;
         const image =
           (it.image_url && String(it.image_url).trim()) || meta?.image || '';
-        const lang = (it.language || 'en').toString().trim().toLowerCase() || 'en';
-        const rz = it.rareza == null || String(it.rareza).trim() === '' ? null : String(it.rareza).trim();
+        const lang =
+          (it.language || 'en').toString().trim().toLowerCase() || 'en';
+        const rz =
+          it.rareza == null || String(it.rareza).trim() === ''
+            ? null
+            : String(it.rareza).trim();
         const key = inventoryLineKey(it.card_id, lang, rz);
         const qty = Math.max(0, Math.floor(Number(it.remaining_quantity) || 0));
         if (qty <= 0) continue;
@@ -282,7 +329,11 @@ export class StoreInventoryService {
         const existing = byKey.get(key);
         if (existing) {
           existing.quantity += qty;
-          if ((!existing.name || existing.name === existing.card_id) && name && name !== it.card_id) {
+          if (
+            (!existing.name || existing.name === existing.card_id) &&
+            name &&
+            name !== it.card_id
+          ) {
             existing.name = name;
           }
           if (!existing.image && image) existing.image = image;
@@ -310,12 +361,18 @@ export class StoreInventoryService {
       return { success: true, path: outputPath, count: rows.length };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error('StoreInventoryService.exportStoreUpcoming error:', message);
+      console.error(
+        'StoreInventoryService.exportStoreUpcoming error:',
+        message,
+      );
       return { success: false, error: message };
     }
   }
 
-  private async writeUpcomingJson(filePath: string, data: StoreUpcomingItem[]): Promise<void> {
+  private async writeUpcomingJson(
+    filePath: string,
+    data: StoreUpcomingItem[],
+  ): Promise<void> {
     const dir = path.dirname(filePath);
     await fs.mkdir(dir, { recursive: true });
     await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');

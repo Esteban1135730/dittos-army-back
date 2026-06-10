@@ -4,7 +4,6 @@ import { Injectable } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { StockDto } from 'src/Dto/stock.dto';
 
-
 @Injectable()
 export class StockRepository {
   constructor(
@@ -12,7 +11,11 @@ export class StockRepository {
   ) {}
 
   async create(stockDto: StockDto): Promise<Stock> {
-    const { tags: _tags, id: _id, ...rest } = stockDto as StockDto & {
+    const {
+      tags: _tags,
+      id: _id,
+      ...rest
+    } = stockDto as StockDto & {
       tags?: string[];
     };
     const createdStock = new this.stockModel({
@@ -25,7 +28,11 @@ export class StockRepository {
   async createMany(stockDtos: StockDto[]): Promise<any[]> {
     if (!Array.isArray(stockDtos) || stockDtos.length === 0) return [];
     const normalized = stockDtos.map((d) => {
-      const { tags: _tags, id: _id, ...rest } = d as StockDto & {
+      const {
+        tags: _tags,
+        id: _id,
+        ...rest
+      } = d as StockDto & {
         tags?: string[];
       };
       return {
@@ -37,7 +44,11 @@ export class StockRepository {
   }
 
   async update(stockDto: StockDto): Promise<Stock | null> {
-    const { id, tags: _tags, ...rest } = stockDto as StockDto & {
+    const {
+      id,
+      tags: _tags,
+      ...rest
+    } = stockDto as StockDto & {
       tags?: string[];
     };
     if (!id) return null;

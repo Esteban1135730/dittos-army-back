@@ -31,6 +31,9 @@ export function stockLineLanguage(stock: {
   language?: string;
   languaje?: string;
 }): string {
-  const raw = (stock.language || stock.languaje || 'en').toString().trim().toLowerCase();
+  const raw = (stock.language || stock.languaje || 'en')
+    .toString()
+    .trim()
+    .toLowerCase();
   return raw || 'en';
 }

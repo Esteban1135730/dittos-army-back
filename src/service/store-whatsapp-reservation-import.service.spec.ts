@@ -16,7 +16,12 @@ describe('StoreWhatsAppReservationImportService', () => {
   function makeService(deps: {
     stock: Array<Record<string, unknown>>;
     reservas?: Array<{ stock_id: string }>;
-    pvps?: Array<{ card_id: string; pvp: number; currency: string; rareza?: string | null }>;
+    pvps?: Array<{
+      card_id: string;
+      pvp: number;
+      currency: string;
+      rareza?: string | null;
+    }>;
   }) {
     const clientRepository = {
       findById: jest.fn().mockResolvedValue({ _id: 'c1', nombre: 'Cliente' }),
@@ -24,7 +29,10 @@ describe('StoreWhatsAppReservationImportService', () => {
 
     const stockRepository = {
       findAll: jest.fn().mockResolvedValue(deps.stock),
-      findById: jest.fn(async (id: string) => deps.stock.find((s) => String(s._id) === id) ?? null),
+      findById: jest.fn(
+        async (id: string) =>
+          deps.stock.find((s) => String(s._id) === id) ?? null,
+      ),
       updateCardState: jest.fn().mockResolvedValue({}),
     } as unknown as StockRepository;
 
@@ -61,7 +69,9 @@ describe('StoreWhatsAppReservationImportService', () => {
           card_state: 'disponible',
         },
       ],
-      pvps: [{ card_id: 'sv08-130', pvp: 12000, currency: 'COP', rareza: null }],
+      pvps: [
+        { card_id: 'sv08-130', pvp: 12000, currency: 'COP', rareza: null },
+      ],
     });
 
     const plan = await svc.preview('c1', sampleMessage);
@@ -106,6 +116,9 @@ describe('StoreWhatsAppReservationImportService', () => {
     const result = await svc.import('c1', sampleMessage);
     expect(result.created).toHaveLength(1);
     expect(reservaRepository.create).toHaveBeenCalled();
-    expect(stockRepository.updateCardState).toHaveBeenCalledWith('s1', 'reserva');
+    expect(stockRepository.updateCardState).toHaveBeenCalledWith(
+      's1',
+      'reserva',
+    );
   });
 });

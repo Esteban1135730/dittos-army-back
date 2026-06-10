@@ -125,7 +125,7 @@ function buildSalesByMonth(
   const earliest = new Date(firstYear, firstMonth - 1, 1);
 
   for (const sale of [...activeSales, ...historicalSales]) {
-    const created = (sale as SaleDocument).created_at;
+    const created = sale.created_at;
     if (!created || created < earliest) continue;
     const key = monthKeyLocal(new Date(created));
     const row = bucket.get(key);
@@ -201,7 +201,10 @@ export class DashboardOverviewService {
       const state = stockStateKey(stock);
       if (NON_INVENTORY_STATES.has(state)) continue;
       const rareza = effectiveOperationalRarezaFromStock(stock);
-      const resolved = resolvePvpForLine(pvpByCard.get(stock.card_id) ?? [], rareza);
+      const resolved = resolvePvpForLine(
+        pvpByCard.get(stock.card_id) ?? [],
+        rareza,
+      );
       if (resolved) {
         inventory_pvp_cop += pvpToCop(resolved.pvp, resolved.pvp_currency);
       }
@@ -221,7 +224,7 @@ export class DashboardOverviewService {
     let closed_last_30_days_count = 0;
     let closed_last_30_days_amount_cop = 0;
     for (const sale of historicalSales) {
-      const closedAt = (sale as SaleDocument).cycle_closed_at;
+      const closedAt = sale.cycle_closed_at;
       if (closedAt && closedAt >= thirtyDaysAgo) {
         closed_last_30_days_count += 1;
         closed_last_30_days_amount_cop += sale.amount_cop ?? 0;
@@ -236,10 +239,7 @@ export class DashboardOverviewService {
     let ventas_esperadas_cop = 0;
     let ganancia_estimada_cop = 0;
     for (const reserva of reservas) {
-      const precioCop = amountToCop(
-        reserva.precio,
-        reserva.currency ?? 'COP',
-      );
+      const precioCop = amountToCop(reserva.precio, reserva.currency ?? 'COP');
       ventas_esperadas_cop += precioCop;
       const stock = stockById.get(reserva.stock_id);
       const costCop = stock ? stockLineCostCop(stock) : 0;
@@ -253,9 +253,11 @@ export class DashboardOverviewService {
       if (ri.client_id) incomingClientIds.add(ri.client_id);
     }
 
-    const openBatchIds = openBatches.map((b) =>
-      (b as { _id?: { toString(): string } })._id?.toString?.() ?? '',
-    ).filter(Boolean);
+    const openBatchIds = openBatches
+      .map(
+        (b) => (b as { _id?: { toString(): string } })._id?.toString?.() ?? '',
+      )
+      .filter(Boolean);
 
     let units_in_transit = 0;
     let estimated_cost_cop = 0;

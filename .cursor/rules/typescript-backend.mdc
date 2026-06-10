@@ -1,0 +1,38 @@
+---
+description: TypeScript estricto para backend NestJS
+globs: "**/*.{ts,spec.ts}"
+alwaysApply: false
+---
+
+# TypeScript Backend
+
+## Tipado
+
+- Evitar `any`; usar `unknown` + type guards cuando el tipo sea incierto.
+- Exportar tipos de retorno en services públicos.
+- Usar `readonly` en DTOs inmutables cuando aplique.
+
+## Utilidades
+
+- Lógica pura reutilizable en `src/utils/` con tests `*.spec.ts` colocados junto al archivo.
+- Constantes de dominio en `src/constants/`.
+
+## Errores
+
+```typescript
+// ❌ BAD
+catch (e) {}
+
+// ✅ GOOD
+catch (e) {
+  throw new BadRequestException(
+    e instanceof Error ? e.message : 'Unexpected error',
+  );
+}
+```
+
+## Tests (Jest)
+
+- Archivos `*.spec.ts` junto al código fuente.
+- Patrón Arrange-Act-Assert; nombres descriptivos (`should reject invalid ObjectId`).
+- Mock de dependencias externas (APIs TCGDex, CardTrader) en tests unitarios.

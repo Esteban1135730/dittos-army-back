@@ -37,7 +37,12 @@ describe('StockScanService', () => {
     };
     const pvpRepository = {
       findByCardIds: jest.fn().mockResolvedValue([
-        { card_id: 'swsh3-136', rareza: 'holofoil', pvp: 50000, currency: 'COP' },
+        {
+          card_id: 'swsh3-136',
+          rareza: 'holofoil',
+          pvp: 50000,
+          currency: 'COP',
+        },
       ]),
     };
     const moduleRef = await Test.createTestingModule({
@@ -81,9 +86,11 @@ describe('StockScanService', () => {
       }),
     };
     const pvpRepository = {
-      findByCardIds: jest.fn().mockResolvedValue([
-        { card_id: 'swsh3-136', rareza: null, pvp: 50000, currency: 'COP' },
-      ]),
+      findByCardIds: jest
+        .fn()
+        .mockResolvedValue([
+          { card_id: 'swsh3-136', rareza: null, pvp: 50000, currency: 'COP' },
+        ]),
     };
     const moduleRef = await Test.createTestingModule({
       providers: [

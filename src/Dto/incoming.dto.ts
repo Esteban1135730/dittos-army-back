@@ -34,4 +34,3 @@ export type ReviewIncomingRoundDecision = {
 export type ReviewIncomingRoundDto = {
   decisions: ReviewIncomingRoundDecision[];
 };
-

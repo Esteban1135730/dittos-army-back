@@ -31,4 +31,3 @@ export class IncomingBatch {
 }
 
 export const IncomingBatchSchema = SchemaFactory.createForClass(IncomingBatch);
-

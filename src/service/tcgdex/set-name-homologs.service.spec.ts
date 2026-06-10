@@ -23,12 +23,12 @@ describe('SetNameHomologsService', () => {
     }
     expect(service.getEnglishLabel('ja', 'BW3a')).toBe('Hail Blizzard');
     expect(service.getEnglishLabel('ja', 'BW3b')).toBe('Psycho Drive');
-    expect(
-      service.getEnglishLabel('ja', 'BW3a', 'ヘイルブリザード'),
-    ).toBe('Hail Blizzard');
-    expect(
-      service.getEnglishLabel('ja', 'BW3b', 'サイコドライブ'),
-    ).toBe('Psycho Drive');
+    expect(service.getEnglishLabel('ja', 'BW3a', 'ヘイルブリザード')).toBe(
+      'Hail Blizzard',
+    );
+    expect(service.getEnglishLabel('ja', 'BW3b', 'サイコドライブ')).toBe(
+      'Psycho Drive',
+    );
   });
 
   it('resuelve ko con fallback homolog ja:', () => {
@@ -44,7 +44,7 @@ describe('SetNameHomologsService', () => {
     if (!service.isLoaded()) {
       return;
     }
-    expect(service.getEnglishLabel('ja', 'Pt1')).toBe('Galactic\'s Conquest');
+    expect(service.getEnglishLabel('ja', 'Pt1')).toBe("Galactic's Conquest");
     expect(service.getEnglishLabel('ja', 'neo1')).toBe('Neo Genesis');
     expect(service.getEnglishLabel('ja', 'SC1a', '劍&盾 SET A')).toBe(
       'Sword & Shield SET A',

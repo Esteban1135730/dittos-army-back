@@ -1,0 +1,53 @@
+---
+description: Patrones NestJS para controllers, services y DTOs
+globs: src/**/*.ts
+alwaysApply: false
+---
+
+# NestJS Patterns
+
+## Capas
+
+- **Controller**: routing, validación de entrada, mapeo HTTP → service. Sin lógica de negocio pesada.
+- **Service**: reglas de negocio, orquestación entre repositories.
+- **Repository**: queries Mongoose; retorna documentos o lean objects.
+
+## Controllers
+
+```typescript
+// ❌ BAD — lógica de negocio en controller
+@Get(':id')
+async get(@Param('id') id: string) {
+  const doc = await this.repo.findById(id);
+  if (!doc) throw new NotFoundException();
+  return this.calculateTotals(doc);
+}
+
+// ✅ GOOD — delegar al service
+@Get(':id')
+async get(@Param('id') id: string) {
+  return this.saleService.findByIdOrFail(id);
+}
+```
+
+## Excepciones HTTP
+
+Usar excepciones NestJS con mensajes claros: `BadRequestException`, `NotFoundException`, `ConflictException`.
+
+Validar ObjectIds antes de consultar:
+
+```typescript
+if (!isValidObjectId(id)) {
+  throw new BadRequestException('Invalid id');
+}
+```
+
+## DTOs
+
+- Ubicación: `src/Dto/` (convención del proyecto).
+- Tipar request/response; no usar `any`.
+- Normalizar inputs (trim, lowercase) en service o util, no en repository.
+
+## Imports
+
+Usar paths `src/...` como en el resto del proyecto. Mantener orden: NestJS → externos → internos.

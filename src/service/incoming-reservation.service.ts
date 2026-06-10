@@ -53,7 +53,7 @@ export class IncomingReservationService {
       throw new Error('materializeForNewStockLines: arrays de distinto tamaño');
     }
     const cardIds = [
-      ...new Set(createdStocks.map((s) => s.card_id).filter(Boolean) as string[]),
+      ...new Set(createdStocks.map((s) => s.card_id).filter(Boolean)),
     ];
     const pvps = await this.pvpRepository.findByCardIds(cardIds);
     const pvpMap = groupPvpsByCardId(pvps as any);
@@ -112,7 +112,11 @@ export class IncomingReservationService {
       newQty,
     );
 
-    const saved = await this.reservaIncomingRepo.upsertQuantity(clientId, batchItemId, newQty);
+    const saved = await this.reservaIncomingRepo.upsertQuantity(
+      clientId,
+      batchItemId,
+      newQty,
+    );
     if (!saved) throw new BadRequestException('Cantidad resultante inválida');
     return saved.toObject ? saved.toObject() : saved;
   }
@@ -136,11 +140,18 @@ export class IncomingReservationService {
     const qty = Math.floor(delta);
 
     const batches = await this.incomingBatchRepo.findOpenBatches();
-    type Cand = { batchItemId: string; remaining: number; purchaseMs: number; createdMs: number };
+    type Cand = {
+      batchItemId: string;
+      remaining: number;
+      purchaseMs: number;
+      createdMs: number;
+    };
     const candidates: Cand[] = [];
 
     for (const batch of batches) {
-      const items = await this.batchItemRepo.findByBatchId(batch._id.toString());
+      const items = await this.batchItemRepo.findByBatchId(
+        batch._id.toString(),
+      );
       const purchaseMs = new Date(batch.purchase_date).getTime();
       for (const bi of items) {
         if (bi.card_id !== cardId) continue;
@@ -164,7 +175,9 @@ export class IncomingReservationService {
 
     let totalFree = 0;
     for (const c of candidates) {
-      const sumP = await this.reservaIncomingRepo.sumQuantityForBatchItem(c.batchItemId);
+      const sumP = await this.reservaIncomingRepo.sumQuantityForBatchItem(
+        c.batchItemId,
+      );
       totalFree += Math.max(0, c.remaining - sumP);
     }
     if (qty > totalFree) {
@@ -179,7 +192,9 @@ export class IncomingReservationService {
     let lastSaved: any = null;
     for (const c of candidates) {
       if (need <= 0) break;
-      const sumP = await this.reservaIncomingRepo.sumQuantityForBatchItem(c.batchItemId);
+      const sumP = await this.reservaIncomingRepo.sumQuantityForBatchItem(
+        c.batchItemId,
+      );
       const free = Math.max(0, c.remaining - sumP);
       const take = Math.min(free, need);
       if (take <= 0) continue;
@@ -235,10 +250,7 @@ export class IncomingReservationService {
     });
   }
 
-  async setAbsoluteQuantity(
-    id: string,
-    quantity: number,
-  ): Promise<any> {
+  async setAbsoluteQuantity(id: string, quantity: number): Promise<any> {
     if (!Number.isFinite(quantity) || quantity < 0) {
       throw new BadRequestException('quantity inválida');
     }
@@ -249,9 +261,18 @@ export class IncomingReservationService {
     if (!bi) throw new NotFoundException('Línea de lote no encontrada');
 
     const q = Math.floor(quantity);
-    await this.assertCupoReplace(doc.batch_item_id, bi.remaining_quantity, doc.quantity, q);
+    await this.assertCupoReplace(
+      doc.batch_item_id,
+      bi.remaining_quantity,
+      doc.quantity,
+      q,
+    );
 
-    return this.reservaIncomingRepo.upsertQuantity(doc.client_id, doc.batch_item_id, q);
+    return this.reservaIncomingRepo.upsertQuantity(
+      doc.client_id,
+      doc.batch_item_id,
+      q,
+    );
   }
 
   async deleteById(id: string): Promise<boolean> {
@@ -264,11 +285,13 @@ export class IncomingReservationService {
     oldQtyThisLine: number,
     newQtyThisLine: number,
   ): Promise<void> {
-    const sumPending = await this.reservaIncomingRepo.sumQuantityForBatchItem(batchItemId);
+    const sumPending =
+      await this.reservaIncomingRepo.sumQuantityForBatchItem(batchItemId);
     const newTotalPending = sumPending - oldQtyThisLine + newQtyThisLine;
     if (newTotalPending > remainingQuantity) {
       throw new ConflictException({
-        error: 'Cantidad en reserva supera lo disponible en camino para esta línea',
+        error:
+          'Cantidad en reserva supera lo disponible en camino para esta línea',
         code: 'RESERVA_INCOMING_CUPO',
       });
     }

@@ -5,7 +5,6 @@ export type StockDocument = HydratedDocument<Stock>;
 
 @Schema()
 export class Stock {
-
   @Prop()
   card_id: string;
 

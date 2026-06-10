@@ -81,4 +81,3 @@ describe('StockController language validation', () => {
     expect(stockRepository.create).not.toHaveBeenCalled();
   });
 });
-

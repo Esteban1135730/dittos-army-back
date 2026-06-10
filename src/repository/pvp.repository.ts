@@ -8,19 +8,13 @@ import { normalizeOperationalRareza } from '../constants/item-rareza';
 function filterBasePvp(cardId: string) {
   return {
     card_id: cardId,
-    $or: [
-      { rareza: { $exists: false } },
-      { rareza: null },
-      { rareza: '' },
-    ],
+    $or: [{ rareza: { $exists: false } }, { rareza: null }, { rareza: '' }],
   };
 }
 
 @Injectable()
 export class PvpRepository {
-  constructor(
-    @InjectModel(Pvp.name) private pvpModel: Model<PvpDocument>,
-  ) {}
+  constructor(@InjectModel(Pvp.name) private pvpModel: Model<PvpDocument>) {}
 
   private normalizeDtoRareza(dto: PvpDto): string | null {
     return normalizeOperationalRareza(dto.rareza);

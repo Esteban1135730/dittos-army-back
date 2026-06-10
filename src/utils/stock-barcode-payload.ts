@@ -11,7 +11,10 @@ export function encodeStockQrPayload(stockId: string): string {
 }
 
 function normalizeQrWedgeInput(raw: string): string {
-  return raw.trim().replace(/Ñ/g, ':').replace(/[''´`]/g, '-');
+  return raw
+    .trim()
+    .replace(/Ñ/g, ':')
+    .replace(/[''´`]/g, '-');
 }
 
 export function parseStockQrPayload(raw: string): string | null {
@@ -24,7 +27,8 @@ export function parseStockQrPayload(raw: string): string | null {
     return isValidObjectId(id) ? id : null;
   }
 
-  const loose = LOOSE_STOCK_QR_RE.exec(trimmed) ?? LOOSE_STOCK_QR_RE.exec(normalized);
+  const loose =
+    LOOSE_STOCK_QR_RE.exec(trimmed) ?? LOOSE_STOCK_QR_RE.exec(normalized);
   if (loose?.[1] && isValidObjectId(loose[1])) {
     return loose[1];
   }

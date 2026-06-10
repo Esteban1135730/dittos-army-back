@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { PvpCardRowDto } from '../Dto/pvp.dto';
 import { PvpRepository } from '../repository/pvp.repository';
 import { StockRepository } from '../repository/stock.repository';
-import { effectiveOperationalRarezaFromStock, stockLineRareza } from '../utils/pvp-resolve';
+import {
+  effectiveOperationalRarezaFromStock,
+  stockLineRareza,
+} from '../utils/pvp-resolve';
 
 @Injectable()
 export class PvpCardRowsService {
@@ -29,7 +32,10 @@ export class PvpCardRowsService {
       else rarezaHasStock.set(rz, true);
     }
 
-    const pvpByRareza = new Map<string | null, { pvp: number; currency: string }>();
+    const pvpByRareza = new Map<
+      string | null,
+      { pvp: number; currency: string }
+    >();
     for (const p of pvps) {
       const key = stockLineRareza(p.rareza);
       pvpByRareza.set(key, { pvp: p.pvp, currency: p.currency });

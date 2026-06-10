@@ -50,7 +50,5 @@ export class IncomingBatchItem {
   created_at: Date;
 }
 
-export const IncomingBatchItemSchema = SchemaFactory.createForClass(
-  IncomingBatchItem,
-);
-
+export const IncomingBatchItemSchema =
+  SchemaFactory.createForClass(IncomingBatchItem);

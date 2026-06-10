@@ -36,9 +36,9 @@ describe('effectiveOperationalRarezaFromStock', () => {
   });
 
   it('liga sin campo rareza', () => {
-    expect(
-      effectiveOperationalRarezaFromStock({ league_card: true }),
-    ).toBe('league card');
+    expect(effectiveOperationalRarezaFromStock({ league_card: true })).toBe(
+      'league card',
+    );
   });
 
   it('holofoil sin campo rareza', () => {
@@ -49,7 +49,12 @@ describe('effectiveOperationalRarezaFromStock', () => {
 });
 
 describe('resolvePvpForLine', () => {
-  const base = { card_id: 'c1', pvp: 10, currency: 'COP', rareza: null as string | null };
+  const base = {
+    card_id: 'c1',
+    pvp: 10,
+    currency: 'COP',
+    rareza: null as string | null,
+  };
   const foil = { card_id: 'c1', pvp: 25, currency: 'COP', rareza: 'foil' };
 
   it('usa variante si existe', () => {

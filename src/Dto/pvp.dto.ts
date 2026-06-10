@@ -15,5 +15,3 @@ export type PvpCardRowDto = {
   currency: string | null;
   has_stock: boolean;
 };
-
-

@@ -5,9 +5,7 @@ import { Sale, SaleDocument } from 'src/schema/sale.schema';
 
 @Injectable()
 export class SaleRepository {
-  constructor(
-    @InjectModel(Sale.name) private saleModel: Model<SaleDocument>,
-  ) {}
+  constructor(@InjectModel(Sale.name) private saleModel: Model<SaleDocument>) {}
 
   async create(data: Partial<Sale>): Promise<Sale> {
     const sale = new this.saleModel({
@@ -25,7 +23,10 @@ export class SaleRepository {
     return this.saleModel
       .find({
         type: 'venta',
-        $or: [{ cycle_closed_at: null }, { cycle_closed_at: { $exists: false } }],
+        $or: [
+          { cycle_closed_at: null },
+          { cycle_closed_at: { $exists: false } },
+        ],
       })
       .sort({ created_at: -1 })
       .exec();
@@ -55,7 +56,10 @@ export class SaleRepository {
       .updateMany(
         {
           type: 'venta',
-          $or: [{ cycle_closed_at: null }, { cycle_closed_at: { $exists: false } }],
+          $or: [
+            { cycle_closed_at: null },
+            { cycle_closed_at: { $exists: false } },
+          ],
         },
         { $set: { cycle_closed_at: closedAt } },
       )
@@ -124,4 +128,3 @@ export class SaleRepository {
     return this.saleModel.findByIdAndDelete(id).exec();
   }
 }
-

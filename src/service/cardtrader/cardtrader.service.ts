@@ -37,7 +37,9 @@ export class CardTraderService {
   private readonly marketplaceProductCache = new Map<number, any>();
 
   constructor() {
-    this.baseUrl = (process.env.CARDTRADER_API_BASE_URL ?? DEFAULT_BASE).replace(/\/$/, '');
+    this.baseUrl = (
+      process.env.CARDTRADER_API_BASE_URL ?? DEFAULT_BASE
+    ).replace(/\/$/, '');
   }
 
   private getToken(): string {
@@ -50,9 +52,13 @@ export class CardTraderService {
     return t.trim();
   }
 
-  private mergeDefaultAddresses<T extends CardTraderCartAddPayload>(body: T): T {
+  private mergeDefaultAddresses<T extends CardTraderCartAddPayload>(
+    body: T,
+  ): T {
     const billing = this.parseEnvAddressJson('CARDTRADER_DEFAULT_BILLING_JSON');
-    const shipping = this.parseEnvAddressJson('CARDTRADER_DEFAULT_SHIPPING_JSON');
+    const shipping = this.parseEnvAddressJson(
+      'CARDTRADER_DEFAULT_SHIPPING_JSON',
+    );
     if (!billing && !shipping) {
       return body;
     }
@@ -110,7 +116,10 @@ export class CardTraderService {
           Accept: 'application/json',
           ...(method === 'POST' ? { 'Content-Type': 'application/json' } : {}),
         },
-        body: method === 'POST' && options?.body !== undefined ? JSON.stringify(options.body) : undefined,
+        body:
+          method === 'POST' && options?.body !== undefined
+            ? JSON.stringify(options.body)
+            : undefined,
         signal: controller.signal,
       });
 
@@ -126,7 +135,10 @@ export class CardTraderService {
 
       if (res.status === 429) {
         throw new HttpException(
-          { message: 'CardTrader: demasiadas peticiones. Espera unos segundos e inténtalo de nuevo.' },
+          {
+            message:
+              'CardTrader: demasiadas peticiones. Espera unos segundos e inténtalo de nuevo.',
+          },
           HttpStatus.TOO_MANY_REQUESTS,
         );
       }
@@ -150,7 +162,10 @@ export class CardTraderService {
 
       return parsed;
     } catch (e) {
-      if (e instanceof HttpException || e instanceof ServiceUnavailableException) {
+      if (
+        e instanceof HttpException ||
+        e instanceof ServiceUnavailableException
+      ) {
         throw e;
       }
       if (e instanceof Error && e.name === 'AbortError') {
@@ -168,7 +183,11 @@ export class CardTraderService {
     }
   }
 
-  async getExpansions(_page?: number, _limit?: number, _gameId?: number): Promise<unknown> {
+  async getExpansions(
+    _page?: number,
+    _limit?: number,
+    _gameId?: number,
+  ): Promise<unknown> {
     // CardTrader no está aplicando consistentemente el filtro por query param game_id.
     // Traemos todas las expansiones y filtramos manualmente solo Pokémon (game_id = 5).
     const raw = await this.requestJson('GET', 'expansions');
@@ -193,7 +212,10 @@ export class CardTraderService {
     try {
       parsed = new URL(sourceUrl);
     } catch {
-      throw new HttpException({ message: 'URL de imagen inválida' }, HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        { message: 'URL de imagen inválida' },
+        HttpStatus.BAD_REQUEST,
+      );
     }
     if (parsed.protocol !== 'https:') {
       throw new HttpException(
@@ -230,10 +252,14 @@ export class CardTraderService {
         );
       }
 
-      const contentType = res.headers.get('content-type')?.split(';')[0]?.trim() || 'image/jpeg';
+      const contentType =
+        res.headers.get('content-type')?.split(';')[0]?.trim() || 'image/jpeg';
       const buffer = Buffer.from(await res.arrayBuffer());
       if (buffer.length === 0) {
-        throw new HttpException({ message: 'Imagen vacía' }, HttpStatus.BAD_GATEWAY);
+        throw new HttpException(
+          { message: 'Imagen vacía' },
+          HttpStatus.BAD_GATEWAY,
+        );
       }
       return { buffer, contentType };
     } catch (e) {
@@ -251,6 +277,10 @@ export class CardTraderService {
     return this.requestJson('GET', 'blueprints/export', {
       query: { expansion_id: String(expansionId) },
     });
+  }
+
+  async getBlueprintById(blueprintId: number): Promise<unknown> {
+    return this.requestJson('GET', `blueprints/${blueprintId}`);
   }
 
   async getMarketplaceProducts(params: {
@@ -272,7 +302,9 @@ export class CardTraderService {
     if (params.language) {
       query.language = params.language.trim().toLowerCase();
     }
-    const data = await this.requestJson('GET', 'marketplace/products', { query });
+    const data = await this.requestJson('GET', 'marketplace/products', {
+      query,
+    });
     this.captureMarketplaceProductsIntoCache(data);
     return data;
   }
@@ -309,7 +341,12 @@ export class CardTraderService {
       if (!Array.isArray(items)) continue;
       for (const item of items) {
         const pid = item?.product?.id;
-        const resolvedId = typeof pid === 'number' ? pid : typeof pid === 'string' ? Number(pid) : NaN;
+        const resolvedId =
+          typeof pid === 'number'
+            ? pid
+            : typeof pid === 'string'
+              ? Number(pid)
+              : NaN;
         if (!Number.isFinite(resolvedId)) continue;
         const cached = this.marketplaceProductCache.get(resolvedId);
         if (!cached) continue;
@@ -340,5 +377,42 @@ export class CardTraderService {
 
   async removeFromCart(body: CardTraderCartRemovePayload): Promise<unknown> {
     return this.requestJson('POST', 'cart/remove', { body });
+  }
+
+  async getOrders(params: {
+    page?: number;
+    limit?: number;
+    from?: string;
+    to?: string;
+    fromId?: number;
+    toId?: number;
+    state?: string;
+    orderAs?: 'buyer' | 'seller';
+    sort?: string;
+  }): Promise<unknown> {
+    const query: Record<string, string | undefined> = {
+      order_as: params.orderAs ?? 'buyer',
+      sort: params.sort ?? 'date.desc',
+    };
+    if (params.page !== undefined) query.page = String(params.page);
+    if (params.limit !== undefined) query.limit = String(params.limit);
+    if (params.from) query.from = params.from;
+    if (params.to) query.to = params.to;
+    if (params.fromId !== undefined) query.from_id = String(params.fromId);
+    if (params.toId !== undefined) query.to_id = String(params.toId);
+    if (params.state?.trim()) query.state = params.state.trim();
+    return this.requestJson('GET', 'orders', { query });
+  }
+
+  async getOrderById(orderId: number): Promise<unknown> {
+    return this.requestJson('GET', `orders/${orderId}`);
+  }
+
+  async getCt0BoxItems(): Promise<unknown> {
+    return this.requestJson('GET', 'ct0_box_items');
+  }
+
+  async getCt0BoxItemById(itemId: number): Promise<unknown> {
+    return this.requestJson('GET', `ct0_box_items/${itemId}`);
   }
 }

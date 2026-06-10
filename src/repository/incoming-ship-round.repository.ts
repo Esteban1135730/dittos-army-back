@@ -13,7 +13,9 @@ export class IncomingShipRoundRepository {
     private roundModel: Model<IncomingShipRoundDocument>,
   ) {}
 
-  async create(data: { shipping_total_cop: number }): Promise<IncomingShipRoundDocument> {
+  async create(data: {
+    shipping_total_cop: number;
+  }): Promise<IncomingShipRoundDocument> {
     const created = new this.roundModel({
       shipping_total_cop: data.shipping_total_cop,
       status: 'reviewing',
@@ -48,4 +50,3 @@ export class IncomingShipRoundRepository {
     return (result.deletedCount ?? 0) > 0;
   }
 }
-

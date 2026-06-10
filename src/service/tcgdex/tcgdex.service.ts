@@ -205,7 +205,9 @@ export class TCGDexService {
     }
     const id = cardId.trim();
     if (!id) {
-      console.error('[TCGDexService] getCard: cardId vacío después de trim', { cardId });
+      console.error('[TCGDexService] getCard: cardId vacío después de trim', {
+        cardId,
+      });
       return undefined;
     }
 
@@ -220,20 +222,26 @@ export class TCGDexService {
     try {
       const res = await fetch(url);
       if (!res.ok) {
-        console.error('[TCGDexService] getCard: API TCGdex respondió con error', {
-          cardId: id,
-          status: res.status,
-          statusText: res.statusText,
-        });
+        console.error(
+          '[TCGDexService] getCard: API TCGdex respondió con error',
+          {
+            cardId: id,
+            status: res.status,
+            statusText: res.statusText,
+          },
+        );
         return undefined;
       }
-      const raw = await res.json() as TCGdexCardApiResponse;
+      const raw = (await res.json()) as TCGdexCardApiResponse;
       if (!raw || typeof raw !== 'object' || !raw.name) {
-        console.error('[TCGDexService] getCard: respuesta sin nombre de carta', {
-          cardId: id,
-          hasRaw: !!raw,
-          hasName: !!(raw && raw.name),
-        });
+        console.error(
+          '[TCGDexService] getCard: respuesta sin nombre de carta',
+          {
+            cardId: id,
+            hasRaw: !!raw,
+            hasName: !!(raw && raw.name),
+          },
+        );
         return undefined;
       }
       const dto = mapCardFromApi(raw);
@@ -263,7 +271,10 @@ export class TCGDexService {
     }
   }
 
-  async getCardSet(cardId: string, locale?: string): Promise<string | undefined> {
+  async getCardSet(
+    cardId: string,
+    locale?: string,
+  ): Promise<string | undefined> {
     const normalizedLocale = this.normalizeLocale(locale);
     const card = await this.getClient(normalizedLocale).card.get(cardId);
     if (card) {

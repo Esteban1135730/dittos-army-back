@@ -69,7 +69,9 @@ describe('StockController.listStock (tags por card_id)', () => {
     expect(Array.isArray(rows)).toBe(true);
     expect(rows).toHaveLength(1);
     expect(rows![0].tags).toEqual(['vintage']);
-    expect(cardStockTagRepository.findMapByCardIds).toHaveBeenCalledWith(['sv1-1']);
+    expect(cardStockTagRepository.findMapByCardIds).toHaveBeenCalledWith([
+      'sv1-1',
+    ]);
   });
 
   it('si no hay fila en card_stock_tags, usa tags del documento stock', async () => {
@@ -97,7 +99,9 @@ describe('StockController.listStock (tags por card_id)', () => {
       findAll: jest.fn().mockResolvedValue([stockRow]),
     };
     const cardStockTagRepository = {
-      findMapByCardIds: jest.fn().mockResolvedValue(new Map<string, string[]>()),
+      findMapByCardIds: jest
+        .fn()
+        .mockResolvedValue(new Map<string, string[]>()),
       setTagsForCardId: jest.fn(),
     };
     const pvpRepository = {

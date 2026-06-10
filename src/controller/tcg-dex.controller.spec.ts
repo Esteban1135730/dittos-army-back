@@ -50,4 +50,3 @@ describe('TcgDexController locale support', () => {
     expect(tcgDexService.getSetCards).toHaveBeenCalledWith('sv8', 'zh-cn');
   });
 });
-

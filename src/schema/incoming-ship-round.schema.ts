@@ -20,7 +20,5 @@ export class IncomingShipRound {
   finalized_at?: Date;
 }
 
-export const IncomingShipRoundSchema = SchemaFactory.createForClass(
-  IncomingShipRound,
-);
-
+export const IncomingShipRoundSchema =
+  SchemaFactory.createForClass(IncomingShipRound);

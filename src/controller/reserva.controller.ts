@@ -49,7 +49,9 @@ export class ReservaController {
   }
 
   @Post('import-store-whatsapp')
-  async importStoreWhatsApp(@Body() body: { client_id?: string; message?: string }) {
+  async importStoreWhatsApp(
+    @Body() body: { client_id?: string; message?: string },
+  ) {
     const client_id = body?.client_id?.trim();
     const message = body?.message ?? '';
     if (!client_id) {
@@ -77,7 +79,11 @@ export class ReservaController {
     }
     const batch_item_id = body?.batch_item_id?.trim();
     if (batch_item_id) {
-      return this.incomingReservationService.addQuantity(client_id, batch_item_id, Number(quantity));
+      return this.incomingReservationService.addQuantity(
+        client_id,
+        batch_item_id,
+        Number(quantity),
+      );
     }
     const card_id = body?.card_id?.trim();
     const language = body?.language?.trim();
@@ -97,7 +103,9 @@ export class ReservaController {
 
   @Get('incoming')
   async listReservaIncoming(@Query('client_id') clientId?: string) {
-    return this.incomingReservationService.listIncoming(clientId?.trim() || undefined);
+    return this.incomingReservationService.listIncoming(
+      clientId?.trim() || undefined,
+    );
   }
 
   @Patch('incoming/:id')
@@ -108,11 +116,16 @@ export class ReservaController {
     if (body?.quantity == null) {
       throw new BadRequestException('quantity es requerido');
     }
-    return this.incomingReservationService.setAbsoluteQuantity(id, Number(body.quantity));
+    return this.incomingReservationService.setAbsoluteQuantity(
+      id,
+      Number(body.quantity),
+    );
   }
 
   @Delete('incoming/:id')
-  async deleteReservaIncoming(@Param('id') id: string): Promise<{ success: boolean }> {
+  async deleteReservaIncoming(
+    @Param('id') id: string,
+  ): Promise<{ success: boolean }> {
     const ok = await this.incomingReservationService.deleteById(id);
     return { success: ok };
   }
@@ -187,7 +200,9 @@ export class ReservaController {
   }
 
   @Post('client/:clientId/finalizar-venta')
-  async finalizarVenta(@Param('clientId') clientId: string): Promise<{ success: boolean; vendidas?: number; error?: string }> {
+  async finalizarVenta(
+    @Param('clientId') clientId: string,
+  ): Promise<{ success: boolean; vendidas?: number; error?: string }> {
     const reservas = await this.reservaRepository.findByClientId(clientId);
     if (!reservas || reservas.length === 0) {
       return { success: false, error: 'El cliente no tiene reservas' };
@@ -195,7 +210,10 @@ export class ReservaController {
     for (const reserva of reservas) {
       const stock = await this.stockRepository.findById(reserva.stock_id);
       if (!stock) {
-        return { success: false, error: `Stock no encontrado: ${reserva.stock_id}` };
+        return {
+          success: false,
+          error: `Stock no encontrado: ${reserva.stock_id}`,
+        };
       }
       const amountCop = precioToCop(reserva.precio, reserva.currency ?? 'COP');
       await this.saleRepository.create({
@@ -206,7 +224,10 @@ export class ReservaController {
         client_id: clientId,
         notes: `Venta finalizada desde reserva (cliente ${clientId}). Precio original: ${reserva.precio} ${reserva.currency ?? 'COP'}.`,
       });
-      await this.stockRepository.updateCardState(reserva.stock_id, ESTADO_VENDIDA);
+      await this.stockRepository.updateCardState(
+        reserva.stock_id,
+        ESTADO_VENDIDA,
+      );
       await this.pvpRepository.update({
         card_id: stock.card_id,
         pvp: reserva.precio,

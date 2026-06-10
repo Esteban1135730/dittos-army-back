@@ -38,7 +38,10 @@ describe('DashboardOverviewService', () => {
         { provide: SaleRepository, useValue: saleRepository },
         { provide: ClientRepository, useValue: clientRepository },
         { provide: ReservaRepository, useValue: reservaRepository },
-        { provide: ReservaIncomingRepository, useValue: reservaIncomingRepository },
+        {
+          provide: ReservaIncomingRepository,
+          useValue: reservaIncomingRepository,
+        },
         { provide: IncomingBatchRepository, useValue: incomingBatchRepository },
         {
           provide: IncomingBatchItemRepository,
@@ -88,7 +91,9 @@ describe('DashboardOverviewService', () => {
 
     const result = await service.getOverview();
     const monthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-    const monthRow = result.charts.sales_by_month.find((d) => d.month === monthKey);
+    const monthRow = result.charts.sales_by_month.find(
+      (d) => d.month === monthKey,
+    );
 
     expect(monthRow?.count).toBe(1);
     expect(monthRow?.amount_cop).toBe(5000);
@@ -96,8 +101,24 @@ describe('DashboardOverviewService', () => {
 
   it('agrupa conteos por card_state', async () => {
     stockRepository.findAll.mockResolvedValue([
-      { _id: stockId, card_id: 'c1', card_state: 'disponible', currency: 'COP', unity_cost: 1000, shipment: 0, cards_in_shipmet: 1 },
-      { _id: stockId2, card_id: 'c2', card_state: 'Reserva', currency: 'COP', unity_cost: 500, shipment: 0, cards_in_shipmet: 1 },
+      {
+        _id: stockId,
+        card_id: 'c1',
+        card_state: 'disponible',
+        currency: 'COP',
+        unity_cost: 1000,
+        shipment: 0,
+        cards_in_shipmet: 1,
+      },
+      {
+        _id: stockId2,
+        card_id: 'c2',
+        card_state: 'Reserva',
+        currency: 'COP',
+        unity_cost: 500,
+        shipment: 0,
+        cards_in_shipmet: 1,
+      },
     ]);
     saleRepository.findActiveVentas.mockResolvedValue([]);
     saleRepository.findHistoricalVentas.mockResolvedValue([]);
@@ -146,8 +167,24 @@ describe('DashboardOverviewService', () => {
 
   it('cuenta discrepancias de consistencia', async () => {
     stockRepository.findAll.mockResolvedValue([
-      { _id: stockId, card_id: 'c1', card_state: 'vendida', currency: 'COP', unity_cost: 0, shipment: 0, cards_in_shipmet: 1 },
-      { _id: stockId2, card_id: 'c2', card_state: 'disponible', currency: 'COP', unity_cost: 0, shipment: 0, cards_in_shipmet: 1 },
+      {
+        _id: stockId,
+        card_id: 'c1',
+        card_state: 'vendida',
+        currency: 'COP',
+        unity_cost: 0,
+        shipment: 0,
+        cards_in_shipmet: 1,
+      },
+      {
+        _id: stockId2,
+        card_id: 'c2',
+        card_state: 'disponible',
+        currency: 'COP',
+        unity_cost: 0,
+        shipment: 0,
+        cards_in_shipmet: 1,
+      },
     ]);
     saleRepository.findActiveVentas.mockResolvedValue([
       { stock_id: stockId2, amount_cop: 1000 },

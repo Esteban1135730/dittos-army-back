@@ -18,7 +18,9 @@ export class IncomingShipRoundItemRepository {
     return this.itemModel.insertMany(items as any);
   }
 
-  async findByRoundId(roundId: string): Promise<IncomingShipRoundItemDocument[]> {
+  async findByRoundId(
+    roundId: string,
+  ): Promise<IncomingShipRoundItemDocument[]> {
     return this.itemModel.find({ ship_round_id: roundId }).exec();
   }
 
@@ -51,8 +53,9 @@ export class IncomingShipRoundItemRepository {
   }
 
   async deleteByRoundId(roundId: string): Promise<number> {
-    const result = await this.itemModel.deleteMany({ ship_round_id: roundId }).exec();
+    const result = await this.itemModel
+      .deleteMany({ ship_round_id: roundId })
+      .exec();
     return result.deletedCount ?? 0;
   }
 }
-

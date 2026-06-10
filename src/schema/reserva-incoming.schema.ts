@@ -22,7 +22,11 @@ export class ReservaIncoming {
   updated_at: Date;
 }
 
-export const ReservaIncomingSchema = SchemaFactory.createForClass(ReservaIncoming);
+export const ReservaIncomingSchema =
+  SchemaFactory.createForClass(ReservaIncoming);
 
-ReservaIncomingSchema.index({ client_id: 1, batch_item_id: 1 }, { unique: true });
+ReservaIncomingSchema.index(
+  { client_id: 1, batch_item_id: 1 },
+  { unique: true },
+);
 ReservaIncomingSchema.index({ batch_item_id: 1, created_at: 1 });

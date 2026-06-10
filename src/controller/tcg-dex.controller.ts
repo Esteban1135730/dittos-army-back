@@ -1,8 +1,17 @@
-import { BadRequestException, Controller, Get, Param, Query } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Param,
+  Query,
+} from '@nestjs/common';
 import { CardDto } from 'src/service/tcgdex/dto/card.dto';
 import { CardResumeDto } from 'src/service/tcgdex/dto/card.resume.dto';
 import { SetResumeDto } from 'src/service/tcgdex/dto/set.resume.dto';
-import { TCGDEX_SUPPORTED_LOCALES, TCGDexService } from 'src/service/tcgdex/tcgdex.service';
+import {
+  TCGDEX_SUPPORTED_LOCALES,
+  TCGDexService,
+} from 'src/service/tcgdex/tcgdex.service';
 
 @Controller('tcg-dex')
 export class TcgDexController {
@@ -21,7 +30,9 @@ export class TcgDexController {
   }
 
   @Get('set')
-  async listSets(@Query('locale') locale?: string): Promise<SetResumeDto[] | null> {
+  async listSets(
+    @Query('locale') locale?: string,
+  ): Promise<SetResumeDto[] | null> {
     return await this.tcgDexService.getSets(this.resolveLocale(locale));
   }
 
@@ -52,7 +63,10 @@ export class TcgDexController {
     @Param() params: any,
     @Query('locale') locale?: string,
   ): Promise<CardDto | undefined> {
-    return await this.tcgDexService.getCard(params.id, this.resolveLocale(locale));
+    return await this.tcgDexService.getCard(
+      params.id,
+      this.resolveLocale(locale),
+    );
   }
 
   /**
@@ -64,7 +78,10 @@ export class TcgDexController {
     @Query('locale') locale?: string,
   ): Promise<CardDto | null> {
     const cardId = params.id as string;
-    const card = await this.tcgDexService.getCard(cardId, this.resolveLocale(locale));
+    const card = await this.tcgDexService.getCard(
+      cardId,
+      this.resolveLocale(locale),
+    );
     if (!card) {
       console.error('[tcg-dex] getCardAlter: carta no encontrada', { cardId });
     }

@@ -28,7 +28,9 @@ export class CardStockTagRepository {
   }
 
   async findMapByCardIds(cardIds: string[]): Promise<Map<string, string[]>> {
-    const unique = [...new Set(cardIds.map((c) => String(c ?? '').trim()).filter(Boolean))];
+    const unique = [
+      ...new Set(cardIds.map((c) => String(c ?? '').trim()).filter(Boolean)),
+    ];
     if (unique.length === 0) {
       return new Map();
     }

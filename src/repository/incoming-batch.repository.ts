@@ -1,12 +1,16 @@
 import { InjectModel } from '@nestjs/mongoose';
 import { Injectable } from '@nestjs/common';
 import { Model } from 'mongoose';
-import { IncomingBatch, IncomingBatchDocument } from '../schema/incoming-batch.schema';
+import {
+  IncomingBatch,
+  IncomingBatchDocument,
+} from '../schema/incoming-batch.schema';
 
 @Injectable()
 export class IncomingBatchRepository {
   constructor(
-    @InjectModel(IncomingBatch.name) private batchModel: Model<IncomingBatchDocument>,
+    @InjectModel(IncomingBatch.name)
+    private batchModel: Model<IncomingBatchDocument>,
   ) {}
 
   async create(data: {
@@ -33,7 +37,10 @@ export class IncomingBatchRepository {
   }
 
   async findOpenBatches(): Promise<IncomingBatchDocument[]> {
-    return this.batchModel.find({ status: 'open' }).sort({ created_at: -1 }).exec();
+    return this.batchModel
+      .find({ status: 'open' })
+      .sort({ created_at: -1 })
+      .exec();
   }
 
   async setStatus(
@@ -61,4 +68,3 @@ export class IncomingBatchRepository {
     return this.batchModel.findByIdAndUpdate(id, data, { new: true }).exec();
   }
 }
-

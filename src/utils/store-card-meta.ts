@@ -8,7 +8,9 @@ export type StoreCardExportMeta = {
 };
 
 /** Set field from CardDto: `setId(Set Name)` */
-export function parseExpansionFromSetField(setField: string | undefined | null): string | undefined {
+export function parseExpansionFromSetField(
+  setField: string | undefined | null,
+): string | undefined {
   const raw = (setField ?? '').trim();
   if (!raw) return undefined;
   const open = raw.indexOf('(');
@@ -33,7 +35,8 @@ export function parseCardNumberFromCardId(cardId: string): string | undefined {
 
 export function storeCardMetaFromDto(card: CardDto): StoreCardExportMeta {
   const cardNumber =
-    (card.localId && String(card.localId).trim()) || parseCardNumberFromCardId(card.id);
+    (card.localId && String(card.localId).trim()) ||
+    parseCardNumberFromCardId(card.id);
   return {
     name: card.name,
     image: card.image || card.images?.small || card.images?.large || '',

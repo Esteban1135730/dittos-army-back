@@ -27,9 +27,9 @@ describe('normalizeStockTagsInput', () => {
   });
 
   it('rechaza tag desconocido', () => {
-    expect(() =>
-      normalizeStockTagsInput(['vintage', 'nope']),
-    ).toThrow(BadRequestException);
+    expect(() => normalizeStockTagsInput(['vintage', 'nope'])).toThrow(
+      BadRequestException,
+    );
   });
 
   it('rechaza elemento no string', () => {

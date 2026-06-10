@@ -1,0 +1,4625 @@
+{
+  "updatedAt": "2026-06-09T04:39:54.268Z",
+  "entries": [
+    {
+      "cardId": "B1a-031",
+      "lang": "en",
+      "setId": "B1a",
+      "url": "https://assets.tcgdex.net/en/tcgp/B1a/031/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/tcgp/B1a/031",
+      "firstSeenAt": "2026-06-09T04:39:51.035Z",
+      "lastSeenAt": "2026-06-09T04:39:51.035Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base1-24",
+      "lang": "en",
+      "setId": "base1",
+      "url": "https://assets.tcgdex.net/en/base/base1/24/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base1/24",
+      "firstSeenAt": "2026-06-09T04:39:51.040Z",
+      "lastSeenAt": "2026-06-09T04:39:51.040Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base1-26",
+      "lang": "en",
+      "setId": "base1",
+      "url": "https://assets.tcgdex.net/en/base/base1/26/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base1/26",
+      "firstSeenAt": "2026-06-09T04:39:51.046Z",
+      "lastSeenAt": "2026-06-09T04:39:51.046Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base1-28",
+      "lang": "en",
+      "setId": "base1",
+      "url": "https://assets.tcgdex.net/en/base/base1/28/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base1/28",
+      "firstSeenAt": "2026-06-09T04:39:51.046Z",
+      "lastSeenAt": "2026-06-09T04:39:51.046Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base1-35",
+      "lang": "en",
+      "setId": "base1",
+      "url": "https://assets.tcgdex.net/en/base/base1/35/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base1/35",
+      "firstSeenAt": "2026-06-09T04:39:51.013Z",
+      "lastSeenAt": "2026-06-09T04:39:51.013Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base1-38",
+      "lang": "en",
+      "setId": "base1",
+      "url": "https://assets.tcgdex.net/en/base/base1/38/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base1/38",
+      "firstSeenAt": "2026-06-09T04:39:51.024Z",
+      "lastSeenAt": "2026-06-09T04:39:51.024Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base1-43",
+      "lang": "en",
+      "setId": "base1",
+      "url": "https://assets.tcgdex.net/en/base/base1/43/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base1/43",
+      "firstSeenAt": "2026-06-09T04:39:51.006Z",
+      "lastSeenAt": "2026-06-09T04:39:51.006Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base1-44",
+      "lang": "en",
+      "setId": "base1",
+      "url": "https://assets.tcgdex.net/en/base/base1/44/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base1/44",
+      "firstSeenAt": "2026-06-09T04:39:51.038Z",
+      "lastSeenAt": "2026-06-09T04:39:51.038Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base1-46",
+      "lang": "en",
+      "setId": "base1",
+      "url": "https://assets.tcgdex.net/en/base/base1/46/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base1/46",
+      "firstSeenAt": "2026-06-09T04:39:50.192Z",
+      "lastSeenAt": "2026-06-09T04:39:50.192Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base1-63",
+      "lang": "en",
+      "setId": "base1",
+      "url": "https://assets.tcgdex.net/en/base/base1/63/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base1/63",
+      "firstSeenAt": "2026-06-09T04:39:50.197Z",
+      "lastSeenAt": "2026-06-09T04:39:50.197Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base1-68",
+      "lang": "en",
+      "setId": "base1",
+      "url": "https://assets.tcgdex.net/en/base/base1/68/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base1/68",
+      "firstSeenAt": "2026-06-09T04:39:51.012Z",
+      "lastSeenAt": "2026-06-09T04:39:51.012Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base2-38",
+      "lang": "en",
+      "setId": "base2",
+      "url": "https://assets.tcgdex.net/en/base/base2/38/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base2/38",
+      "firstSeenAt": "2026-06-09T04:39:51.043Z",
+      "lastSeenAt": "2026-06-09T04:39:51.043Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base2-39",
+      "lang": "en",
+      "setId": "base2",
+      "url": "https://assets.tcgdex.net/en/base/base2/39/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base2/39",
+      "firstSeenAt": "2026-06-09T04:39:51.020Z",
+      "lastSeenAt": "2026-06-09T04:39:51.020Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base2-40",
+      "lang": "en",
+      "setId": "base2",
+      "url": "https://assets.tcgdex.net/en/base/base2/40/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base2/40",
+      "firstSeenAt": "2026-06-09T04:39:51.036Z",
+      "lastSeenAt": "2026-06-09T04:39:51.036Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base2-41",
+      "lang": "en",
+      "setId": "base2",
+      "url": "https://assets.tcgdex.net/en/base/base2/41/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base2/41",
+      "firstSeenAt": "2026-06-09T04:39:51.170Z",
+      "lastSeenAt": "2026-06-09T04:39:51.170Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base2-43",
+      "lang": "en",
+      "setId": "base2",
+      "url": "https://assets.tcgdex.net/en/base/base2/43/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base2/43",
+      "firstSeenAt": "2026-06-09T04:39:50.995Z",
+      "lastSeenAt": "2026-06-09T04:39:50.995Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base2-44",
+      "lang": "en",
+      "setId": "base2",
+      "url": "https://assets.tcgdex.net/en/base/base2/44/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base2/44",
+      "firstSeenAt": "2026-06-09T04:39:51.259Z",
+      "lastSeenAt": "2026-06-09T04:39:51.259Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base2-46",
+      "lang": "en",
+      "setId": "base2",
+      "url": "https://assets.tcgdex.net/en/base/base2/46/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base2/46",
+      "firstSeenAt": "2026-06-09T04:39:51.036Z",
+      "lastSeenAt": "2026-06-09T04:39:51.036Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base2-47",
+      "lang": "en",
+      "setId": "base2",
+      "url": "https://assets.tcgdex.net/en/base/base2/47/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base2/47",
+      "firstSeenAt": "2026-06-09T04:39:51.036Z",
+      "lastSeenAt": "2026-06-09T04:39:51.036Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base2-48",
+      "lang": "en",
+      "setId": "base2",
+      "url": "https://assets.tcgdex.net/en/base/base2/48/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base2/48",
+      "firstSeenAt": "2026-06-09T04:39:51.038Z",
+      "lastSeenAt": "2026-06-09T04:39:51.038Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base2-49",
+      "lang": "en",
+      "setId": "base2",
+      "url": "https://assets.tcgdex.net/en/base/base2/49/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base2/49",
+      "firstSeenAt": "2026-06-09T04:39:51.015Z",
+      "lastSeenAt": "2026-06-09T04:39:51.015Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base2-50",
+      "lang": "en",
+      "setId": "base2",
+      "url": "https://assets.tcgdex.net/en/base/base2/50/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base2/50",
+      "firstSeenAt": "2026-06-09T04:39:51.016Z",
+      "lastSeenAt": "2026-06-09T04:39:51.016Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base2-51",
+      "lang": "en",
+      "setId": "base2",
+      "url": "https://assets.tcgdex.net/en/base/base2/51/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base2/51",
+      "firstSeenAt": "2026-06-09T04:39:50.191Z",
+      "lastSeenAt": "2026-06-09T04:39:51.028Z",
+      "hitCount": 2
+    },
+    {
+      "cardId": "base2-53",
+      "lang": "en",
+      "setId": "base2",
+      "url": "https://assets.tcgdex.net/en/base/base2/53/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base2/53",
+      "firstSeenAt": "2026-06-09T04:39:51.003Z",
+      "lastSeenAt": "2026-06-09T04:39:51.003Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base2-54",
+      "lang": "en",
+      "setId": "base2",
+      "url": "https://assets.tcgdex.net/en/base/base2/54/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base2/54",
+      "firstSeenAt": "2026-06-09T04:39:51.034Z",
+      "lastSeenAt": "2026-06-09T04:39:51.034Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base2-56",
+      "lang": "en",
+      "setId": "base2",
+      "url": "https://assets.tcgdex.net/en/base/base2/56/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base2/56",
+      "firstSeenAt": "2026-06-09T04:39:51.093Z",
+      "lastSeenAt": "2026-06-09T04:39:51.093Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base2-58",
+      "lang": "en",
+      "setId": "base2",
+      "url": "https://assets.tcgdex.net/en/base/base2/58/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base2/58",
+      "firstSeenAt": "2026-06-09T04:39:51.014Z",
+      "lastSeenAt": "2026-06-09T04:39:51.014Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base2-59",
+      "lang": "en",
+      "setId": "base2",
+      "url": "https://assets.tcgdex.net/en/base/base2/59/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base2/59",
+      "firstSeenAt": "2026-06-09T04:39:51.019Z",
+      "lastSeenAt": "2026-06-09T04:39:51.019Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base2-60",
+      "lang": "en",
+      "setId": "base2",
+      "url": "https://assets.tcgdex.net/en/base/base2/60/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base2/60",
+      "firstSeenAt": "2026-06-09T04:39:50.187Z",
+      "lastSeenAt": "2026-06-09T04:39:50.187Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base2-61",
+      "lang": "en",
+      "setId": "base2",
+      "url": "https://assets.tcgdex.net/en/base/base2/61/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base2/61",
+      "firstSeenAt": "2026-06-09T04:39:50.979Z",
+      "lastSeenAt": "2026-06-09T04:39:50.979Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base2-62",
+      "lang": "en",
+      "setId": "base2",
+      "url": "https://assets.tcgdex.net/en/base/base2/62/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base2/62",
+      "firstSeenAt": "2026-06-09T04:39:51.016Z",
+      "lastSeenAt": "2026-06-09T04:39:51.016Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base2-63",
+      "lang": "en",
+      "setId": "base2",
+      "url": "https://assets.tcgdex.net/en/base/base2/63/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base2/63",
+      "firstSeenAt": "2026-06-09T04:39:51.040Z",
+      "lastSeenAt": "2026-06-09T04:39:51.040Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base3-31",
+      "lang": "en",
+      "setId": "base3",
+      "url": "https://assets.tcgdex.net/en/base/base3/31/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base3/31",
+      "firstSeenAt": "2026-06-09T04:39:50.979Z",
+      "lastSeenAt": "2026-06-09T04:39:50.979Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base3-33",
+      "lang": "en",
+      "setId": "base3",
+      "url": "https://assets.tcgdex.net/en/base/base3/33/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base3/33",
+      "firstSeenAt": "2026-06-09T04:39:51.008Z",
+      "lastSeenAt": "2026-06-09T04:39:51.008Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base3-34",
+      "lang": "en",
+      "setId": "base3",
+      "url": "https://assets.tcgdex.net/en/base/base3/34/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base3/34",
+      "firstSeenAt": "2026-06-09T04:39:51.016Z",
+      "lastSeenAt": "2026-06-09T04:39:51.016Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base3-37",
+      "lang": "en",
+      "setId": "base3",
+      "url": "https://assets.tcgdex.net/en/base/base3/37/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base3/37",
+      "firstSeenAt": "2026-06-09T04:39:51.038Z",
+      "lastSeenAt": "2026-06-09T04:39:51.038Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base3-38",
+      "lang": "en",
+      "setId": "base3",
+      "url": "https://assets.tcgdex.net/en/base/base3/38/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base3/38",
+      "firstSeenAt": "2026-06-09T04:39:51.032Z",
+      "lastSeenAt": "2026-06-09T04:39:51.032Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base3-39",
+      "lang": "en",
+      "setId": "base3",
+      "url": "https://assets.tcgdex.net/en/base/base3/39/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base3/39",
+      "firstSeenAt": "2026-06-09T04:39:51.041Z",
+      "lastSeenAt": "2026-06-09T04:39:51.041Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base3-42",
+      "lang": "en",
+      "setId": "base3",
+      "url": "https://assets.tcgdex.net/en/base/base3/42/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base3/42",
+      "firstSeenAt": "2026-06-09T04:39:51.004Z",
+      "lastSeenAt": "2026-06-09T04:39:51.004Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base3-43",
+      "lang": "en",
+      "setId": "base3",
+      "url": "https://assets.tcgdex.net/en/base/base3/43/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base3/43",
+      "firstSeenAt": "2026-06-09T04:39:50.992Z",
+      "lastSeenAt": "2026-06-09T04:39:50.992Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base3-44",
+      "lang": "en",
+      "setId": "base3",
+      "url": "https://assets.tcgdex.net/en/base/base3/44/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base3/44",
+      "firstSeenAt": "2026-06-09T04:39:51.039Z",
+      "lastSeenAt": "2026-06-09T04:39:51.039Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base3-46",
+      "lang": "en",
+      "setId": "base3",
+      "url": "https://assets.tcgdex.net/en/base/base3/46/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base3/46",
+      "firstSeenAt": "2026-06-09T04:39:51.006Z",
+      "lastSeenAt": "2026-06-09T04:39:51.006Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base3-47",
+      "lang": "en",
+      "setId": "base3",
+      "url": "https://assets.tcgdex.net/en/base/base3/47/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base3/47",
+      "firstSeenAt": "2026-06-09T04:39:51.172Z",
+      "lastSeenAt": "2026-06-09T04:39:51.172Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base3-49",
+      "lang": "en",
+      "setId": "base3",
+      "url": "https://assets.tcgdex.net/en/base/base3/49/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base3/49",
+      "firstSeenAt": "2026-06-09T04:39:51.042Z",
+      "lastSeenAt": "2026-06-09T04:39:51.042Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base3-50",
+      "lang": "en",
+      "setId": "base3",
+      "url": "https://assets.tcgdex.net/en/base/base3/50/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base3/50",
+      "firstSeenAt": "2026-06-09T04:39:50.984Z",
+      "lastSeenAt": "2026-06-09T04:39:50.984Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base3-51",
+      "lang": "en",
+      "setId": "base3",
+      "url": "https://assets.tcgdex.net/en/base/base3/51/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base3/51",
+      "firstSeenAt": "2026-06-09T04:39:51.043Z",
+      "lastSeenAt": "2026-06-09T04:39:51.043Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base3-52",
+      "lang": "en",
+      "setId": "base3",
+      "url": "https://assets.tcgdex.net/en/base/base3/52/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base3/52",
+      "firstSeenAt": "2026-06-09T04:39:51.309Z",
+      "lastSeenAt": "2026-06-09T04:39:51.309Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base3-53",
+      "lang": "en",
+      "setId": "base3",
+      "url": "https://assets.tcgdex.net/en/base/base3/53/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base3/53",
+      "firstSeenAt": "2026-06-09T04:39:51.032Z",
+      "lastSeenAt": "2026-06-09T04:39:51.040Z",
+      "hitCount": 2
+    },
+    {
+      "cardId": "base3-54",
+      "lang": "en",
+      "setId": "base3",
+      "url": "https://assets.tcgdex.net/en/base/base3/54/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base3/54",
+      "firstSeenAt": "2026-06-09T04:39:51.043Z",
+      "lastSeenAt": "2026-06-09T04:39:51.043Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base3-55",
+      "lang": "en",
+      "setId": "base3",
+      "url": "https://assets.tcgdex.net/en/base/base3/55/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base3/55",
+      "firstSeenAt": "2026-06-09T04:39:51.043Z",
+      "lastSeenAt": "2026-06-09T04:39:51.043Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base3-56",
+      "lang": "en",
+      "setId": "base3",
+      "url": "https://assets.tcgdex.net/en/base/base3/56/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base3/56",
+      "firstSeenAt": "2026-06-09T04:39:51.024Z",
+      "lastSeenAt": "2026-06-09T04:39:51.024Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base3-57",
+      "lang": "en",
+      "setId": "base3",
+      "url": "https://assets.tcgdex.net/en/base/base3/57/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base3/57",
+      "firstSeenAt": "2026-06-09T04:39:51.032Z",
+      "lastSeenAt": "2026-06-09T04:39:51.032Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base3-58",
+      "lang": "en",
+      "setId": "base3",
+      "url": "https://assets.tcgdex.net/en/base/base3/58/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base3/58",
+      "firstSeenAt": "2026-06-09T04:39:51.041Z",
+      "lastSeenAt": "2026-06-09T04:39:51.041Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base3-59",
+      "lang": "en",
+      "setId": "base3",
+      "url": "https://assets.tcgdex.net/en/base/base3/59/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base3/59",
+      "firstSeenAt": "2026-06-09T04:39:51.036Z",
+      "lastSeenAt": "2026-06-09T04:39:51.036Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base5-39",
+      "lang": "en",
+      "setId": "base5",
+      "url": "https://assets.tcgdex.net/en/base/base5/39/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base5/39",
+      "firstSeenAt": "2026-06-09T04:39:51.294Z",
+      "lastSeenAt": "2026-06-09T04:39:51.294Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base5-45",
+      "lang": "en",
+      "setId": "base5",
+      "url": "https://assets.tcgdex.net/en/base/base5/45/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base5/45",
+      "firstSeenAt": "2026-06-09T04:39:51.039Z",
+      "lastSeenAt": "2026-06-09T04:39:51.039Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base5-49",
+      "lang": "en",
+      "setId": "base5",
+      "url": "https://assets.tcgdex.net/en/base/base5/49/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base5/49",
+      "firstSeenAt": "2026-06-09T04:39:50.020Z",
+      "lastSeenAt": "2026-06-09T04:39:50.020Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base5-50",
+      "lang": "en",
+      "setId": "base5",
+      "url": "https://assets.tcgdex.net/en/base/base5/50/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base5/50",
+      "firstSeenAt": "2026-06-09T04:39:51.037Z",
+      "lastSeenAt": "2026-06-09T04:39:51.037Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base5-54",
+      "lang": "en",
+      "setId": "base5",
+      "url": "https://assets.tcgdex.net/en/base/base5/54/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base5/54",
+      "firstSeenAt": "2026-06-09T04:39:51.036Z",
+      "lastSeenAt": "2026-06-09T04:39:51.036Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base5-55",
+      "lang": "en",
+      "setId": "base5",
+      "url": "https://assets.tcgdex.net/en/base/base5/55/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base5/55",
+      "firstSeenAt": "2026-06-09T04:39:50.201Z",
+      "lastSeenAt": "2026-06-09T04:39:51.034Z",
+      "hitCount": 2
+    },
+    {
+      "cardId": "base5-58",
+      "lang": "en",
+      "setId": "base5",
+      "url": "https://assets.tcgdex.net/en/base/base5/58/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base5/58",
+      "firstSeenAt": "2026-06-09T04:39:51.022Z",
+      "lastSeenAt": "2026-06-09T04:39:51.022Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base5-59",
+      "lang": "en",
+      "setId": "base5",
+      "url": "https://assets.tcgdex.net/en/base/base5/59/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base5/59",
+      "firstSeenAt": "2026-06-09T04:39:51.241Z",
+      "lastSeenAt": "2026-06-09T04:39:51.241Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base5-61",
+      "lang": "en",
+      "setId": "base5",
+      "url": "https://assets.tcgdex.net/en/base/base5/61/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base5/61",
+      "firstSeenAt": "2026-06-09T04:39:51.007Z",
+      "lastSeenAt": "2026-06-09T04:39:51.007Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base5-63",
+      "lang": "en",
+      "setId": "base5",
+      "url": "https://assets.tcgdex.net/en/base/base5/63/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base5/63",
+      "firstSeenAt": "2026-06-09T04:39:51.014Z",
+      "lastSeenAt": "2026-06-09T04:39:51.014Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base5-64",
+      "lang": "en",
+      "setId": "base5",
+      "url": "https://assets.tcgdex.net/en/base/base5/64/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base5/64",
+      "firstSeenAt": "2026-06-09T04:39:51.018Z",
+      "lastSeenAt": "2026-06-09T04:39:51.018Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base5-65",
+      "lang": "en",
+      "setId": "base5",
+      "url": "https://assets.tcgdex.net/en/base/base5/65/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base5/65",
+      "firstSeenAt": "2026-06-09T04:39:50.197Z",
+      "lastSeenAt": "2026-06-09T04:39:51.042Z",
+      "hitCount": 2
+    },
+    {
+      "cardId": "base5-66",
+      "lang": "en",
+      "setId": "base5",
+      "url": "https://assets.tcgdex.net/en/base/base5/66/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base5/66",
+      "firstSeenAt": "2026-06-09T04:39:51.038Z",
+      "lastSeenAt": "2026-06-09T04:39:51.038Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base5-67",
+      "lang": "en",
+      "setId": "base5",
+      "url": "https://assets.tcgdex.net/en/base/base5/67/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base5/67",
+      "firstSeenAt": "2026-06-09T04:39:51.235Z",
+      "lastSeenAt": "2026-06-09T04:39:51.235Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base5-68",
+      "lang": "en",
+      "setId": "base5",
+      "url": "https://assets.tcgdex.net/en/base/base5/68/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base5/68",
+      "firstSeenAt": "2026-06-09T04:39:50.982Z",
+      "lastSeenAt": "2026-06-09T04:39:50.982Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base5-69",
+      "lang": "en",
+      "setId": "base5",
+      "url": "https://assets.tcgdex.net/en/base/base5/69/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base5/69",
+      "firstSeenAt": "2026-06-09T04:39:51.269Z",
+      "lastSeenAt": "2026-06-09T04:39:51.269Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base5-75",
+      "lang": "en",
+      "setId": "base5",
+      "url": "https://assets.tcgdex.net/en/base/base5/75/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base5/75",
+      "firstSeenAt": "2026-06-09T04:39:51.010Z",
+      "lastSeenAt": "2026-06-09T04:39:51.010Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "base5-79",
+      "lang": "en",
+      "setId": "base5",
+      "url": "https://assets.tcgdex.net/en/base/base5/79/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/base/base5/79",
+      "firstSeenAt": "2026-06-09T04:39:51.002Z",
+      "lastSeenAt": "2026-06-09T04:39:51.002Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard1-102",
+      "lang": "en",
+      "setId": "ecard1",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard1/102/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard1/102",
+      "firstSeenAt": "2026-06-09T04:39:51.036Z",
+      "lastSeenAt": "2026-06-09T04:39:51.036Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard1-106",
+      "lang": "en",
+      "setId": "ecard1",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard1/106/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard1/106",
+      "firstSeenAt": "2026-06-09T04:39:51.011Z",
+      "lastSeenAt": "2026-06-09T04:39:51.011Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard1-109",
+      "lang": "en",
+      "setId": "ecard1",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard1/109/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard1/109",
+      "firstSeenAt": "2026-06-09T04:39:51.056Z",
+      "lastSeenAt": "2026-06-09T04:39:51.056Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard1-111",
+      "lang": "en",
+      "setId": "ecard1",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard1/111/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard1/111",
+      "firstSeenAt": "2026-06-09T04:39:51.046Z",
+      "lastSeenAt": "2026-06-09T04:39:51.046Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard1-112",
+      "lang": "en",
+      "setId": "ecard1",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard1/112/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard1/112",
+      "firstSeenAt": "2026-06-09T04:39:51.264Z",
+      "lastSeenAt": "2026-06-09T04:39:51.264Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard1-113",
+      "lang": "en",
+      "setId": "ecard1",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard1/113/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard1/113",
+      "firstSeenAt": "2026-06-09T04:39:51.031Z",
+      "lastSeenAt": "2026-06-09T04:39:51.031Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard1-114",
+      "lang": "en",
+      "setId": "ecard1",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard1/114/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard1/114",
+      "firstSeenAt": "2026-06-09T04:39:51.029Z",
+      "lastSeenAt": "2026-06-09T04:39:51.029Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard1-115",
+      "lang": "en",
+      "setId": "ecard1",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard1/115/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard1/115",
+      "firstSeenAt": "2026-06-09T04:39:51.237Z",
+      "lastSeenAt": "2026-06-09T04:39:51.237Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard1-116",
+      "lang": "en",
+      "setId": "ecard1",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard1/116/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard1/116",
+      "firstSeenAt": "2026-06-09T04:39:51.014Z",
+      "lastSeenAt": "2026-06-09T04:39:51.014Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard1-117",
+      "lang": "en",
+      "setId": "ecard1",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard1/117/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard1/117",
+      "firstSeenAt": "2026-06-09T04:39:51.232Z",
+      "lastSeenAt": "2026-06-09T04:39:51.232Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard1-120",
+      "lang": "en",
+      "setId": "ecard1",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard1/120/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard1/120",
+      "firstSeenAt": "2026-06-09T04:39:51.030Z",
+      "lastSeenAt": "2026-06-09T04:39:51.030Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard1-121",
+      "lang": "en",
+      "setId": "ecard1",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard1/121/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard1/121",
+      "firstSeenAt": "2026-06-09T04:39:51.277Z",
+      "lastSeenAt": "2026-06-09T04:39:51.277Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard1-122",
+      "lang": "en",
+      "setId": "ecard1",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard1/122/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard1/122",
+      "firstSeenAt": "2026-06-09T04:39:50.197Z",
+      "lastSeenAt": "2026-06-09T04:39:50.197Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard1-126",
+      "lang": "en",
+      "setId": "ecard1",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard1/126/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard1/126",
+      "firstSeenAt": "2026-06-09T04:39:51.034Z",
+      "lastSeenAt": "2026-06-09T04:39:51.034Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard1-127",
+      "lang": "en",
+      "setId": "ecard1",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard1/127/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard1/127",
+      "firstSeenAt": "2026-06-09T04:39:51.038Z",
+      "lastSeenAt": "2026-06-09T04:39:51.038Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard1-130",
+      "lang": "en",
+      "setId": "ecard1",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard1/130/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard1/130",
+      "firstSeenAt": "2026-06-09T04:39:51.178Z",
+      "lastSeenAt": "2026-06-09T04:39:51.178Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard1-162",
+      "lang": "en",
+      "setId": "ecard1",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard1/162/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard1/162",
+      "firstSeenAt": "2026-06-09T04:39:50.202Z",
+      "lastSeenAt": "2026-06-09T04:39:50.202Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard1-163",
+      "lang": "en",
+      "setId": "ecard1",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard1/163/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard1/163",
+      "firstSeenAt": "2026-06-09T04:39:51.179Z",
+      "lastSeenAt": "2026-06-09T04:39:51.179Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard1-164",
+      "lang": "en",
+      "setId": "ecard1",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard1/164/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard1/164",
+      "firstSeenAt": "2026-06-09T04:39:49.302Z",
+      "lastSeenAt": "2026-06-09T04:39:49.302Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard1-165",
+      "lang": "en",
+      "setId": "ecard1",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard1/165/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard1/165",
+      "firstSeenAt": "2026-06-09T04:39:51.037Z",
+      "lastSeenAt": "2026-06-09T04:39:51.037Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard2-110",
+      "lang": "en",
+      "setId": "ecard2",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard2/110/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard2/110",
+      "firstSeenAt": "2026-06-09T04:39:51.276Z",
+      "lastSeenAt": "2026-06-09T04:39:51.276Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard2-115",
+      "lang": "en",
+      "setId": "ecard2",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard2/115/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard2/115",
+      "firstSeenAt": "2026-06-09T04:39:51.099Z",
+      "lastSeenAt": "2026-06-09T04:39:51.099Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard2-69",
+      "lang": "en",
+      "setId": "ecard2",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard2/69/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard2/69",
+      "firstSeenAt": "2026-06-09T04:39:51.011Z",
+      "lastSeenAt": "2026-06-09T04:39:51.011Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard2-78",
+      "lang": "en",
+      "setId": "ecard2",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard2/78/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard2/78",
+      "firstSeenAt": "2026-06-09T04:39:51.148Z",
+      "lastSeenAt": "2026-06-09T04:39:51.148Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ecard2-86",
+      "lang": "en",
+      "setId": "ecard2",
+      "url": "https://assets.tcgdex.net/en/ecard/ecard2/86/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ecard/ecard2/86",
+      "firstSeenAt": "2026-06-09T04:39:51.257Z",
+      "lastSeenAt": "2026-06-09T04:39:51.257Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex1-27",
+      "lang": "en",
+      "setId": "ex1",
+      "url": "https://assets.tcgdex.net/en/ex/ex1/27/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex1/27",
+      "firstSeenAt": "2026-06-09T04:39:51.011Z",
+      "lastSeenAt": "2026-06-09T04:39:51.011Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex1-60",
+      "lang": "en",
+      "setId": "ex1",
+      "url": "https://assets.tcgdex.net/en/ex/ex1/60/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex1/60",
+      "firstSeenAt": "2026-06-09T04:39:51.172Z",
+      "lastSeenAt": "2026-06-09T04:39:51.172Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex1-73",
+      "lang": "en",
+      "setId": "ex1",
+      "url": "https://assets.tcgdex.net/en/ex/ex1/73/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex1/73",
+      "firstSeenAt": "2026-06-09T04:39:51.015Z",
+      "lastSeenAt": "2026-06-09T04:39:51.015Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex1-74",
+      "lang": "en",
+      "setId": "ex1",
+      "url": "https://assets.tcgdex.net/en/ex/ex1/74/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex1/74",
+      "firstSeenAt": "2026-06-09T04:39:50.195Z",
+      "lastSeenAt": "2026-06-09T04:39:50.195Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex1-82",
+      "lang": "en",
+      "setId": "ex1",
+      "url": "https://assets.tcgdex.net/en/ex/ex1/82/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex1/82",
+      "firstSeenAt": "2026-06-09T04:39:50.086Z",
+      "lastSeenAt": "2026-06-09T04:39:50.086Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex1-92",
+      "lang": "en",
+      "setId": "ex1",
+      "url": "https://assets.tcgdex.net/en/ex/ex1/92/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex1/92",
+      "firstSeenAt": "2026-06-09T04:39:50.075Z",
+      "lastSeenAt": "2026-06-09T04:39:50.075Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex13-39",
+      "lang": "en",
+      "setId": "ex13",
+      "url": "https://assets.tcgdex.net/en/ex/ex13/39/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex13/39",
+      "firstSeenAt": "2026-06-09T04:39:51.029Z",
+      "lastSeenAt": "2026-06-09T04:39:51.029Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex13-50",
+      "lang": "en",
+      "setId": "ex13",
+      "url": "https://assets.tcgdex.net/en/ex/ex13/50/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex13/50",
+      "firstSeenAt": "2026-06-09T04:39:50.182Z",
+      "lastSeenAt": "2026-06-09T04:39:50.182Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex13-55",
+      "lang": "en",
+      "setId": "ex13",
+      "url": "https://assets.tcgdex.net/en/ex/ex13/55/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex13/55",
+      "firstSeenAt": "2026-06-09T04:39:51.025Z",
+      "lastSeenAt": "2026-06-09T04:39:51.025Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex13-56",
+      "lang": "en",
+      "setId": "ex13",
+      "url": "https://assets.tcgdex.net/en/ex/ex13/56/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex13/56",
+      "firstSeenAt": "2026-06-09T04:39:51.034Z",
+      "lastSeenAt": "2026-06-09T04:39:51.034Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex13-57",
+      "lang": "en",
+      "setId": "ex13",
+      "url": "https://assets.tcgdex.net/en/ex/ex13/57/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex13/57",
+      "firstSeenAt": "2026-06-09T04:39:51.037Z",
+      "lastSeenAt": "2026-06-09T04:39:51.037Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex13-58",
+      "lang": "en",
+      "setId": "ex13",
+      "url": "https://assets.tcgdex.net/en/ex/ex13/58/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex13/58",
+      "firstSeenAt": "2026-06-09T04:39:51.023Z",
+      "lastSeenAt": "2026-06-09T04:39:51.023Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex13-61",
+      "lang": "en",
+      "setId": "ex13",
+      "url": "https://assets.tcgdex.net/en/ex/ex13/61/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex13/61",
+      "firstSeenAt": "2026-06-09T04:39:51.027Z",
+      "lastSeenAt": "2026-06-09T04:39:51.027Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex13-64",
+      "lang": "en",
+      "setId": "ex13",
+      "url": "https://assets.tcgdex.net/en/ex/ex13/64/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex13/64",
+      "firstSeenAt": "2026-06-09T04:39:51.042Z",
+      "lastSeenAt": "2026-06-09T04:39:51.042Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex13-66",
+      "lang": "en",
+      "setId": "ex13",
+      "url": "https://assets.tcgdex.net/en/ex/ex13/66/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex13/66",
+      "firstSeenAt": "2026-06-09T04:39:51.018Z",
+      "lastSeenAt": "2026-06-09T04:39:51.018Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex13-67",
+      "lang": "en",
+      "setId": "ex13",
+      "url": "https://assets.tcgdex.net/en/ex/ex13/67/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex13/67",
+      "firstSeenAt": "2026-06-09T04:39:51.040Z",
+      "lastSeenAt": "2026-06-09T04:39:51.040Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex13-71",
+      "lang": "en",
+      "setId": "ex13",
+      "url": "https://assets.tcgdex.net/en/ex/ex13/71/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex13/71",
+      "firstSeenAt": "2026-06-09T04:39:51.023Z",
+      "lastSeenAt": "2026-06-09T04:39:51.023Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex13-73",
+      "lang": "en",
+      "setId": "ex13",
+      "url": "https://assets.tcgdex.net/en/ex/ex13/73/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex13/73",
+      "firstSeenAt": "2026-06-09T04:39:51.037Z",
+      "lastSeenAt": "2026-06-09T04:39:51.037Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex13-74",
+      "lang": "en",
+      "setId": "ex13",
+      "url": "https://assets.tcgdex.net/en/ex/ex13/74/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex13/74",
+      "firstSeenAt": "2026-06-09T04:39:50.187Z",
+      "lastSeenAt": "2026-06-09T04:39:50.187Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex13-75",
+      "lang": "en",
+      "setId": "ex13",
+      "url": "https://assets.tcgdex.net/en/ex/ex13/75/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex13/75",
+      "firstSeenAt": "2026-06-09T04:39:51.030Z",
+      "lastSeenAt": "2026-06-09T04:39:51.030Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex13-77",
+      "lang": "en",
+      "setId": "ex13",
+      "url": "https://assets.tcgdex.net/en/ex/ex13/77/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex13/77",
+      "firstSeenAt": "2026-06-09T04:39:50.196Z",
+      "lastSeenAt": "2026-06-09T04:39:50.196Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex13-80",
+      "lang": "en",
+      "setId": "ex13",
+      "url": "https://assets.tcgdex.net/en/ex/ex13/80/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex13/80",
+      "firstSeenAt": "2026-06-09T04:39:51.014Z",
+      "lastSeenAt": "2026-06-09T04:39:51.014Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex13-83",
+      "lang": "en",
+      "setId": "ex13",
+      "url": "https://assets.tcgdex.net/en/ex/ex13/83/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex13/83",
+      "firstSeenAt": "2026-06-09T04:39:51.018Z",
+      "lastSeenAt": "2026-06-09T04:39:51.018Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-16",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/16/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/16",
+      "firstSeenAt": "2026-06-09T04:39:51.031Z",
+      "lastSeenAt": "2026-06-09T04:39:51.031Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-17",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/17/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/17",
+      "firstSeenAt": "2026-06-09T04:39:51.032Z",
+      "lastSeenAt": "2026-06-09T04:39:51.032Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-29",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/29/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/29",
+      "firstSeenAt": "2026-06-09T04:39:51.008Z",
+      "lastSeenAt": "2026-06-09T04:39:51.008Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-30",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/30/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/30",
+      "firstSeenAt": "2026-06-09T04:39:51.041Z",
+      "lastSeenAt": "2026-06-09T04:39:51.041Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-31",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/31/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/31",
+      "firstSeenAt": "2026-06-09T04:39:51.015Z",
+      "lastSeenAt": "2026-06-09T04:39:51.015Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-32",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/32/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/32",
+      "firstSeenAt": "2026-06-09T04:39:51.018Z",
+      "lastSeenAt": "2026-06-09T04:39:51.018Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-40",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/40/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/40",
+      "firstSeenAt": "2026-06-09T04:39:51.005Z",
+      "lastSeenAt": "2026-06-09T04:39:51.005Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-42",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/42/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/42",
+      "firstSeenAt": "2026-06-09T04:39:50.999Z",
+      "lastSeenAt": "2026-06-09T04:39:50.999Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-43",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/43/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/43",
+      "firstSeenAt": "2026-06-09T04:39:51.007Z",
+      "lastSeenAt": "2026-06-09T04:39:51.007Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-45",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/45/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/45",
+      "firstSeenAt": "2026-06-09T04:39:50.187Z",
+      "lastSeenAt": "2026-06-09T04:39:50.187Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-46",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/46/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/46",
+      "firstSeenAt": "2026-06-09T04:39:51.009Z",
+      "lastSeenAt": "2026-06-09T04:39:51.009Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-48",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/48/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/48",
+      "firstSeenAt": "2026-06-09T04:39:51.043Z",
+      "lastSeenAt": "2026-06-09T04:39:51.043Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-49",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/49/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/49",
+      "firstSeenAt": "2026-06-09T04:39:51.033Z",
+      "lastSeenAt": "2026-06-09T04:39:51.033Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-50",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/50/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/50",
+      "firstSeenAt": "2026-06-09T04:39:50.999Z",
+      "lastSeenAt": "2026-06-09T04:39:50.999Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-51",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/51/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/51",
+      "firstSeenAt": "2026-06-09T04:39:51.039Z",
+      "lastSeenAt": "2026-06-09T04:39:51.039Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-53",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/53/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/53",
+      "firstSeenAt": "2026-06-09T04:39:51.042Z",
+      "lastSeenAt": "2026-06-09T04:39:51.042Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-55",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/55/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/55",
+      "firstSeenAt": "2026-06-09T04:39:51.027Z",
+      "lastSeenAt": "2026-06-09T04:39:51.027Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-57",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/57/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/57",
+      "firstSeenAt": "2026-06-09T04:39:51.022Z",
+      "lastSeenAt": "2026-06-09T04:39:51.022Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-58",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/58/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/58",
+      "firstSeenAt": "2026-06-09T04:39:50.190Z",
+      "lastSeenAt": "2026-06-09T04:39:50.190Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-63",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/63/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/63",
+      "firstSeenAt": "2026-06-09T04:39:50.081Z",
+      "lastSeenAt": "2026-06-09T04:39:50.081Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-64",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/64/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/64",
+      "firstSeenAt": "2026-06-09T04:39:50.088Z",
+      "lastSeenAt": "2026-06-09T04:39:50.088Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-65",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/65/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/65",
+      "firstSeenAt": "2026-06-09T04:39:51.040Z",
+      "lastSeenAt": "2026-06-09T04:39:51.040Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-66",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/66/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/66",
+      "firstSeenAt": "2026-06-09T04:39:51.046Z",
+      "lastSeenAt": "2026-06-09T04:39:51.046Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-67",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/67/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/67",
+      "firstSeenAt": "2026-06-09T04:39:51.005Z",
+      "lastSeenAt": "2026-06-09T04:39:51.005Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex14-68",
+      "lang": "en",
+      "setId": "ex14",
+      "url": "https://assets.tcgdex.net/en/ex/ex14/68/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex14/68",
+      "firstSeenAt": "2026-06-09T04:39:51.039Z",
+      "lastSeenAt": "2026-06-09T04:39:51.039Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex16-25",
+      "lang": "en",
+      "setId": "ex16",
+      "url": "https://assets.tcgdex.net/en/ex/ex16/25/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex16/25",
+      "firstSeenAt": "2026-06-09T04:39:50.200Z",
+      "lastSeenAt": "2026-06-09T04:39:50.200Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex16-26",
+      "lang": "en",
+      "setId": "ex16",
+      "url": "https://assets.tcgdex.net/en/ex/ex16/26/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex16/26",
+      "firstSeenAt": "2026-06-09T04:39:50.180Z",
+      "lastSeenAt": "2026-06-09T04:39:50.180Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex16-28",
+      "lang": "en",
+      "setId": "ex16",
+      "url": "https://assets.tcgdex.net/en/ex/ex16/28/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex16/28",
+      "firstSeenAt": "2026-06-09T04:39:51.002Z",
+      "lastSeenAt": "2026-06-09T04:39:51.002Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex16-31",
+      "lang": "en",
+      "setId": "ex16",
+      "url": "https://assets.tcgdex.net/en/ex/ex16/31/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex16/31",
+      "firstSeenAt": "2026-06-09T04:39:51.012Z",
+      "lastSeenAt": "2026-06-09T04:39:51.012Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex16-43",
+      "lang": "en",
+      "setId": "ex16",
+      "url": "https://assets.tcgdex.net/en/ex/ex16/43/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex16/43",
+      "firstSeenAt": "2026-06-09T04:39:51.024Z",
+      "lastSeenAt": "2026-06-09T04:39:51.024Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex16-44",
+      "lang": "en",
+      "setId": "ex16",
+      "url": "https://assets.tcgdex.net/en/ex/ex16/44/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex16/44",
+      "firstSeenAt": "2026-06-09T04:39:51.042Z",
+      "lastSeenAt": "2026-06-09T04:39:51.042Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex16-45",
+      "lang": "en",
+      "setId": "ex16",
+      "url": "https://assets.tcgdex.net/en/ex/ex16/45/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex16/45",
+      "firstSeenAt": "2026-06-09T04:39:51.033Z",
+      "lastSeenAt": "2026-06-09T04:39:51.033Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex16-47",
+      "lang": "en",
+      "setId": "ex16",
+      "url": "https://assets.tcgdex.net/en/ex/ex16/47/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex16/47",
+      "firstSeenAt": "2026-06-09T04:39:51.027Z",
+      "lastSeenAt": "2026-06-09T04:39:51.027Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex16-48",
+      "lang": "en",
+      "setId": "ex16",
+      "url": "https://assets.tcgdex.net/en/ex/ex16/48/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex16/48",
+      "firstSeenAt": "2026-06-09T04:39:51.016Z",
+      "lastSeenAt": "2026-06-09T04:39:51.016Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex16-49",
+      "lang": "en",
+      "setId": "ex16",
+      "url": "https://assets.tcgdex.net/en/ex/ex16/49/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex16/49",
+      "firstSeenAt": "2026-06-09T04:39:51.016Z",
+      "lastSeenAt": "2026-06-09T04:39:51.016Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex16-51",
+      "lang": "en",
+      "setId": "ex16",
+      "url": "https://assets.tcgdex.net/en/ex/ex16/51/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex16/51",
+      "firstSeenAt": "2026-06-09T04:39:51.027Z",
+      "lastSeenAt": "2026-06-09T04:39:51.027Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex16-53",
+      "lang": "en",
+      "setId": "ex16",
+      "url": "https://assets.tcgdex.net/en/ex/ex16/53/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex16/53",
+      "firstSeenAt": "2026-06-09T04:39:50.195Z",
+      "lastSeenAt": "2026-06-09T04:39:50.195Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex16-54",
+      "lang": "en",
+      "setId": "ex16",
+      "url": "https://assets.tcgdex.net/en/ex/ex16/54/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex16/54",
+      "firstSeenAt": "2026-06-09T04:39:51.024Z",
+      "lastSeenAt": "2026-06-09T04:39:51.024Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex16-56",
+      "lang": "en",
+      "setId": "ex16",
+      "url": "https://assets.tcgdex.net/en/ex/ex16/56/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex16/56",
+      "firstSeenAt": "2026-06-09T04:39:50.091Z",
+      "lastSeenAt": "2026-06-09T04:39:50.091Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex16-58",
+      "lang": "en",
+      "setId": "ex16",
+      "url": "https://assets.tcgdex.net/en/ex/ex16/58/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex16/58",
+      "firstSeenAt": "2026-06-09T04:39:51.006Z",
+      "lastSeenAt": "2026-06-09T04:39:51.006Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex16-59",
+      "lang": "en",
+      "setId": "ex16",
+      "url": "https://assets.tcgdex.net/en/ex/ex16/59/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex16/59",
+      "firstSeenAt": "2026-06-09T04:39:51.022Z",
+      "lastSeenAt": "2026-06-09T04:39:51.022Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex16-61",
+      "lang": "en",
+      "setId": "ex16",
+      "url": "https://assets.tcgdex.net/en/ex/ex16/61/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex16/61",
+      "firstSeenAt": "2026-06-09T04:39:50.132Z",
+      "lastSeenAt": "2026-06-09T04:39:50.132Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex16-64",
+      "lang": "en",
+      "setId": "ex16",
+      "url": "https://assets.tcgdex.net/en/ex/ex16/64/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex16/64",
+      "firstSeenAt": "2026-06-09T04:39:50.985Z",
+      "lastSeenAt": "2026-06-09T04:39:50.985Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex16-65",
+      "lang": "en",
+      "setId": "ex16",
+      "url": "https://assets.tcgdex.net/en/ex/ex16/65/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex16/65",
+      "firstSeenAt": "2026-06-09T04:39:51.093Z",
+      "lastSeenAt": "2026-06-09T04:39:51.093Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex16-67",
+      "lang": "en",
+      "setId": "ex16",
+      "url": "https://assets.tcgdex.net/en/ex/ex16/67/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex16/67",
+      "firstSeenAt": "2026-06-09T04:39:51.013Z",
+      "lastSeenAt": "2026-06-09T04:39:51.013Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex16-78",
+      "lang": "en",
+      "setId": "ex16",
+      "url": "https://assets.tcgdex.net/en/ex/ex16/78/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex16/78",
+      "firstSeenAt": "2026-06-09T04:39:51.026Z",
+      "lastSeenAt": "2026-06-09T04:39:51.026Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex2-42",
+      "lang": "en",
+      "setId": "ex2",
+      "url": "https://assets.tcgdex.net/en/ex/ex2/42/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex2/42",
+      "firstSeenAt": "2026-06-09T04:39:51.041Z",
+      "lastSeenAt": "2026-06-09T04:39:51.041Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex2-56",
+      "lang": "en",
+      "setId": "ex2",
+      "url": "https://assets.tcgdex.net/en/ex/ex2/56/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex2/56",
+      "firstSeenAt": "2026-06-09T04:39:51.007Z",
+      "lastSeenAt": "2026-06-09T04:39:51.007Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex2-57",
+      "lang": "en",
+      "setId": "ex2",
+      "url": "https://assets.tcgdex.net/en/ex/ex2/57/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex2/57",
+      "firstSeenAt": "2026-06-09T04:39:50.201Z",
+      "lastSeenAt": "2026-06-09T04:39:50.201Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex2-59",
+      "lang": "en",
+      "setId": "ex2",
+      "url": "https://assets.tcgdex.net/en/ex/ex2/59/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex2/59",
+      "firstSeenAt": "2026-06-09T04:39:50.186Z",
+      "lastSeenAt": "2026-06-09T04:39:50.186Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex2-61",
+      "lang": "en",
+      "setId": "ex2",
+      "url": "https://assets.tcgdex.net/en/ex/ex2/61/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex2/61",
+      "firstSeenAt": "2026-06-09T04:39:51.023Z",
+      "lastSeenAt": "2026-06-09T04:39:51.023Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex2-62",
+      "lang": "en",
+      "setId": "ex2",
+      "url": "https://assets.tcgdex.net/en/ex/ex2/62/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex2/62",
+      "firstSeenAt": "2026-06-09T04:39:51.003Z",
+      "lastSeenAt": "2026-06-09T04:39:51.003Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex2-65",
+      "lang": "en",
+      "setId": "ex2",
+      "url": "https://assets.tcgdex.net/en/ex/ex2/65/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex2/65",
+      "firstSeenAt": "2026-06-09T04:39:51.025Z",
+      "lastSeenAt": "2026-06-09T04:39:51.025Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex2-66",
+      "lang": "en",
+      "setId": "ex2",
+      "url": "https://assets.tcgdex.net/en/ex/ex2/66/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex2/66",
+      "firstSeenAt": "2026-06-09T04:39:50.999Z",
+      "lastSeenAt": "2026-06-09T04:39:50.999Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex2-67",
+      "lang": "en",
+      "setId": "ex2",
+      "url": "https://assets.tcgdex.net/en/ex/ex2/67/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex2/67",
+      "firstSeenAt": "2026-06-09T04:39:51.012Z",
+      "lastSeenAt": "2026-06-09T04:39:51.012Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex2-68",
+      "lang": "en",
+      "setId": "ex2",
+      "url": "https://assets.tcgdex.net/en/ex/ex2/68/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex2/68",
+      "firstSeenAt": "2026-06-09T04:39:51.025Z",
+      "lastSeenAt": "2026-06-09T04:39:51.025Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex2-70",
+      "lang": "en",
+      "setId": "ex2",
+      "url": "https://assets.tcgdex.net/en/ex/ex2/70/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex2/70",
+      "firstSeenAt": "2026-06-09T04:39:50.977Z",
+      "lastSeenAt": "2026-06-09T04:39:50.977Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex2-71",
+      "lang": "en",
+      "setId": "ex2",
+      "url": "https://assets.tcgdex.net/en/ex/ex2/71/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex2/71",
+      "firstSeenAt": "2026-06-09T04:39:51.003Z",
+      "lastSeenAt": "2026-06-09T04:39:51.003Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex2-74",
+      "lang": "en",
+      "setId": "ex2",
+      "url": "https://assets.tcgdex.net/en/ex/ex2/74/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex2/74",
+      "firstSeenAt": "2026-06-09T04:39:50.198Z",
+      "lastSeenAt": "2026-06-09T04:39:50.198Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex2-75",
+      "lang": "en",
+      "setId": "ex2",
+      "url": "https://assets.tcgdex.net/en/ex/ex2/75/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex2/75",
+      "firstSeenAt": "2026-06-09T04:39:51.027Z",
+      "lastSeenAt": "2026-06-09T04:39:51.027Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex2-76",
+      "lang": "en",
+      "setId": "ex2",
+      "url": "https://assets.tcgdex.net/en/ex/ex2/76/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex2/76",
+      "firstSeenAt": "2026-06-09T04:39:51.041Z",
+      "lastSeenAt": "2026-06-09T04:39:51.041Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex2-78",
+      "lang": "en",
+      "setId": "ex2",
+      "url": "https://assets.tcgdex.net/en/ex/ex2/78/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex2/78",
+      "firstSeenAt": "2026-06-09T04:39:51.032Z",
+      "lastSeenAt": "2026-06-09T04:39:51.032Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex2-82",
+      "lang": "en",
+      "setId": "ex2",
+      "url": "https://assets.tcgdex.net/en/ex/ex2/82/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex2/82",
+      "firstSeenAt": "2026-06-09T04:39:51.008Z",
+      "lastSeenAt": "2026-06-09T04:39:51.008Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex2-85",
+      "lang": "en",
+      "setId": "ex2",
+      "url": "https://assets.tcgdex.net/en/ex/ex2/85/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex2/85",
+      "firstSeenAt": "2026-06-09T04:39:51.027Z",
+      "lastSeenAt": "2026-06-09T04:39:51.027Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-16",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/16/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/16",
+      "firstSeenAt": "2026-06-09T04:39:51.035Z",
+      "lastSeenAt": "2026-06-09T04:39:51.035Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-19",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/19/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/19",
+      "firstSeenAt": "2026-06-09T04:39:51.017Z",
+      "lastSeenAt": "2026-06-09T04:39:51.017Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-21",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/21/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/21",
+      "firstSeenAt": "2026-06-09T04:39:51.014Z",
+      "lastSeenAt": "2026-06-09T04:39:51.014Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-25",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/25/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/25",
+      "firstSeenAt": "2026-06-09T04:39:51.034Z",
+      "lastSeenAt": "2026-06-09T04:39:51.034Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-35",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/35/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/35",
+      "firstSeenAt": "2026-06-09T04:39:51.031Z",
+      "lastSeenAt": "2026-06-09T04:39:51.031Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-44",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/44/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/44",
+      "firstSeenAt": "2026-06-09T04:39:51.024Z",
+      "lastSeenAt": "2026-06-09T04:39:51.024Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-49",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/49/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/49",
+      "firstSeenAt": "2026-06-09T04:39:51.041Z",
+      "lastSeenAt": "2026-06-09T04:39:51.041Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-50",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/50/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/50",
+      "firstSeenAt": "2026-06-09T04:39:51.005Z",
+      "lastSeenAt": "2026-06-09T04:39:51.005Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-52",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/52/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/52",
+      "firstSeenAt": "2026-06-09T04:39:51.039Z",
+      "lastSeenAt": "2026-06-09T04:39:51.039Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-54",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/54/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/54",
+      "firstSeenAt": "2026-06-09T04:39:51.017Z",
+      "lastSeenAt": "2026-06-09T04:39:51.017Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-55",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/55/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/55",
+      "firstSeenAt": "2026-06-09T04:39:51.075Z",
+      "lastSeenAt": "2026-06-09T04:39:51.075Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-57",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/57/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/57",
+      "firstSeenAt": "2026-06-09T04:39:50.186Z",
+      "lastSeenAt": "2026-06-09T04:39:50.186Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-58",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/58/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/58",
+      "firstSeenAt": "2026-06-09T04:39:51.022Z",
+      "lastSeenAt": "2026-06-09T04:39:51.022Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-59",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/59/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/59",
+      "firstSeenAt": "2026-06-09T04:39:50.187Z",
+      "lastSeenAt": "2026-06-09T04:39:50.187Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-60",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/60/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/60",
+      "firstSeenAt": "2026-06-09T04:39:51.021Z",
+      "lastSeenAt": "2026-06-09T04:39:51.021Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-61",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/61/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/61",
+      "firstSeenAt": "2026-06-09T04:39:51.028Z",
+      "lastSeenAt": "2026-06-09T04:39:51.028Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-64",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/64/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/64",
+      "firstSeenAt": "2026-06-09T04:39:51.035Z",
+      "lastSeenAt": "2026-06-09T04:39:51.035Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-65",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/65/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/65",
+      "firstSeenAt": "2026-06-09T04:39:50.090Z",
+      "lastSeenAt": "2026-06-09T04:39:50.090Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-69",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/69/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/69",
+      "firstSeenAt": "2026-06-09T04:39:51.024Z",
+      "lastSeenAt": "2026-06-09T04:39:51.024Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-70",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/70/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/70",
+      "firstSeenAt": "2026-06-09T04:39:50.199Z",
+      "lastSeenAt": "2026-06-09T04:39:50.199Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-74",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/74/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/74",
+      "firstSeenAt": "2026-06-09T04:39:50.190Z",
+      "lastSeenAt": "2026-06-09T04:39:50.190Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-77",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/77/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/77",
+      "firstSeenAt": "2026-06-09T04:39:51.038Z",
+      "lastSeenAt": "2026-06-09T04:39:51.038Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-78",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/78/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/78",
+      "firstSeenAt": "2026-06-09T04:39:51.000Z",
+      "lastSeenAt": "2026-06-09T04:39:51.000Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "ex3-80",
+      "lang": "en",
+      "setId": "ex3",
+      "url": "https://assets.tcgdex.net/en/ex/ex3/80/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/ex/ex3/80",
+      "firstSeenAt": "2026-06-09T04:39:51.023Z",
+      "lastSeenAt": "2026-06-09T04:39:51.023Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "gym1-125",
+      "lang": "en",
+      "setId": "gym1",
+      "url": "https://assets.tcgdex.net/en/gym/gym1/125/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/gym/gym1/125",
+      "firstSeenAt": "2026-06-09T04:39:51.026Z",
+      "lastSeenAt": "2026-06-09T04:39:51.026Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "gym1-66",
+      "lang": "en",
+      "setId": "gym1",
+      "url": "https://assets.tcgdex.net/en/gym/gym1/66/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/gym/gym1/66",
+      "firstSeenAt": "2026-06-09T04:39:51.037Z",
+      "lastSeenAt": "2026-06-09T04:39:51.037Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "gym1-67",
+      "lang": "en",
+      "setId": "gym1",
+      "url": "https://assets.tcgdex.net/en/gym/gym1/67/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/gym/gym1/67",
+      "firstSeenAt": "2026-06-09T04:39:51.009Z",
+      "lastSeenAt": "2026-06-09T04:39:51.009Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "gym1-75",
+      "lang": "en",
+      "setId": "gym1",
+      "url": "https://assets.tcgdex.net/en/gym/gym1/75/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/gym/gym1/75",
+      "firstSeenAt": "2026-06-09T04:39:51.038Z",
+      "lastSeenAt": "2026-06-09T04:39:51.038Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "gym1-76",
+      "lang": "en",
+      "setId": "gym1",
+      "url": "https://assets.tcgdex.net/en/gym/gym1/76/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/gym/gym1/76",
+      "firstSeenAt": "2026-06-09T04:39:51.034Z",
+      "lastSeenAt": "2026-06-09T04:39:51.034Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "gym1-77",
+      "lang": "en",
+      "setId": "gym1",
+      "url": "https://assets.tcgdex.net/en/gym/gym1/77/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/gym/gym1/77",
+      "firstSeenAt": "2026-06-09T04:39:51.008Z",
+      "lastSeenAt": "2026-06-09T04:39:51.008Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "gym1-78",
+      "lang": "en",
+      "setId": "gym1",
+      "url": "https://assets.tcgdex.net/en/gym/gym1/78/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/gym/gym1/78",
+      "firstSeenAt": "2026-06-09T04:39:51.185Z",
+      "lastSeenAt": "2026-06-09T04:39:51.185Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "gym1-83",
+      "lang": "en",
+      "setId": "gym1",
+      "url": "https://assets.tcgdex.net/en/gym/gym1/83/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/gym/gym1/83",
+      "firstSeenAt": "2026-06-09T04:39:51.032Z",
+      "lastSeenAt": "2026-06-09T04:39:51.032Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "gym1-84",
+      "lang": "en",
+      "setId": "gym1",
+      "url": "https://assets.tcgdex.net/en/gym/gym1/84/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/gym/gym1/84",
+      "firstSeenAt": "2026-06-09T04:39:51.042Z",
+      "lastSeenAt": "2026-06-09T04:39:51.042Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "gym1-85",
+      "lang": "en",
+      "setId": "gym1",
+      "url": "https://assets.tcgdex.net/en/gym/gym1/85/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/gym/gym1/85",
+      "firstSeenAt": "2026-06-09T04:39:51.271Z",
+      "lastSeenAt": "2026-06-09T04:39:51.271Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "gym1-86",
+      "lang": "en",
+      "setId": "gym1",
+      "url": "https://assets.tcgdex.net/en/gym/gym1/86/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/gym/gym1/86",
+      "firstSeenAt": "2026-06-09T04:39:51.198Z",
+      "lastSeenAt": "2026-06-09T04:39:51.198Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "gym1-91",
+      "lang": "en",
+      "setId": "gym1",
+      "url": "https://assets.tcgdex.net/en/gym/gym1/91/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/gym/gym1/91",
+      "firstSeenAt": "2026-06-09T04:39:51.035Z",
+      "lastSeenAt": "2026-06-09T04:39:51.035Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "lc-37",
+      "lang": "en",
+      "setId": "lc",
+      "url": "https://assets.tcgdex.net/en/lc/lc/37/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/lc/lc/37",
+      "firstSeenAt": "2026-06-09T04:39:49.266Z",
+      "lastSeenAt": "2026-06-09T04:39:49.266Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me01-001",
+      "lang": "en",
+      "setId": "me01",
+      "url": "https://assets.tcgdex.net/en/me/me01/001/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me01/001",
+      "firstSeenAt": "2026-06-09T04:39:51.003Z",
+      "lastSeenAt": "2026-06-09T04:39:51.003Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me01-003",
+      "lang": "en",
+      "setId": "me01",
+      "url": "https://assets.tcgdex.net/en/me/me01/003/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me01/003",
+      "firstSeenAt": "2026-06-09T04:39:51.029Z",
+      "lastSeenAt": "2026-06-09T04:39:51.029Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me01-050",
+      "lang": "en",
+      "setId": "me01",
+      "url": "https://assets.tcgdex.net/en/me/me01/050/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me01/050",
+      "firstSeenAt": "2026-06-09T04:39:51.002Z",
+      "lastSeenAt": "2026-06-09T04:39:51.002Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me01-055",
+      "lang": "en",
+      "setId": "me01",
+      "url": "https://assets.tcgdex.net/en/me/me01/055/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me01/055",
+      "firstSeenAt": "2026-06-09T04:39:51.038Z",
+      "lastSeenAt": "2026-06-09T04:39:51.038Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me01-056",
+      "lang": "en",
+      "setId": "me01",
+      "url": "https://assets.tcgdex.net/en/me/me01/056/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me01/056",
+      "firstSeenAt": "2026-06-09T04:39:50.200Z",
+      "lastSeenAt": "2026-06-09T04:39:50.200Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me01-074",
+      "lang": "en",
+      "setId": "me01",
+      "url": "https://assets.tcgdex.net/en/me/me01/074/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me01/074",
+      "firstSeenAt": "2026-06-09T04:39:51.023Z",
+      "lastSeenAt": "2026-06-09T04:39:51.023Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me01-075",
+      "lang": "en",
+      "setId": "me01",
+      "url": "https://assets.tcgdex.net/en/me/me01/075/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me01/075",
+      "firstSeenAt": "2026-06-09T04:39:51.012Z",
+      "lastSeenAt": "2026-06-09T04:39:51.012Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me01-077",
+      "lang": "en",
+      "setId": "me01",
+      "url": "https://assets.tcgdex.net/en/me/me01/077/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me01/077",
+      "firstSeenAt": "2026-06-09T04:39:51.029Z",
+      "lastSeenAt": "2026-06-09T04:39:51.029Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me01-086",
+      "lang": "en",
+      "setId": "me01",
+      "url": "https://assets.tcgdex.net/en/me/me01/086/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me01/086",
+      "firstSeenAt": "2026-06-09T04:39:50.201Z",
+      "lastSeenAt": "2026-06-09T04:39:51.153Z",
+      "hitCount": 2
+    },
+    {
+      "cardId": "me01-094",
+      "lang": "en",
+      "setId": "me01",
+      "url": "https://assets.tcgdex.net/en/me/me01/094/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me01/094",
+      "firstSeenAt": "2026-06-09T04:39:51.022Z",
+      "lastSeenAt": "2026-06-09T04:39:51.022Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me01-104",
+      "lang": "en",
+      "setId": "me01",
+      "url": "https://assets.tcgdex.net/en/me/me01/104/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me01/104",
+      "firstSeenAt": "2026-06-09T04:39:50.186Z",
+      "lastSeenAt": "2026-06-09T04:39:51.009Z",
+      "hitCount": 2
+    },
+    {
+      "cardId": "me02-018",
+      "lang": "en",
+      "setId": "me02",
+      "url": "https://assets.tcgdex.net/en/me/me02/018/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me02/018",
+      "firstSeenAt": "2026-06-09T04:39:51.043Z",
+      "lastSeenAt": "2026-06-09T04:39:51.043Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me02-041",
+      "lang": "en",
+      "setId": "me02",
+      "url": "https://assets.tcgdex.net/en/me/me02/041/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me02/041",
+      "firstSeenAt": "2026-06-09T04:39:51.016Z",
+      "lastSeenAt": "2026-06-09T04:39:51.016Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me02-061",
+      "lang": "en",
+      "setId": "me02",
+      "url": "https://assets.tcgdex.net/en/me/me02/061/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me02/061",
+      "firstSeenAt": "2026-06-09T04:39:51.005Z",
+      "lastSeenAt": "2026-06-09T04:39:51.005Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me02-084",
+      "lang": "en",
+      "setId": "me02",
+      "url": "https://assets.tcgdex.net/en/me/me02/084/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me02/084",
+      "firstSeenAt": "2026-06-09T04:39:50.978Z",
+      "lastSeenAt": "2026-06-09T04:39:50.978Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me02-087",
+      "lang": "en",
+      "setId": "me02",
+      "url": "https://assets.tcgdex.net/en/me/me02/087/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me02/087",
+      "firstSeenAt": "2026-06-09T04:39:51.021Z",
+      "lastSeenAt": "2026-06-09T04:39:51.021Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me02-094",
+      "lang": "en",
+      "setId": "me02",
+      "url": "https://assets.tcgdex.net/en/me/me02/094/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me02/094",
+      "firstSeenAt": "2026-06-09T04:39:51.031Z",
+      "lastSeenAt": "2026-06-09T04:39:51.031Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me02-123",
+      "lang": "en",
+      "setId": "me02",
+      "url": "https://assets.tcgdex.net/en/me/me02/123/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me02/123",
+      "firstSeenAt": "2026-06-09T04:39:51.008Z",
+      "lastSeenAt": "2026-06-09T04:39:51.008Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me02.5-039",
+      "lang": "en",
+      "setId": "me02.5",
+      "url": "https://assets.tcgdex.net/en/me/me02.5/039/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me02.5/039",
+      "firstSeenAt": "2026-06-09T04:39:51.021Z",
+      "lastSeenAt": "2026-06-09T04:39:51.021Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me02.5-046",
+      "lang": "en",
+      "setId": "me02.5",
+      "url": "https://assets.tcgdex.net/en/me/me02.5/046/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me02.5/046",
+      "firstSeenAt": "2026-06-09T04:39:49.293Z",
+      "lastSeenAt": "2026-06-09T04:39:51.033Z",
+      "hitCount": 2
+    },
+    {
+      "cardId": "me02.5-060",
+      "lang": "en",
+      "setId": "me02.5",
+      "url": "https://assets.tcgdex.net/en/me/me02.5/060/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me02.5/060",
+      "firstSeenAt": "2026-06-09T04:39:51.022Z",
+      "lastSeenAt": "2026-06-09T04:39:51.022Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me02.5-061",
+      "lang": "en",
+      "setId": "me02.5",
+      "url": "https://assets.tcgdex.net/en/me/me02.5/061/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me02.5/061",
+      "firstSeenAt": "2026-06-09T04:39:51.019Z",
+      "lastSeenAt": "2026-06-09T04:39:51.019Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me02.5-076",
+      "lang": "en",
+      "setId": "me02.5",
+      "url": "https://assets.tcgdex.net/en/me/me02.5/076/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me02.5/076",
+      "firstSeenAt": "2026-06-09T04:39:49.290Z",
+      "lastSeenAt": "2026-06-09T04:39:49.290Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me02.5-089",
+      "lang": "en",
+      "setId": "me02.5",
+      "url": "https://assets.tcgdex.net/en/me/me02.5/089/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me02.5/089",
+      "firstSeenAt": "2026-06-09T04:39:50.198Z",
+      "lastSeenAt": "2026-06-09T04:39:50.198Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me02.5-111",
+      "lang": "en",
+      "setId": "me02.5",
+      "url": "https://assets.tcgdex.net/en/me/me02.5/111/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me02.5/111",
+      "firstSeenAt": "2026-06-09T04:39:50.020Z",
+      "lastSeenAt": "2026-06-09T04:39:50.020Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me02.5-136",
+      "lang": "en",
+      "setId": "me02.5",
+      "url": "https://assets.tcgdex.net/en/me/me02.5/136/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me02.5/136",
+      "firstSeenAt": "2026-06-09T04:39:49.287Z",
+      "lastSeenAt": "2026-06-09T04:39:49.287Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me02.5-137",
+      "lang": "en",
+      "setId": "me02.5",
+      "url": "https://assets.tcgdex.net/en/me/me02.5/137/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me02.5/137",
+      "firstSeenAt": "2026-06-09T04:39:49.558Z",
+      "lastSeenAt": "2026-06-09T04:39:49.558Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me02.5-162",
+      "lang": "en",
+      "setId": "me02.5",
+      "url": "https://assets.tcgdex.net/en/me/me02.5/162/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me02.5/162",
+      "firstSeenAt": "2026-06-09T04:39:51.033Z",
+      "lastSeenAt": "2026-06-09T04:39:51.033Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me02.5-221",
+      "lang": "en",
+      "setId": "me02.5",
+      "url": "https://assets.tcgdex.net/en/me/me02.5/221/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me02.5/221",
+      "firstSeenAt": "2026-06-09T04:39:51.047Z",
+      "lastSeenAt": "2026-06-09T04:39:51.047Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me02.5-260",
+      "lang": "en",
+      "setId": "me02.5",
+      "url": "https://assets.tcgdex.net/en/me/me02.5/260/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me02.5/260",
+      "firstSeenAt": "2026-06-09T04:39:49.270Z",
+      "lastSeenAt": "2026-06-09T04:39:49.270Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me02.5-261",
+      "lang": "en",
+      "setId": "me02.5",
+      "url": "https://assets.tcgdex.net/en/me/me02.5/261/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me02.5/261",
+      "firstSeenAt": "2026-06-09T04:39:51.034Z",
+      "lastSeenAt": "2026-06-09T04:39:51.034Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me02.5-263",
+      "lang": "en",
+      "setId": "me02.5",
+      "url": "https://assets.tcgdex.net/en/me/me02.5/263/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me02.5/263",
+      "firstSeenAt": "2026-06-09T04:39:51.045Z",
+      "lastSeenAt": "2026-06-09T04:39:51.045Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me03-013",
+      "lang": "en",
+      "setId": "me03",
+      "url": "https://assets.tcgdex.net/en/me/me03/013/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me03/013",
+      "firstSeenAt": "2026-06-09T04:39:51.023Z",
+      "lastSeenAt": "2026-06-09T04:39:51.023Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me03-014",
+      "lang": "en",
+      "setId": "me03",
+      "url": "https://assets.tcgdex.net/en/me/me03/014/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me03/014",
+      "firstSeenAt": "2026-06-09T04:39:51.031Z",
+      "lastSeenAt": "2026-06-09T04:39:51.031Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me03-021",
+      "lang": "en",
+      "setId": "me03",
+      "url": "https://assets.tcgdex.net/en/me/me03/021/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me03/021",
+      "firstSeenAt": "2026-06-09T04:39:51.007Z",
+      "lastSeenAt": "2026-06-09T04:39:51.007Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me03-047",
+      "lang": "en",
+      "setId": "me03",
+      "url": "https://assets.tcgdex.net/en/me/me03/047/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me03/047",
+      "firstSeenAt": "2026-06-09T04:39:50.182Z",
+      "lastSeenAt": "2026-06-09T04:39:50.182Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me03-053",
+      "lang": "en",
+      "setId": "me03",
+      "url": "https://assets.tcgdex.net/en/me/me03/053/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me03/053",
+      "firstSeenAt": "2026-06-09T04:39:50.074Z",
+      "lastSeenAt": "2026-06-09T04:39:51.009Z",
+      "hitCount": 2
+    },
+    {
+      "cardId": "me03-055",
+      "lang": "en",
+      "setId": "me03",
+      "url": "https://assets.tcgdex.net/en/me/me03/055/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me03/055",
+      "firstSeenAt": "2026-06-09T04:39:51.009Z",
+      "lastSeenAt": "2026-06-09T04:39:51.009Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me03-062",
+      "lang": "en",
+      "setId": "me03",
+      "url": "https://assets.tcgdex.net/en/me/me03/062/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me03/062",
+      "firstSeenAt": "2026-06-09T04:39:51.000Z",
+      "lastSeenAt": "2026-06-09T04:39:51.000Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me03-081",
+      "lang": "en",
+      "setId": "me03",
+      "url": "https://assets.tcgdex.net/en/me/me03/081/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me03/081",
+      "firstSeenAt": "2026-06-09T04:39:49.302Z",
+      "lastSeenAt": "2026-06-09T04:39:49.302Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me03-084",
+      "lang": "en",
+      "setId": "me03",
+      "url": "https://assets.tcgdex.net/en/me/me03/084/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me03/084",
+      "firstSeenAt": "2026-06-09T04:39:51.032Z",
+      "lastSeenAt": "2026-06-09T04:39:51.032Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me03-087",
+      "lang": "en",
+      "setId": "me03",
+      "url": "https://assets.tcgdex.net/en/me/me03/087/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me03/087",
+      "firstSeenAt": "2026-06-09T04:39:49.586Z",
+      "lastSeenAt": "2026-06-09T04:39:49.586Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me03-088",
+      "lang": "en",
+      "setId": "me03",
+      "url": "https://assets.tcgdex.net/en/me/me03/088/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me03/088",
+      "firstSeenAt": "2026-06-09T04:39:49.292Z",
+      "lastSeenAt": "2026-06-09T04:39:51.027Z",
+      "hitCount": 2
+    },
+    {
+      "cardId": "me03-090",
+      "lang": "en",
+      "setId": "me03",
+      "url": "https://assets.tcgdex.net/en/me/me03/090/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me03/090",
+      "firstSeenAt": "2026-06-09T04:39:51.030Z",
+      "lastSeenAt": "2026-06-09T04:39:51.030Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me04-040",
+      "lang": "en",
+      "setId": "me04",
+      "url": "https://assets.tcgdex.net/en/me/me04/040/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me04/040",
+      "firstSeenAt": "2026-06-09T04:39:51.170Z",
+      "lastSeenAt": "2026-06-09T04:39:51.170Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me04-082",
+      "lang": "en",
+      "setId": "me04",
+      "url": "https://assets.tcgdex.net/en/me/me04/082/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me04/082",
+      "firstSeenAt": "2026-06-09T04:39:51.026Z",
+      "lastSeenAt": "2026-06-09T04:39:51.026Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "me04-091",
+      "lang": "en",
+      "setId": "me04",
+      "url": "https://assets.tcgdex.net/en/me/me04/091/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/me/me04/091",
+      "firstSeenAt": "2026-06-09T04:39:51.033Z",
+      "lastSeenAt": "2026-06-09T04:39:51.033Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo1-102",
+      "lang": "en",
+      "setId": "neo1",
+      "url": "https://assets.tcgdex.net/en/neo/neo1/102/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo1/102",
+      "firstSeenAt": "2026-06-09T04:39:51.031Z",
+      "lastSeenAt": "2026-06-09T04:39:51.031Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo1-27",
+      "lang": "en",
+      "setId": "neo1",
+      "url": "https://assets.tcgdex.net/en/neo/neo1/27/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo1/27",
+      "firstSeenAt": "2026-06-09T04:39:51.037Z",
+      "lastSeenAt": "2026-06-09T04:39:51.037Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo1-32",
+      "lang": "en",
+      "setId": "neo1",
+      "url": "https://assets.tcgdex.net/en/neo/neo1/32/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo1/32",
+      "firstSeenAt": "2026-06-09T04:39:51.015Z",
+      "lastSeenAt": "2026-06-09T04:39:51.015Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo1-41",
+      "lang": "en",
+      "setId": "neo1",
+      "url": "https://assets.tcgdex.net/en/neo/neo1/41/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo1/41",
+      "firstSeenAt": "2026-06-09T04:39:51.165Z",
+      "lastSeenAt": "2026-06-09T04:39:51.165Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo1-43",
+      "lang": "en",
+      "setId": "neo1",
+      "url": "https://assets.tcgdex.net/en/neo/neo1/43/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo1/43",
+      "firstSeenAt": "2026-06-09T04:39:51.304Z",
+      "lastSeenAt": "2026-06-09T04:39:51.304Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo1-48",
+      "lang": "en",
+      "setId": "neo1",
+      "url": "https://assets.tcgdex.net/en/neo/neo1/48/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo1/48",
+      "firstSeenAt": "2026-06-09T04:39:49.289Z",
+      "lastSeenAt": "2026-06-09T04:39:49.289Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo1-58",
+      "lang": "en",
+      "setId": "neo1",
+      "url": "https://assets.tcgdex.net/en/neo/neo1/58/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo1/58",
+      "firstSeenAt": "2026-06-09T04:39:51.006Z",
+      "lastSeenAt": "2026-06-09T04:39:51.006Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo1-59",
+      "lang": "en",
+      "setId": "neo1",
+      "url": "https://assets.tcgdex.net/en/neo/neo1/59/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo1/59",
+      "firstSeenAt": "2026-06-09T04:39:51.000Z",
+      "lastSeenAt": "2026-06-09T04:39:51.000Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo1-60",
+      "lang": "en",
+      "setId": "neo1",
+      "url": "https://assets.tcgdex.net/en/neo/neo1/60/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo1/60",
+      "firstSeenAt": "2026-06-09T04:39:51.041Z",
+      "lastSeenAt": "2026-06-09T04:39:51.041Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo1-63",
+      "lang": "en",
+      "setId": "neo1",
+      "url": "https://assets.tcgdex.net/en/neo/neo1/63/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo1/63",
+      "firstSeenAt": "2026-06-09T04:39:50.197Z",
+      "lastSeenAt": "2026-06-09T04:39:50.197Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo1-65",
+      "lang": "en",
+      "setId": "neo1",
+      "url": "https://assets.tcgdex.net/en/neo/neo1/65/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo1/65",
+      "firstSeenAt": "2026-06-09T04:39:50.195Z",
+      "lastSeenAt": "2026-06-09T04:39:50.195Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo1-66",
+      "lang": "en",
+      "setId": "neo1",
+      "url": "https://assets.tcgdex.net/en/neo/neo1/66/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo1/66",
+      "firstSeenAt": "2026-06-09T04:39:51.025Z",
+      "lastSeenAt": "2026-06-09T04:39:51.025Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo1-67",
+      "lang": "en",
+      "setId": "neo1",
+      "url": "https://assets.tcgdex.net/en/neo/neo1/67/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo1/67",
+      "firstSeenAt": "2026-06-09T04:39:51.033Z",
+      "lastSeenAt": "2026-06-09T04:39:51.033Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo1-68",
+      "lang": "en",
+      "setId": "neo1",
+      "url": "https://assets.tcgdex.net/en/neo/neo1/68/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo1/68",
+      "firstSeenAt": "2026-06-09T04:39:51.028Z",
+      "lastSeenAt": "2026-06-09T04:39:51.028Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo1-69",
+      "lang": "en",
+      "setId": "neo1",
+      "url": "https://assets.tcgdex.net/en/neo/neo1/69/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo1/69",
+      "firstSeenAt": "2026-06-09T04:39:51.040Z",
+      "lastSeenAt": "2026-06-09T04:39:51.040Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo1-72",
+      "lang": "en",
+      "setId": "neo1",
+      "url": "https://assets.tcgdex.net/en/neo/neo1/72/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo1/72",
+      "firstSeenAt": "2026-06-09T04:39:51.025Z",
+      "lastSeenAt": "2026-06-09T04:39:51.025Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo1-74",
+      "lang": "en",
+      "setId": "neo1",
+      "url": "https://assets.tcgdex.net/en/neo/neo1/74/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo1/74",
+      "firstSeenAt": "2026-06-09T04:39:51.045Z",
+      "lastSeenAt": "2026-06-09T04:39:51.045Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo1-77",
+      "lang": "en",
+      "setId": "neo1",
+      "url": "https://assets.tcgdex.net/en/neo/neo1/77/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo1/77",
+      "firstSeenAt": "2026-06-09T04:39:51.032Z",
+      "lastSeenAt": "2026-06-09T04:39:51.032Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo1-78",
+      "lang": "en",
+      "setId": "neo1",
+      "url": "https://assets.tcgdex.net/en/neo/neo1/78/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo1/78",
+      "firstSeenAt": "2026-06-09T04:39:51.034Z",
+      "lastSeenAt": "2026-06-09T04:39:51.034Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo1-79",
+      "lang": "en",
+      "setId": "neo1",
+      "url": "https://assets.tcgdex.net/en/neo/neo1/79/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo1/79",
+      "firstSeenAt": "2026-06-09T04:39:51.004Z",
+      "lastSeenAt": "2026-06-09T04:39:51.004Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo1-81",
+      "lang": "en",
+      "setId": "neo1",
+      "url": "https://assets.tcgdex.net/en/neo/neo1/81/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo1/81",
+      "firstSeenAt": "2026-06-09T04:39:50.200Z",
+      "lastSeenAt": "2026-06-09T04:39:50.200Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo1-82",
+      "lang": "en",
+      "setId": "neo1",
+      "url": "https://assets.tcgdex.net/en/neo/neo1/82/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo1/82",
+      "firstSeenAt": "2026-06-09T04:39:51.035Z",
+      "lastSeenAt": "2026-06-09T04:39:51.035Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo2-42",
+      "lang": "en",
+      "setId": "neo2",
+      "url": "https://assets.tcgdex.net/en/neo/neo2/42/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo2/42",
+      "firstSeenAt": "2026-06-09T04:39:50.079Z",
+      "lastSeenAt": "2026-06-09T04:39:50.079Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo2-46",
+      "lang": "en",
+      "setId": "neo2",
+      "url": "https://assets.tcgdex.net/en/neo/neo2/46/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo2/46",
+      "firstSeenAt": "2026-06-09T04:39:50.993Z",
+      "lastSeenAt": "2026-06-09T04:39:50.993Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo2-54",
+      "lang": "en",
+      "setId": "neo2",
+      "url": "https://assets.tcgdex.net/en/neo/neo2/54/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo2/54",
+      "firstSeenAt": "2026-06-09T04:39:51.015Z",
+      "lastSeenAt": "2026-06-09T04:39:51.015Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo2-55",
+      "lang": "en",
+      "setId": "neo2",
+      "url": "https://assets.tcgdex.net/en/neo/neo2/55/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo2/55",
+      "firstSeenAt": "2026-06-09T04:39:51.036Z",
+      "lastSeenAt": "2026-06-09T04:39:51.036Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo2-57",
+      "lang": "en",
+      "setId": "neo2",
+      "url": "https://assets.tcgdex.net/en/neo/neo2/57/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo2/57",
+      "firstSeenAt": "2026-06-09T04:39:51.040Z",
+      "lastSeenAt": "2026-06-09T04:39:51.040Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo2-58",
+      "lang": "en",
+      "setId": "neo2",
+      "url": "https://assets.tcgdex.net/en/neo/neo2/58/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo2/58",
+      "firstSeenAt": "2026-06-09T04:39:51.030Z",
+      "lastSeenAt": "2026-06-09T04:39:51.030Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo2-59",
+      "lang": "en",
+      "setId": "neo2",
+      "url": "https://assets.tcgdex.net/en/neo/neo2/59/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo2/59",
+      "firstSeenAt": "2026-06-09T04:39:51.204Z",
+      "lastSeenAt": "2026-06-09T04:39:51.204Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo2-60",
+      "lang": "en",
+      "setId": "neo2",
+      "url": "https://assets.tcgdex.net/en/neo/neo2/60/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo2/60",
+      "firstSeenAt": "2026-06-09T04:39:49.592Z",
+      "lastSeenAt": "2026-06-09T04:39:49.592Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo2-61",
+      "lang": "en",
+      "setId": "neo2",
+      "url": "https://assets.tcgdex.net/en/neo/neo2/61/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo2/61",
+      "firstSeenAt": "2026-06-09T04:39:51.035Z",
+      "lastSeenAt": "2026-06-09T04:39:51.035Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo2-62",
+      "lang": "en",
+      "setId": "neo2",
+      "url": "https://assets.tcgdex.net/en/neo/neo2/62/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo2/62",
+      "firstSeenAt": "2026-06-09T04:39:51.277Z",
+      "lastSeenAt": "2026-06-09T04:39:51.277Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo2-63",
+      "lang": "en",
+      "setId": "neo2",
+      "url": "https://assets.tcgdex.net/en/neo/neo2/63/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo2/63",
+      "firstSeenAt": "2026-06-09T04:39:51.040Z",
+      "lastSeenAt": "2026-06-09T04:39:51.040Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo2-64",
+      "lang": "en",
+      "setId": "neo2",
+      "url": "https://assets.tcgdex.net/en/neo/neo2/64/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo2/64",
+      "firstSeenAt": "2026-06-09T04:39:51.037Z",
+      "lastSeenAt": "2026-06-09T04:39:51.037Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo2-65",
+      "lang": "en",
+      "setId": "neo2",
+      "url": "https://assets.tcgdex.net/en/neo/neo2/65/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo2/65",
+      "firstSeenAt": "2026-06-09T04:39:51.247Z",
+      "lastSeenAt": "2026-06-09T04:39:51.247Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo2-66",
+      "lang": "en",
+      "setId": "neo2",
+      "url": "https://assets.tcgdex.net/en/neo/neo2/66/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo2/66",
+      "firstSeenAt": "2026-06-09T04:39:51.170Z",
+      "lastSeenAt": "2026-06-09T04:39:51.170Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo2-67",
+      "lang": "en",
+      "setId": "neo2",
+      "url": "https://assets.tcgdex.net/en/neo/neo2/67/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo2/67",
+      "firstSeenAt": "2026-06-09T04:39:50.196Z",
+      "lastSeenAt": "2026-06-09T04:39:50.196Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo2-69",
+      "lang": "en",
+      "setId": "neo2",
+      "url": "https://assets.tcgdex.net/en/neo/neo2/69/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo2/69",
+      "firstSeenAt": "2026-06-09T04:39:51.165Z",
+      "lastSeenAt": "2026-06-09T04:39:51.165Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo2-70",
+      "lang": "en",
+      "setId": "neo2",
+      "url": "https://assets.tcgdex.net/en/neo/neo2/70/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo2/70",
+      "firstSeenAt": "2026-06-09T04:39:51.017Z",
+      "lastSeenAt": "2026-06-09T04:39:51.017Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo2-71",
+      "lang": "en",
+      "setId": "neo2",
+      "url": "https://assets.tcgdex.net/en/neo/neo2/71/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo2/71",
+      "firstSeenAt": "2026-06-09T04:39:51.025Z",
+      "lastSeenAt": "2026-06-09T04:39:51.025Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo3-29",
+      "lang": "en",
+      "setId": "neo3",
+      "url": "https://assets.tcgdex.net/en/neo/neo3/29/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo3/29",
+      "firstSeenAt": "2026-06-09T04:39:51.171Z",
+      "lastSeenAt": "2026-06-09T04:39:51.171Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo3-30",
+      "lang": "en",
+      "setId": "neo3",
+      "url": "https://assets.tcgdex.net/en/neo/neo3/30/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo3/30",
+      "firstSeenAt": "2026-06-09T04:39:50.195Z",
+      "lastSeenAt": "2026-06-09T04:39:50.195Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo3-32",
+      "lang": "en",
+      "setId": "neo3",
+      "url": "https://assets.tcgdex.net/en/neo/neo3/32/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo3/32",
+      "firstSeenAt": "2026-06-09T04:39:51.035Z",
+      "lastSeenAt": "2026-06-09T04:39:51.035Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo3-33",
+      "lang": "en",
+      "setId": "neo3",
+      "url": "https://assets.tcgdex.net/en/neo/neo3/33/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo3/33",
+      "firstSeenAt": "2026-06-09T04:39:51.043Z",
+      "lastSeenAt": "2026-06-09T04:39:51.043Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo3-35",
+      "lang": "en",
+      "setId": "neo3",
+      "url": "https://assets.tcgdex.net/en/neo/neo3/35/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo3/35",
+      "firstSeenAt": "2026-06-09T04:39:51.200Z",
+      "lastSeenAt": "2026-06-09T04:39:51.200Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo3-37",
+      "lang": "en",
+      "setId": "neo3",
+      "url": "https://assets.tcgdex.net/en/neo/neo3/37/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo3/37",
+      "firstSeenAt": "2026-06-09T04:39:51.019Z",
+      "lastSeenAt": "2026-06-09T04:39:51.019Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo3-38",
+      "lang": "en",
+      "setId": "neo3",
+      "url": "https://assets.tcgdex.net/en/neo/neo3/38/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo3/38",
+      "firstSeenAt": "2026-06-09T04:39:51.054Z",
+      "lastSeenAt": "2026-06-09T04:39:51.054Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo3-42",
+      "lang": "en",
+      "setId": "neo3",
+      "url": "https://assets.tcgdex.net/en/neo/neo3/42/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo3/42",
+      "firstSeenAt": "2026-06-09T04:39:51.309Z",
+      "lastSeenAt": "2026-06-09T04:39:51.309Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo3-43",
+      "lang": "en",
+      "setId": "neo3",
+      "url": "https://assets.tcgdex.net/en/neo/neo3/43/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo3/43",
+      "firstSeenAt": "2026-06-09T04:39:51.036Z",
+      "lastSeenAt": "2026-06-09T04:39:51.036Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo3-44",
+      "lang": "en",
+      "setId": "neo3",
+      "url": "https://assets.tcgdex.net/en/neo/neo3/44/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo3/44",
+      "firstSeenAt": "2026-06-09T04:39:51.018Z",
+      "lastSeenAt": "2026-06-09T04:39:51.018Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo3-46",
+      "lang": "en",
+      "setId": "neo3",
+      "url": "https://assets.tcgdex.net/en/neo/neo3/46/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo3/46",
+      "firstSeenAt": "2026-06-09T04:39:51.039Z",
+      "lastSeenAt": "2026-06-09T04:39:51.039Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo3-47",
+      "lang": "en",
+      "setId": "neo3",
+      "url": "https://assets.tcgdex.net/en/neo/neo3/47/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo3/47",
+      "firstSeenAt": "2026-06-09T04:39:51.008Z",
+      "lastSeenAt": "2026-06-09T04:39:51.008Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo3-48",
+      "lang": "en",
+      "setId": "neo3",
+      "url": "https://assets.tcgdex.net/en/neo/neo3/48/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo3/48",
+      "firstSeenAt": "2026-06-09T04:39:50.072Z",
+      "lastSeenAt": "2026-06-09T04:39:50.072Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo3-50",
+      "lang": "en",
+      "setId": "neo3",
+      "url": "https://assets.tcgdex.net/en/neo/neo3/50/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo3/50",
+      "firstSeenAt": "2026-06-09T04:39:51.033Z",
+      "lastSeenAt": "2026-06-09T04:39:51.033Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo3-52",
+      "lang": "en",
+      "setId": "neo3",
+      "url": "https://assets.tcgdex.net/en/neo/neo3/52/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo3/52",
+      "firstSeenAt": "2026-06-09T04:39:51.178Z",
+      "lastSeenAt": "2026-06-09T04:39:51.178Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo3-53",
+      "lang": "en",
+      "setId": "neo3",
+      "url": "https://assets.tcgdex.net/en/neo/neo3/53/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo3/53",
+      "firstSeenAt": "2026-06-09T04:39:51.171Z",
+      "lastSeenAt": "2026-06-09T04:39:51.171Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo3-54",
+      "lang": "en",
+      "setId": "neo3",
+      "url": "https://assets.tcgdex.net/en/neo/neo3/54/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo3/54",
+      "firstSeenAt": "2026-06-09T04:39:51.024Z",
+      "lastSeenAt": "2026-06-09T04:39:51.024Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo3-55",
+      "lang": "en",
+      "setId": "neo3",
+      "url": "https://assets.tcgdex.net/en/neo/neo3/55/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo3/55",
+      "firstSeenAt": "2026-06-09T04:39:51.007Z",
+      "lastSeenAt": "2026-06-09T04:39:51.007Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo3-56",
+      "lang": "en",
+      "setId": "neo3",
+      "url": "https://assets.tcgdex.net/en/neo/neo3/56/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo3/56",
+      "firstSeenAt": "2026-06-09T04:39:50.185Z",
+      "lastSeenAt": "2026-06-09T04:39:50.185Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo3-57",
+      "lang": "en",
+      "setId": "neo3",
+      "url": "https://assets.tcgdex.net/en/neo/neo3/57/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo3/57",
+      "firstSeenAt": "2026-06-09T04:39:51.031Z",
+      "lastSeenAt": "2026-06-09T04:39:51.031Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo3-59",
+      "lang": "en",
+      "setId": "neo3",
+      "url": "https://assets.tcgdex.net/en/neo/neo3/59/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo3/59",
+      "firstSeenAt": "2026-06-09T04:39:51.042Z",
+      "lastSeenAt": "2026-06-09T04:39:51.042Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo3-63",
+      "lang": "en",
+      "setId": "neo3",
+      "url": "https://assets.tcgdex.net/en/neo/neo3/63/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo3/63",
+      "firstSeenAt": "2026-06-09T04:39:51.171Z",
+      "lastSeenAt": "2026-06-09T04:39:51.171Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo4-39",
+      "lang": "en",
+      "setId": "neo4",
+      "url": "https://assets.tcgdex.net/en/neo/neo4/39/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo4/39",
+      "firstSeenAt": "2026-06-09T04:39:51.030Z",
+      "lastSeenAt": "2026-06-09T04:39:51.030Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo4-67",
+      "lang": "en",
+      "setId": "neo4",
+      "url": "https://assets.tcgdex.net/en/neo/neo4/67/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo4/67",
+      "firstSeenAt": "2026-06-09T04:39:51.004Z",
+      "lastSeenAt": "2026-06-09T04:39:51.004Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo4-68",
+      "lang": "en",
+      "setId": "neo4",
+      "url": "https://assets.tcgdex.net/en/neo/neo4/68/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo4/68",
+      "firstSeenAt": "2026-06-09T04:39:51.039Z",
+      "lastSeenAt": "2026-06-09T04:39:51.039Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo4-69",
+      "lang": "en",
+      "setId": "neo4",
+      "url": "https://assets.tcgdex.net/en/neo/neo4/69/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo4/69",
+      "firstSeenAt": "2026-06-09T04:39:51.029Z",
+      "lastSeenAt": "2026-06-09T04:39:51.029Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo4-72",
+      "lang": "en",
+      "setId": "neo4",
+      "url": "https://assets.tcgdex.net/en/neo/neo4/72/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo4/72",
+      "firstSeenAt": "2026-06-09T04:39:51.035Z",
+      "lastSeenAt": "2026-06-09T04:39:51.035Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo4-73",
+      "lang": "en",
+      "setId": "neo4",
+      "url": "https://assets.tcgdex.net/en/neo/neo4/73/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo4/73",
+      "firstSeenAt": "2026-06-09T04:39:50.986Z",
+      "lastSeenAt": "2026-06-09T04:39:50.986Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo4-74",
+      "lang": "en",
+      "setId": "neo4",
+      "url": "https://assets.tcgdex.net/en/neo/neo4/74/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo4/74",
+      "firstSeenAt": "2026-06-09T04:39:51.028Z",
+      "lastSeenAt": "2026-06-09T04:39:51.028Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo4-75",
+      "lang": "en",
+      "setId": "neo4",
+      "url": "https://assets.tcgdex.net/en/neo/neo4/75/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo4/75",
+      "firstSeenAt": "2026-06-09T04:39:51.025Z",
+      "lastSeenAt": "2026-06-09T04:39:51.025Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo4-76",
+      "lang": "en",
+      "setId": "neo4",
+      "url": "https://assets.tcgdex.net/en/neo/neo4/76/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo4/76",
+      "firstSeenAt": "2026-06-09T04:39:51.028Z",
+      "lastSeenAt": "2026-06-09T04:39:51.028Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo4-77",
+      "lang": "en",
+      "setId": "neo4",
+      "url": "https://assets.tcgdex.net/en/neo/neo4/77/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo4/77",
+      "firstSeenAt": "2026-06-09T04:39:51.013Z",
+      "lastSeenAt": "2026-06-09T04:39:51.013Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo4-81",
+      "lang": "en",
+      "setId": "neo4",
+      "url": "https://assets.tcgdex.net/en/neo/neo4/81/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo4/81",
+      "firstSeenAt": "2026-06-09T04:39:51.028Z",
+      "lastSeenAt": "2026-06-09T04:39:51.028Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo4-82",
+      "lang": "en",
+      "setId": "neo4",
+      "url": "https://assets.tcgdex.net/en/neo/neo4/82/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo4/82",
+      "firstSeenAt": "2026-06-09T04:39:51.271Z",
+      "lastSeenAt": "2026-06-09T04:39:51.271Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo4-83",
+      "lang": "en",
+      "setId": "neo4",
+      "url": "https://assets.tcgdex.net/en/neo/neo4/83/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo4/83",
+      "firstSeenAt": "2026-06-09T04:39:50.201Z",
+      "lastSeenAt": "2026-06-09T04:39:50.201Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo4-84",
+      "lang": "en",
+      "setId": "neo4",
+      "url": "https://assets.tcgdex.net/en/neo/neo4/84/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo4/84",
+      "firstSeenAt": "2026-06-09T04:39:50.201Z",
+      "lastSeenAt": "2026-06-09T04:39:50.201Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "neo4-89",
+      "lang": "en",
+      "setId": "neo4",
+      "url": "https://assets.tcgdex.net/en/neo/neo4/89/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/neo/neo4/89",
+      "firstSeenAt": "2026-06-09T04:39:49.978Z",
+      "lastSeenAt": "2026-06-09T04:39:49.978Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sm1-115",
+      "lang": "en",
+      "setId": "sm1",
+      "url": "https://assets.tcgdex.net/en/sm/sm1/115/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sm/sm1/115",
+      "firstSeenAt": "2026-06-09T04:39:51.178Z",
+      "lastSeenAt": "2026-06-09T04:39:51.178Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sm10-159",
+      "lang": "en",
+      "setId": "sm10",
+      "url": "https://assets.tcgdex.net/en/sm/sm10/159/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sm/sm10/159",
+      "firstSeenAt": "2026-06-09T04:39:49.591Z",
+      "lastSeenAt": "2026-06-09T04:39:49.591Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sm4-40",
+      "lang": "en",
+      "setId": "sm4",
+      "url": "https://assets.tcgdex.net/en/sm/sm4/40/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sm/sm4/40",
+      "firstSeenAt": "2026-06-09T04:39:50.091Z",
+      "lastSeenAt": "2026-06-09T04:39:50.091Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv02-169",
+      "lang": "en",
+      "setId": "sv02",
+      "url": "https://assets.tcgdex.net/en/sv/sv02/169/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv02/169",
+      "firstSeenAt": "2026-06-09T04:39:50.999Z",
+      "lastSeenAt": "2026-06-09T04:39:50.999Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv03-192",
+      "lang": "en",
+      "setId": "sv03",
+      "url": "https://assets.tcgdex.net/en/sv/sv03/192/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv03/192",
+      "firstSeenAt": "2026-06-09T04:39:50.094Z",
+      "lastSeenAt": "2026-06-09T04:39:50.094Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv05-025",
+      "lang": "en",
+      "setId": "sv05",
+      "url": "https://assets.tcgdex.net/en/sv/sv05/025/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv05/025",
+      "firstSeenAt": "2026-06-09T04:39:51.043Z",
+      "lastSeenAt": "2026-06-09T04:39:51.043Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv05-114",
+      "lang": "en",
+      "setId": "sv05",
+      "url": "https://assets.tcgdex.net/en/sv/sv05/114/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv05/114",
+      "firstSeenAt": "2026-06-09T04:39:51.006Z",
+      "lastSeenAt": "2026-06-09T04:39:51.006Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv05-197",
+      "lang": "en",
+      "setId": "sv05",
+      "url": "https://assets.tcgdex.net/en/sv/sv05/197/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv05/197",
+      "firstSeenAt": "2026-06-09T04:39:51.046Z",
+      "lastSeenAt": "2026-06-09T04:39:51.046Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv06-033",
+      "lang": "en",
+      "setId": "sv06",
+      "url": "https://assets.tcgdex.net/en/sv/sv06/033/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv06/033",
+      "firstSeenAt": "2026-06-09T04:39:50.187Z",
+      "lastSeenAt": "2026-06-09T04:39:50.187Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv06-064",
+      "lang": "en",
+      "setId": "sv06",
+      "url": "https://assets.tcgdex.net/en/sv/sv06/064/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv06/064",
+      "firstSeenAt": "2026-06-09T04:39:50.997Z",
+      "lastSeenAt": "2026-06-09T04:39:50.997Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv06-072",
+      "lang": "en",
+      "setId": "sv06",
+      "url": "https://assets.tcgdex.net/en/sv/sv06/072/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv06/072",
+      "firstSeenAt": "2026-06-09T04:39:51.005Z",
+      "lastSeenAt": "2026-06-09T04:39:51.005Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv06-106",
+      "lang": "en",
+      "setId": "sv06",
+      "url": "https://assets.tcgdex.net/en/sv/sv06/106/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv06/106",
+      "firstSeenAt": "2026-06-09T04:39:51.030Z",
+      "lastSeenAt": "2026-06-09T04:39:51.030Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv06-123",
+      "lang": "en",
+      "setId": "sv06",
+      "url": "https://assets.tcgdex.net/en/sv/sv06/123/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv06/123",
+      "firstSeenAt": "2026-06-09T04:39:50.066Z",
+      "lastSeenAt": "2026-06-09T04:39:50.066Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv06-130",
+      "lang": "en",
+      "setId": "sv06",
+      "url": "https://assets.tcgdex.net/en/sv/sv06/130/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv06/130",
+      "firstSeenAt": "2026-06-09T04:39:51.046Z",
+      "lastSeenAt": "2026-06-09T04:39:51.046Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv06-134",
+      "lang": "en",
+      "setId": "sv06",
+      "url": "https://assets.tcgdex.net/en/sv/sv06/134/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv06/134",
+      "firstSeenAt": "2026-06-09T04:39:51.011Z",
+      "lastSeenAt": "2026-06-09T04:39:51.011Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv06-167",
+      "lang": "en",
+      "setId": "sv06",
+      "url": "https://assets.tcgdex.net/en/sv/sv06/167/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv06/167",
+      "firstSeenAt": "2026-06-09T04:39:51.031Z",
+      "lastSeenAt": "2026-06-09T04:39:51.031Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv06-188",
+      "lang": "en",
+      "setId": "sv06",
+      "url": "https://assets.tcgdex.net/en/sv/sv06/188/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv06/188",
+      "firstSeenAt": "2026-06-09T04:39:51.170Z",
+      "lastSeenAt": "2026-06-09T04:39:51.170Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv06-202",
+      "lang": "en",
+      "setId": "sv06",
+      "url": "https://assets.tcgdex.net/en/sv/sv06/202/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv06/202",
+      "firstSeenAt": "2026-06-09T04:39:51.017Z",
+      "lastSeenAt": "2026-06-09T04:39:51.017Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv06.5-038",
+      "lang": "en",
+      "setId": "sv06.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv06.5/038/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv06.5/038",
+      "firstSeenAt": "2026-06-09T04:39:51.046Z",
+      "lastSeenAt": "2026-06-09T04:39:51.046Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv06.5-042",
+      "lang": "en",
+      "setId": "sv06.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv06.5/042/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv06.5/042",
+      "firstSeenAt": "2026-06-09T04:39:51.030Z",
+      "lastSeenAt": "2026-06-09T04:39:51.030Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv06.5-043",
+      "lang": "en",
+      "setId": "sv06.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv06.5/043/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv06.5/043",
+      "firstSeenAt": "2026-06-09T04:39:50.197Z",
+      "lastSeenAt": "2026-06-09T04:39:50.197Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv06.5-062",
+      "lang": "en",
+      "setId": "sv06.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv06.5/062/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv06.5/062",
+      "firstSeenAt": "2026-06-09T04:39:50.200Z",
+      "lastSeenAt": "2026-06-09T04:39:50.200Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv07-014",
+      "lang": "en",
+      "setId": "sv07",
+      "url": "https://assets.tcgdex.net/en/sv/sv07/014/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv07/014",
+      "firstSeenAt": "2026-06-09T04:39:51.030Z",
+      "lastSeenAt": "2026-06-09T04:39:51.030Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv07-050",
+      "lang": "en",
+      "setId": "sv07",
+      "url": "https://assets.tcgdex.net/en/sv/sv07/050/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv07/050",
+      "firstSeenAt": "2026-06-09T04:39:51.015Z",
+      "lastSeenAt": "2026-06-09T04:39:51.015Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv07-058",
+      "lang": "en",
+      "setId": "sv07",
+      "url": "https://assets.tcgdex.net/en/sv/sv07/058/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv07/058",
+      "firstSeenAt": "2026-06-09T04:39:49.562Z",
+      "lastSeenAt": "2026-06-09T04:39:49.562Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv07-117",
+      "lang": "en",
+      "setId": "sv07",
+      "url": "https://assets.tcgdex.net/en/sv/sv07/117/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv07/117",
+      "firstSeenAt": "2026-06-09T04:39:50.995Z",
+      "lastSeenAt": "2026-06-09T04:39:50.995Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv07-128",
+      "lang": "en",
+      "setId": "sv07",
+      "url": "https://assets.tcgdex.net/en/sv/sv07/128/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv07/128",
+      "firstSeenAt": "2026-06-09T04:39:51.017Z",
+      "lastSeenAt": "2026-06-09T04:39:51.017Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv07-136",
+      "lang": "en",
+      "setId": "sv07",
+      "url": "https://assets.tcgdex.net/en/sv/sv07/136/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv07/136",
+      "firstSeenAt": "2026-06-09T04:39:49.291Z",
+      "lastSeenAt": "2026-06-09T04:39:50.193Z",
+      "hitCount": 2
+    },
+    {
+      "cardId": "sv07-163",
+      "lang": "en",
+      "setId": "sv07",
+      "url": "https://assets.tcgdex.net/en/sv/sv07/163/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv07/163",
+      "firstSeenAt": "2026-06-09T04:39:51.046Z",
+      "lastSeenAt": "2026-06-09T04:39:51.046Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08-036",
+      "lang": "en",
+      "setId": "sv08",
+      "url": "https://assets.tcgdex.net/en/sv/sv08/036/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08/036",
+      "firstSeenAt": "2026-06-09T04:39:50.183Z",
+      "lastSeenAt": "2026-06-09T04:39:50.183Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08-042",
+      "lang": "en",
+      "setId": "sv08",
+      "url": "https://assets.tcgdex.net/en/sv/sv08/042/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08/042",
+      "firstSeenAt": "2026-06-09T04:39:50.182Z",
+      "lastSeenAt": "2026-06-09T04:39:50.182Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08-059",
+      "lang": "en",
+      "setId": "sv08",
+      "url": "https://assets.tcgdex.net/en/sv/sv08/059/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08/059",
+      "firstSeenAt": "2026-06-09T04:39:51.029Z",
+      "lastSeenAt": "2026-06-09T04:39:51.029Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08-076",
+      "lang": "en",
+      "setId": "sv08",
+      "url": "https://assets.tcgdex.net/en/sv/sv08/076/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08/076",
+      "firstSeenAt": "2026-06-09T04:39:50.198Z",
+      "lastSeenAt": "2026-06-09T04:39:50.198Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08-130",
+      "lang": "en",
+      "setId": "sv08",
+      "url": "https://assets.tcgdex.net/en/sv/sv08/130/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08/130",
+      "firstSeenAt": "2026-06-09T04:39:51.007Z",
+      "lastSeenAt": "2026-06-09T04:39:51.007Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08-131",
+      "lang": "en",
+      "setId": "sv08",
+      "url": "https://assets.tcgdex.net/en/sv/sv08/131/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08/131",
+      "firstSeenAt": "2026-06-09T04:39:51.012Z",
+      "lastSeenAt": "2026-06-09T04:39:51.012Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08-169",
+      "lang": "en",
+      "setId": "sv08",
+      "url": "https://assets.tcgdex.net/en/sv/sv08/169/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08/169",
+      "firstSeenAt": "2026-06-09T04:39:50.078Z",
+      "lastSeenAt": "2026-06-09T04:39:50.078Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08-176",
+      "lang": "en",
+      "setId": "sv08",
+      "url": "https://assets.tcgdex.net/en/sv/sv08/176/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08/176",
+      "firstSeenAt": "2026-06-09T04:39:51.028Z",
+      "lastSeenAt": "2026-06-09T04:39:51.028Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08-183",
+      "lang": "en",
+      "setId": "sv08",
+      "url": "https://assets.tcgdex.net/en/sv/sv08/183/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08/183",
+      "firstSeenAt": "2026-06-09T04:39:49.595Z",
+      "lastSeenAt": "2026-06-09T04:39:51.016Z",
+      "hitCount": 2
+    },
+    {
+      "cardId": "sv08-185",
+      "lang": "en",
+      "setId": "sv08",
+      "url": "https://assets.tcgdex.net/en/sv/sv08/185/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08/185",
+      "firstSeenAt": "2026-06-09T04:39:50.196Z",
+      "lastSeenAt": "2026-06-09T04:39:50.196Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08-191",
+      "lang": "en",
+      "setId": "sv08",
+      "url": "https://assets.tcgdex.net/en/sv/sv08/191/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08/191",
+      "firstSeenAt": "2026-06-09T04:39:50.069Z",
+      "lastSeenAt": "2026-06-09T04:39:50.069Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08-232",
+      "lang": "en",
+      "setId": "sv08",
+      "url": "https://assets.tcgdex.net/en/sv/sv08/232/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08/232",
+      "firstSeenAt": "2026-06-09T04:39:51.054Z",
+      "lastSeenAt": "2026-06-09T04:39:51.054Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08-233",
+      "lang": "en",
+      "setId": "sv08",
+      "url": "https://assets.tcgdex.net/en/sv/sv08/233/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08/233",
+      "firstSeenAt": "2026-06-09T04:39:51.041Z",
+      "lastSeenAt": "2026-06-09T04:39:51.041Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08.5-004",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/004/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/004",
+      "firstSeenAt": "2026-06-09T04:39:51.013Z",
+      "lastSeenAt": "2026-06-09T04:39:51.013Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08.5-011",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/011/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/011",
+      "firstSeenAt": "2026-06-09T04:39:51.047Z",
+      "lastSeenAt": "2026-06-09T04:39:51.047Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08.5-027",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/027/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/027",
+      "firstSeenAt": "2026-06-09T04:39:49.285Z",
+      "lastSeenAt": "2026-06-09T04:39:50.195Z",
+      "hitCount": 2
+    },
+    {
+      "cardId": "sv08.5-032",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/032/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/032",
+      "firstSeenAt": "2026-06-09T04:39:51.005Z",
+      "lastSeenAt": "2026-06-09T04:39:51.005Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08.5-037",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/037/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/037",
+      "firstSeenAt": "2026-06-09T04:39:49.293Z",
+      "lastSeenAt": "2026-06-09T04:39:49.293Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08.5-055",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/055/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/055",
+      "firstSeenAt": "2026-06-09T04:39:51.014Z",
+      "lastSeenAt": "2026-06-09T04:39:51.014Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08.5-057",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/057/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/057",
+      "firstSeenAt": "2026-06-09T04:39:50.069Z",
+      "lastSeenAt": "2026-06-09T04:39:51.028Z",
+      "hitCount": 2
+    },
+    {
+      "cardId": "sv08.5-058",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/058/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/058",
+      "firstSeenAt": "2026-06-09T04:39:51.003Z",
+      "lastSeenAt": "2026-06-09T04:39:51.003Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08.5-069",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/069/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/069",
+      "firstSeenAt": "2026-06-09T04:39:51.015Z",
+      "lastSeenAt": "2026-06-09T04:39:51.015Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08.5-070",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/070/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/070",
+      "firstSeenAt": "2026-06-09T04:39:51.013Z",
+      "lastSeenAt": "2026-06-09T04:39:51.013Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08.5-071",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/071/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/071",
+      "firstSeenAt": "2026-06-09T04:39:50.071Z",
+      "lastSeenAt": "2026-06-09T04:39:50.071Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08.5-072",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/072/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/072",
+      "firstSeenAt": "2026-06-09T04:39:49.290Z",
+      "lastSeenAt": "2026-06-09T04:39:49.290Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08.5-074",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/074/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/074",
+      "firstSeenAt": "2026-06-09T04:39:51.108Z",
+      "lastSeenAt": "2026-06-09T04:39:51.108Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08.5-078",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/078/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/078",
+      "firstSeenAt": "2026-06-09T04:39:50.188Z",
+      "lastSeenAt": "2026-06-09T04:39:50.202Z",
+      "hitCount": 2
+    },
+    {
+      "cardId": "sv08.5-079",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/079/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/079",
+      "firstSeenAt": "2026-06-09T04:39:50.977Z",
+      "lastSeenAt": "2026-06-09T04:39:50.995Z",
+      "hitCount": 2
+    },
+    {
+      "cardId": "sv08.5-080",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/080/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/080",
+      "firstSeenAt": "2026-06-09T04:39:49.285Z",
+      "lastSeenAt": "2026-06-09T04:39:49.285Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08.5-085",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/085/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/085",
+      "firstSeenAt": "2026-06-09T04:39:51.008Z",
+      "lastSeenAt": "2026-06-09T04:39:51.014Z",
+      "hitCount": 2
+    },
+    {
+      "cardId": "sv08.5-092",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/092/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/092",
+      "firstSeenAt": "2026-06-09T04:39:51.004Z",
+      "lastSeenAt": "2026-06-09T04:39:51.004Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08.5-094",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/094/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/094",
+      "firstSeenAt": "2026-06-09T04:39:49.286Z",
+      "lastSeenAt": "2026-06-09T04:39:51.039Z",
+      "hitCount": 2
+    },
+    {
+      "cardId": "sv08.5-100",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/100/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/100",
+      "firstSeenAt": "2026-06-09T04:39:50.200Z",
+      "lastSeenAt": "2026-06-09T04:39:50.200Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08.5-101",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/101/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/101",
+      "firstSeenAt": "2026-06-09T04:39:49.590Z",
+      "lastSeenAt": "2026-06-09T04:39:49.590Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08.5-102",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/102/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/102",
+      "firstSeenAt": "2026-06-09T04:39:50.088Z",
+      "lastSeenAt": "2026-06-09T04:39:50.088Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08.5-105",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/105/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/105",
+      "firstSeenAt": "2026-06-09T04:39:50.186Z",
+      "lastSeenAt": "2026-06-09T04:39:50.186Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08.5-110",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/110/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/110",
+      "firstSeenAt": "2026-06-09T04:39:49.607Z",
+      "lastSeenAt": "2026-06-09T04:39:51.019Z",
+      "hitCount": 2
+    },
+    {
+      "cardId": "sv08.5-116",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/116/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/116",
+      "firstSeenAt": "2026-06-09T04:39:51.013Z",
+      "lastSeenAt": "2026-06-09T04:39:51.013Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08.5-117",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/117/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/117",
+      "firstSeenAt": "2026-06-09T04:39:50.188Z",
+      "lastSeenAt": "2026-06-09T04:39:50.188Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08.5-119",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/119/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/119",
+      "firstSeenAt": "2026-06-09T04:39:50.202Z",
+      "lastSeenAt": "2026-06-09T04:39:51.075Z",
+      "hitCount": 2
+    },
+    {
+      "cardId": "sv08.5-128",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/128/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/128",
+      "firstSeenAt": "2026-06-09T04:39:50.188Z",
+      "lastSeenAt": "2026-06-09T04:39:51.018Z",
+      "hitCount": 2
+    },
+    {
+      "cardId": "sv08.5-129",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/129/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/129",
+      "firstSeenAt": "2026-06-09T04:39:51.023Z",
+      "lastSeenAt": "2026-06-09T04:39:51.023Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv08.5-139",
+      "lang": "en",
+      "setId": "sv08.5",
+      "url": "https://assets.tcgdex.net/en/sv/sv08.5/139/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv08.5/139",
+      "firstSeenAt": "2026-06-09T04:39:49.298Z",
+      "lastSeenAt": "2026-06-09T04:39:49.298Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv09-026",
+      "lang": "en",
+      "setId": "sv09",
+      "url": "https://assets.tcgdex.net/en/sv/sv09/026/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv09/026",
+      "firstSeenAt": "2026-06-09T04:39:51.029Z",
+      "lastSeenAt": "2026-06-09T04:39:51.029Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv09-098",
+      "lang": "en",
+      "setId": "sv09",
+      "url": "https://assets.tcgdex.net/en/sv/sv09/098/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv09/098",
+      "firstSeenAt": "2026-06-09T04:39:49.273Z",
+      "lastSeenAt": "2026-06-09T04:39:49.273Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv09-111",
+      "lang": "en",
+      "setId": "sv09",
+      "url": "https://assets.tcgdex.net/en/sv/sv09/111/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv09/111",
+      "firstSeenAt": "2026-06-09T04:39:51.000Z",
+      "lastSeenAt": "2026-06-09T04:39:51.000Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv09-121",
+      "lang": "en",
+      "setId": "sv09",
+      "url": "https://assets.tcgdex.net/en/sv/sv09/121/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv09/121",
+      "firstSeenAt": "2026-06-09T04:39:50.999Z",
+      "lastSeenAt": "2026-06-09T04:39:50.999Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv10-023",
+      "lang": "en",
+      "setId": "sv10",
+      "url": "https://assets.tcgdex.net/en/sv/sv10/023/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv10/023",
+      "firstSeenAt": "2026-06-09T04:39:51.053Z",
+      "lastSeenAt": "2026-06-09T04:39:51.053Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv10-032",
+      "lang": "en",
+      "setId": "sv10",
+      "url": "https://assets.tcgdex.net/en/sv/sv10/032/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv10/032",
+      "firstSeenAt": "2026-06-09T04:39:51.014Z",
+      "lastSeenAt": "2026-06-09T04:39:51.014Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv10-034",
+      "lang": "en",
+      "setId": "sv10",
+      "url": "https://assets.tcgdex.net/en/sv/sv10/034/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv10/034",
+      "firstSeenAt": "2026-06-09T04:39:50.196Z",
+      "lastSeenAt": "2026-06-09T04:39:50.196Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv10-057",
+      "lang": "en",
+      "setId": "sv10",
+      "url": "https://assets.tcgdex.net/en/sv/sv10/057/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv10/057",
+      "firstSeenAt": "2026-06-09T04:39:50.072Z",
+      "lastSeenAt": "2026-06-09T04:39:50.072Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv10-071",
+      "lang": "en",
+      "setId": "sv10",
+      "url": "https://assets.tcgdex.net/en/sv/sv10/071/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv10/071",
+      "firstSeenAt": "2026-06-09T04:39:50.199Z",
+      "lastSeenAt": "2026-06-09T04:39:50.199Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv10-104",
+      "lang": "en",
+      "setId": "sv10",
+      "url": "https://assets.tcgdex.net/en/sv/sv10/104/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv10/104",
+      "firstSeenAt": "2026-06-09T04:39:50.188Z",
+      "lastSeenAt": "2026-06-09T04:39:50.188Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv10-136",
+      "lang": "en",
+      "setId": "sv10",
+      "url": "https://assets.tcgdex.net/en/sv/sv10/136/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv10/136",
+      "firstSeenAt": "2026-06-09T04:39:49.297Z",
+      "lastSeenAt": "2026-06-09T04:39:49.297Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv10-145",
+      "lang": "en",
+      "setId": "sv10",
+      "url": "https://assets.tcgdex.net/en/sv/sv10/145/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv10/145",
+      "firstSeenAt": "2026-06-09T04:39:51.048Z",
+      "lastSeenAt": "2026-06-09T04:39:51.048Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv10-154",
+      "lang": "en",
+      "setId": "sv10",
+      "url": "https://assets.tcgdex.net/en/sv/sv10/154/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv10/154",
+      "firstSeenAt": "2026-06-09T04:39:51.037Z",
+      "lastSeenAt": "2026-06-09T04:39:51.037Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv10-155",
+      "lang": "en",
+      "setId": "sv10",
+      "url": "https://assets.tcgdex.net/en/sv/sv10/155/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv10/155",
+      "firstSeenAt": "2026-06-09T04:39:51.017Z",
+      "lastSeenAt": "2026-06-09T04:39:51.017Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv10-176",
+      "lang": "en",
+      "setId": "sv10",
+      "url": "https://assets.tcgdex.net/en/sv/sv10/176/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv10/176",
+      "firstSeenAt": "2026-06-09T04:39:49.586Z",
+      "lastSeenAt": "2026-06-09T04:39:49.586Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv10.5b-030",
+      "lang": "en",
+      "setId": "sv10.5b",
+      "url": "https://assets.tcgdex.net/en/sv/sv10.5b/030/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv10.5b/030",
+      "firstSeenAt": "2026-06-09T04:39:50.197Z",
+      "lastSeenAt": "2026-06-09T04:39:50.197Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv10.5b-067",
+      "lang": "en",
+      "setId": "sv10.5b",
+      "url": "https://assets.tcgdex.net/en/sv/sv10.5b/067/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv10.5b/067",
+      "firstSeenAt": "2026-06-09T04:39:50.980Z",
+      "lastSeenAt": "2026-06-09T04:39:51.012Z",
+      "hitCount": 2
+    },
+    {
+      "cardId": "sv10.5b-103",
+      "lang": "en",
+      "setId": "sv10.5b",
+      "url": "https://assets.tcgdex.net/en/sv/sv10.5b/103/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv10.5b/103",
+      "firstSeenAt": "2026-06-09T04:39:50.083Z",
+      "lastSeenAt": "2026-06-09T04:39:50.083Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv10.5b-161",
+      "lang": "en",
+      "setId": "sv10.5b",
+      "url": "https://assets.tcgdex.net/en/sv/sv10.5b/161/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv10.5b/161",
+      "firstSeenAt": "2026-06-09T04:39:51.054Z",
+      "lastSeenAt": "2026-06-09T04:39:51.054Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv10.5b-162",
+      "lang": "en",
+      "setId": "sv10.5b",
+      "url": "https://assets.tcgdex.net/en/sv/sv10.5b/162/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv10.5b/162",
+      "firstSeenAt": "2026-06-09T04:39:50.991Z",
+      "lastSeenAt": "2026-06-09T04:39:50.991Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv10.5w-045",
+      "lang": "en",
+      "setId": "sv10.5w",
+      "url": "https://assets.tcgdex.net/en/sv/sv10.5w/045/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv10.5w/045",
+      "firstSeenAt": "2026-06-09T04:39:51.056Z",
+      "lastSeenAt": "2026-06-09T04:39:51.056Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "sv10.5w-160",
+      "lang": "en",
+      "setId": "sv10.5w",
+      "url": "https://assets.tcgdex.net/en/sv/sv10.5w/160/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/sv10.5w/160",
+      "firstSeenAt": "2026-06-09T04:39:50.198Z",
+      "lastSeenAt": "2026-06-09T04:39:50.198Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "svp-065",
+      "lang": "en",
+      "setId": "svp",
+      "url": "https://assets.tcgdex.net/en/sv/svp/065/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/svp/065",
+      "firstSeenAt": "2026-06-09T04:39:49.287Z",
+      "lastSeenAt": "2026-06-09T04:39:49.287Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "svp-145",
+      "lang": "en",
+      "setId": "svp",
+      "url": "https://assets.tcgdex.net/en/sv/svp/145/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/svp/145",
+      "firstSeenAt": "2026-06-09T04:39:51.190Z",
+      "lastSeenAt": "2026-06-09T04:39:51.190Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "svp-169",
+      "lang": "en",
+      "setId": "svp",
+      "url": "https://assets.tcgdex.net/en/sv/svp/169/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/svp/169",
+      "firstSeenAt": "2026-06-09T04:39:50.069Z",
+      "lastSeenAt": "2026-06-09T04:39:50.069Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "svp-171",
+      "lang": "en",
+      "setId": "svp",
+      "url": "https://assets.tcgdex.net/en/sv/svp/171/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/svp/171",
+      "firstSeenAt": "2026-06-09T04:39:51.021Z",
+      "lastSeenAt": "2026-06-09T04:39:51.165Z",
+      "hitCount": 2
+    },
+    {
+      "cardId": "svp-177",
+      "lang": "en",
+      "setId": "svp",
+      "url": "https://assets.tcgdex.net/en/sv/svp/177/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/sv/svp/177",
+      "firstSeenAt": "2026-06-09T04:39:51.021Z",
+      "lastSeenAt": "2026-06-09T04:39:51.045Z",
+      "hitCount": 2
+    },
+    {
+      "cardId": "swsh1-156",
+      "lang": "en",
+      "setId": "swsh1",
+      "url": "https://assets.tcgdex.net/en/swsh/swsh1/156/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/swsh/swsh1/156",
+      "firstSeenAt": "2026-06-09T04:39:51.021Z",
+      "lastSeenAt": "2026-06-09T04:39:51.021Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "swsh10-038",
+      "lang": "en",
+      "setId": "swsh10",
+      "url": "https://assets.tcgdex.net/en/swsh/swsh10/038/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/swsh/swsh10/038",
+      "firstSeenAt": "2026-06-09T04:39:51.022Z",
+      "lastSeenAt": "2026-06-09T04:39:51.022Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "swsh10-127",
+      "lang": "en",
+      "setId": "swsh10",
+      "url": "https://assets.tcgdex.net/en/swsh/swsh10/127/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/swsh/swsh10/127",
+      "firstSeenAt": "2026-06-09T04:39:51.124Z",
+      "lastSeenAt": "2026-06-09T04:39:51.124Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "swsh10-128",
+      "lang": "en",
+      "setId": "swsh10",
+      "url": "https://assets.tcgdex.net/en/swsh/swsh10/128/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/swsh/swsh10/128",
+      "firstSeenAt": "2026-06-09T04:39:50.073Z",
+      "lastSeenAt": "2026-06-09T04:39:50.073Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "swsh11-075",
+      "lang": "en",
+      "setId": "swsh11",
+      "url": "https://assets.tcgdex.net/en/swsh/swsh11/075/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/swsh/swsh11/075",
+      "firstSeenAt": "2026-06-09T04:39:50.073Z",
+      "lastSeenAt": "2026-06-09T04:39:50.073Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "swsh12-065",
+      "lang": "en",
+      "setId": "swsh12",
+      "url": "https://assets.tcgdex.net/en/swsh/swsh12/065/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/swsh/swsh12/065",
+      "firstSeenAt": "2026-06-09T04:39:50.073Z",
+      "lastSeenAt": "2026-06-09T04:39:50.073Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "swsh12.5-043",
+      "lang": "en",
+      "setId": "swsh12.5",
+      "url": "https://assets.tcgdex.net/en/swsh/swsh12.5/043/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/swsh/swsh12.5/043",
+      "firstSeenAt": "2026-06-09T04:39:49.293Z",
+      "lastSeenAt": "2026-06-09T04:39:49.293Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "swsh3.5-20",
+      "lang": "en",
+      "setId": "swsh3.5",
+      "url": "https://assets.tcgdex.net/en/swsh/swsh3.5/20/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/swsh/swsh3.5/20",
+      "firstSeenAt": "2026-06-09T04:39:51.000Z",
+      "lastSeenAt": "2026-06-09T04:39:51.000Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "swsh8-156",
+      "lang": "en",
+      "setId": "swsh8",
+      "url": "https://assets.tcgdex.net/en/swsh/swsh8/156/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/swsh/swsh8/156",
+      "firstSeenAt": "2026-06-09T04:39:50.069Z",
+      "lastSeenAt": "2026-06-09T04:39:50.069Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "swsh9-107",
+      "lang": "en",
+      "setId": "swsh9",
+      "url": "https://assets.tcgdex.net/en/swsh/swsh9/107/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/swsh/swsh9/107",
+      "firstSeenAt": "2026-06-09T04:39:49.846Z",
+      "lastSeenAt": "2026-06-09T04:39:49.846Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "swshp-SWSH135",
+      "lang": "en",
+      "setId": "swshp",
+      "url": "https://assets.tcgdex.net/en/swsh/swshp/SWSH135/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/swsh/swshp/SWSH135",
+      "firstSeenAt": "2026-06-09T04:39:51.013Z",
+      "lastSeenAt": "2026-06-09T04:39:51.013Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "swshp-SWSH209",
+      "lang": "en",
+      "setId": "swshp",
+      "url": "https://assets.tcgdex.net/en/swsh/swshp/SWSH209/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/swsh/swshp/SWSH209",
+      "firstSeenAt": "2026-06-09T04:39:50.091Z",
+      "lastSeenAt": "2026-06-09T04:39:50.091Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "swshp-SWSH220",
+      "lang": "en",
+      "setId": "swshp",
+      "url": "https://assets.tcgdex.net/en/swsh/swshp/SWSH220/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/swsh/swshp/SWSH220",
+      "firstSeenAt": "2026-06-09T04:39:50.073Z",
+      "lastSeenAt": "2026-06-09T04:39:50.073Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "swshp-SWSH221",
+      "lang": "en",
+      "setId": "swshp",
+      "url": "https://assets.tcgdex.net/en/swsh/swshp/SWSH221/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/swsh/swshp/SWSH221",
+      "firstSeenAt": "2026-06-09T04:39:50.088Z",
+      "lastSeenAt": "2026-06-09T04:39:50.088Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "swshp-SWSH222",
+      "lang": "en",
+      "setId": "swshp",
+      "url": "https://assets.tcgdex.net/en/swsh/swshp/SWSH222/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/swsh/swshp/SWSH222",
+      "firstSeenAt": "2026-06-09T04:39:49.294Z",
+      "lastSeenAt": "2026-06-09T04:39:49.294Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "swshp-SWSH255",
+      "lang": "en",
+      "setId": "swshp",
+      "url": "https://assets.tcgdex.net/en/swsh/swshp/SWSH255/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/swsh/swshp/SWSH255",
+      "firstSeenAt": "2026-06-09T04:39:51.019Z",
+      "lastSeenAt": "2026-06-09T04:39:51.019Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "swshp-SWSH297",
+      "lang": "en",
+      "setId": "swshp",
+      "url": "https://assets.tcgdex.net/en/swsh/swshp/SWSH297/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/swsh/swshp/SWSH297",
+      "firstSeenAt": "2026-06-09T04:39:51.004Z",
+      "lastSeenAt": "2026-06-09T04:39:51.004Z",
+      "hitCount": 1
+    },
+    {
+      "cardId": "xy1-41",
+      "lang": "en",
+      "setId": "xy1",
+      "url": "https://assets.tcgdex.net/en/xy/xy1/41/high.png",
+      "remoteImageBase": "https://assets.tcgdex.net/en/xy/xy1/41",
+      "firstSeenAt": "2026-06-09T04:39:49.296Z",
+      "lastSeenAt": "2026-06-09T04:39:49.296Z",
+      "hitCount": 1
+    }
+  ]
+}

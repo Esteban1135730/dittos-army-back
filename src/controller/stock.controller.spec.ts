@@ -1,4 +1,8 @@
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { StockController } from './stock.controller';
 import { StockRepository } from 'src/repository/stock.repository';
@@ -23,7 +27,9 @@ describe('StockController.deleteStock', () => {
       findById: jest
         .fn()
         .mockResolvedValue(
-          overrides.findById !== undefined ? overrides.findById : { _id: validId },
+          overrides.findById !== undefined
+            ? overrides.findById
+            : { _id: validId },
         ),
       deleteById: jest
         .fn()
@@ -35,14 +41,18 @@ describe('StockController.deleteStock', () => {
       findByStockId: jest
         .fn()
         .mockResolvedValue(
-          overrides.findByStockId !== undefined ? overrides.findByStockId : null,
+          overrides.findByStockId !== undefined
+            ? overrides.findByStockId
+            : null,
         ),
     };
     const saleRepository = {
       findOneByStockId: jest
         .fn()
         .mockResolvedValue(
-          overrides.findOneByStockId !== undefined ? overrides.findOneByStockId : null,
+          overrides.findOneByStockId !== undefined
+            ? overrides.findOneByStockId
+            : null,
         ),
     };
     const cardStockTagRepository = {
@@ -87,15 +97,19 @@ describe('StockController.deleteStock', () => {
 
   it('rechaza id inválido', async () => {
     const { controller, stockRepository } = await setupController({});
-    await expect(controller.deleteStock('no-es-objectid')).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(
+      controller.deleteStock('no-es-objectid'),
+    ).rejects.toBeInstanceOf(BadRequestException);
     expect(stockRepository.findById).not.toHaveBeenCalled();
   });
 
   it('404 si no existe stock', async () => {
-    const { controller, stockRepository } = await setupController({ findById: null });
-    await expect(controller.deleteStock(validId)).rejects.toBeInstanceOf(NotFoundException);
+    const { controller, stockRepository } = await setupController({
+      findById: null,
+    });
+    await expect(controller.deleteStock(validId)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
     expect(stockRepository.deleteById).not.toHaveBeenCalled();
   });
 
@@ -103,7 +117,9 @@ describe('StockController.deleteStock', () => {
     const { controller, stockRepository } = await setupController({
       findByStockId: { _id: 'reserva1' },
     });
-    await expect(controller.deleteStock(validId)).rejects.toBeInstanceOf(ConflictException);
+    await expect(controller.deleteStock(validId)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
     expect(stockRepository.deleteById).not.toHaveBeenCalled();
   });
 
@@ -111,12 +127,16 @@ describe('StockController.deleteStock', () => {
     const { controller, stockRepository } = await setupController({
       findOneByStockId: { _id: 'sale1' },
     });
-    await expect(controller.deleteStock(validId)).rejects.toBeInstanceOf(ConflictException);
+    await expect(controller.deleteStock(validId)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
     expect(stockRepository.deleteById).not.toHaveBeenCalled();
   });
 
   it('404 si deleteById no borró (carrera)', async () => {
     const { controller } = await setupController({ deleteById: false });
-    await expect(controller.deleteStock(validId)).rejects.toBeInstanceOf(NotFoundException);
+    await expect(controller.deleteStock(validId)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 });

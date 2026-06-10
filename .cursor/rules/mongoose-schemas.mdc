@@ -1,0 +1,36 @@
+---
+description: Convenciones Mongoose para schemas y repositories
+globs: src/{schema,repository}/**/*.ts
+alwaysApply: false
+---
+
+# Mongoose & Repositories
+
+## Schemas
+
+- Definir en `src/schema/` con `@Schema()` y `@Prop()`.
+- Tipar documentos con clases/interfaces exportadas.
+- Índices explícitos para campos filtrados frecuentemente.
+
+## Repositories
+
+- Un repository por agregado; métodos con nombres de dominio (`findByCardId`, `sellBatch`).
+- Preferir `.lean()` en lecturas cuando no se necesita mutar el documento.
+- No filtrar con operadores MongoDB construidos desde strings de usuario sin validar.
+
+```typescript
+// ❌ BAD — input de usuario directo en query
+find({ $where: userInput });
+
+// ✅ GOOD — campos validados y tipados
+find({ card_id: validatedCardId, deleted: { $ne: true } });
+```
+
+## Transacciones y consistencia
+
+- Operaciones multi-documento críticas: usar sesiones Mongoose o diseño idempotente.
+- Evitar N+1: usar `populate` selectivo o agregaciones cuando liste muchos items.
+
+## Tests
+
+Mock repositories en tests de service/controller; tests de repository solo si la query es compleja.

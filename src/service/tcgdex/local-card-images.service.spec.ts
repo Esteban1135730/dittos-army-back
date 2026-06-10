@@ -15,7 +15,11 @@ describe('LocalCardImagesService', () => {
       join(root, 'card-index.json'),
       JSON.stringify({
         'swsh3-136': { file: 'swsh3/swsh3-136.png', setId: 'swsh3' },
-        'zh:SV9a-001': { file: 'SV9a-zh/SV9a-001.png', lang: 'zh-tw', setId: 'SV9a' },
+        'zh:SV9a-001': {
+          file: 'SV9a-zh/SV9a-001.png',
+          lang: 'zh-tw',
+          setId: 'SV9a',
+        },
       }),
     );
 
@@ -44,9 +48,7 @@ describe('LocalCardImagesService', () => {
       setId: 'swsh3',
     });
     expect(resolved?.source).toBe('local');
-    expect(resolved?.image).toBe(
-      'http://test/card-images/swsh3/swsh3-136.png',
-    );
+    expect(resolved?.image).toBe('http://test/card-images/swsh3/swsh3-136.png');
   });
 
   it('resuelve imagen zh-tw con clave prefijada del índice', () => {

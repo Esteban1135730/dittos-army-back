@@ -6,7 +6,9 @@ import {
 
 describe('parseExpansionFromSetField', () => {
   it('extrae nombre entre paréntesis', () => {
-    expect(parseExpansionFromSetField('sv08(Surging Sparks)')).toBe('Surging Sparks');
+    expect(parseExpansionFromSetField('sv08(Surging Sparks)')).toBe(
+      'Surging Sparks',
+    );
   });
 
   it('devuelve undefined si vacío', () => {

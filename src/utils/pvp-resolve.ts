@@ -8,7 +8,9 @@ export type PvpLike = {
 };
 
 /** Rareza solo desde el campo `rareza` (alias y minúsculas). */
-export function stockLineRareza(rareza: string | undefined | null): string | null {
+export function stockLineRareza(
+  rareza: string | undefined | null,
+): string | null {
   return normalizeOperationalRareza(rareza);
 }
 

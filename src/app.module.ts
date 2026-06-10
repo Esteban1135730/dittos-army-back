@@ -3,11 +3,17 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { StockRepository } from './repository/stock.repository';
 import { CardStockTagRepository } from './repository/card-stock-tag.repository';
 import { Stock, StockSchema } from './schema/stock.schema';
-import { CardStockTag, CardStockTagSchema } from './schema/card-stock-tag.schema';
+import {
+  CardStockTag,
+  CardStockTagSchema,
+} from './schema/card-stock-tag.schema';
 import { Pvp, PvpSchema } from './schema/pvp.schema';
 import { Client, ClientSchema } from './schema/client.schema';
 import { Reserva, ReservaSchema } from './schema/reserva.schema';
-import { ReservaIncoming, ReservaIncomingSchema } from './schema/reserva-incoming.schema';
+import {
+  ReservaIncoming,
+  ReservaIncomingSchema,
+} from './schema/reserva-incoming.schema';
 import { PvpRepository } from './repository/pvp.repository';
 import { Sale, SaleSchema } from './schema/sale.schema';
 import { SaleRepository } from './repository/sale.repository';
@@ -34,17 +40,36 @@ import { SaleController } from './controller/sale.controller';
 import { ClientController } from './controller/client.controller';
 import { ReservaController } from './controller/reserva.controller';
 import { IncomingController } from './controller/incoming.controller';
-import { IncomingBatch, IncomingBatchSchema } from './schema/incoming-batch.schema';
-import { IncomingBatchItem, IncomingBatchItemSchema } from './schema/incoming-batch-item.schema';
-import { IncomingRound, IncomingRoundSchema } from './schema/incoming-round.schema';
-import { IncomingRoundItem, IncomingRoundItemSchema } from './schema/incoming-round-item.schema';
-import { IncomingShipRound, IncomingShipRoundSchema } from './schema/incoming-ship-round.schema';
-import { IncomingShipRoundItem, IncomingShipRoundItemSchema } from './schema/incoming-ship-round-item.schema';
+import {
+  IncomingBatch,
+  IncomingBatchSchema,
+} from './schema/incoming-batch.schema';
+import {
+  IncomingBatchItem,
+  IncomingBatchItemSchema,
+} from './schema/incoming-batch-item.schema';
+import {
+  IncomingRound,
+  IncomingRoundSchema,
+} from './schema/incoming-round.schema';
+import {
+  IncomingRoundItem,
+  IncomingRoundItemSchema,
+} from './schema/incoming-round-item.schema';
+import {
+  IncomingShipRound,
+  IncomingShipRoundSchema,
+} from './schema/incoming-ship-round.schema';
+import {
+  IncomingShipRoundItem,
+  IncomingShipRoundItemSchema,
+} from './schema/incoming-ship-round-item.schema';
 import { IncomingShipRoundController } from './controller/incoming-ship-round.controller';
 import { IncomingShipRoundRepository } from './repository/incoming-ship-round.repository';
 import { IncomingShipRoundItemRepository } from './repository/incoming-ship-round-item.repository';
 import { CardTraderController } from './controller/cardtrader.controller';
 import { CardTraderService } from './service/cardtrader/cardtrader.service';
+import { CardTraderTcgdexResolveService } from './service/cardtrader/cardtrader-tcgdex-resolve.service';
 import { StockScanService } from './service/stock-scan.service';
 import { DashboardController } from './controller/dashboard.controller';
 import { DashboardOverviewService } from './service/dashboard-overview.service';
@@ -86,6 +111,7 @@ import { DashboardOverviewService } from './service/dashboard-overview.service';
     IncomingShipRoundRepository,
     IncomingShipRoundItemRepository,
     CardTraderService,
+    CardTraderTcgdexResolveService,
     StockScanService,
     DashboardOverviewService,
   ],

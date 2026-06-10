@@ -27,6 +27,7 @@ export class Pvp {
 
 export const PvpSchema = SchemaFactory.createForClass(Pvp);
 
-PvpSchema.index({ card_id: 1, rareza: 1 }, { unique: true, name: 'pvp_card_id_rareza_unique' });
-
-
+PvpSchema.index(
+  { card_id: 1, rareza: 1 },
+  { unique: true, name: 'pvp_card_id_rareza_unique' },
+);

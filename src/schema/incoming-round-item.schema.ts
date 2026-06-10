@@ -28,7 +28,5 @@ export class IncomingRoundItem {
   updated_at: Date;
 }
 
-export const IncomingRoundItemSchema = SchemaFactory.createForClass(
-  IncomingRoundItem,
-);
-
+export const IncomingRoundItemSchema =
+  SchemaFactory.createForClass(IncomingRoundItem);

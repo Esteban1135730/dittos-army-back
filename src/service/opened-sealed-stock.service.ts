@@ -1,7 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { StockRepository } from '../repository/stock.repository';
 import { StockDto } from '../Dto/stock.dto';
-import { FromOpenedSealedBodyDto, FromOpenedSealedLineDto } from '../Dto/from-opened-sealed.dto';
+import {
+  FromOpenedSealedBodyDto,
+  FromOpenedSealedLineDto,
+} from '../Dto/from-opened-sealed.dto';
 import {
   isValidOperationalRareza,
   normalizeOperationalRareza,
@@ -34,15 +37,29 @@ export type FromOpenedSealedResult = {
 export class OpenedSealedStockService {
   constructor(private readonly stockRepository: StockRepository) {}
 
-  async createFromOpenedSealed(body: FromOpenedSealedBodyDto): Promise<FromOpenedSealedResult> {
+  async createFromOpenedSealed(
+    body: FromOpenedSealedBodyDto,
+  ): Promise<FromOpenedSealedResult> {
     const nonStock = body.non_stock_fraction ?? 0.3;
-    if (typeof nonStock !== 'number' || !Number.isFinite(nonStock) || nonStock < 0 || nonStock >= 1) {
+    if (
+      typeof nonStock !== 'number' ||
+      !Number.isFinite(nonStock) ||
+      nonStock < 0 ||
+      nonStock >= 1
+    ) {
       throw new BadRequestException('non_stock_fraction debe ser >= 0 y < 1');
     }
 
     const pc = body.product_cost_cop;
-    if (typeof pc !== 'number' || !Number.isFinite(pc) || pc <= 0 || !Number.isInteger(pc)) {
-      throw new BadRequestException('product_cost_cop debe ser un entero positivo (COP)');
+    if (
+      typeof pc !== 'number' ||
+      !Number.isFinite(pc) ||
+      pc <= 0 ||
+      !Number.isInteger(pc)
+    ) {
+      throw new BadRequestException(
+        'product_cost_cop debe ser un entero positivo (COP)',
+      );
     }
 
     if (!Array.isArray(body.lines) || body.lines.length === 0) {

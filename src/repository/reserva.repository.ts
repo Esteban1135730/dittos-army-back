@@ -25,7 +25,10 @@ export class ReservaRepository {
   }
 
   async findByClientId(clientId: string): Promise<Reserva[]> {
-    return this.reservaModel.find({ client_id: clientId }).sort({ created_at: -1 }).exec();
+    return this.reservaModel
+      .find({ client_id: clientId })
+      .sort({ created_at: -1 })
+      .exec();
   }
 
   async findByStockId(stockId: string): Promise<Reserva | null> {
@@ -33,7 +36,9 @@ export class ReservaRepository {
   }
 
   async deleteByStockId(stockId: string): Promise<boolean> {
-    const result = await this.reservaModel.deleteOne({ stock_id: stockId }).exec();
+    const result = await this.reservaModel
+      .deleteOne({ stock_id: stockId })
+      .exec();
     return (result.deletedCount ?? 0) > 0;
   }
 

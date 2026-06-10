@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+} from '@nestjs/common';
 import { IncomingShipRoundRepository } from 'src/repository/incoming-ship-round.repository';
 import { IncomingShipRoundItemRepository } from 'src/repository/incoming-ship-round-item.repository';
 import { IncomingBatchItemRepository } from 'src/repository/incoming-batch-item.repository';
@@ -6,12 +14,9 @@ import { IncomingBatchRepository } from 'src/repository/incoming-batch.repositor
 import { StockRepository } from 'src/repository/stock.repository';
 import { StockDto } from 'src/Dto/stock.dto';
 import { IncomingReservationService } from 'src/service/incoming-reservation.service';
-import {
-  ReviewIncomingShipRoundDto,
-} from 'src/Dto/incoming-ship-round.dto';
+import { ReviewIncomingShipRoundDto } from 'src/Dto/incoming-ship-round.dto';
 import { CreateIncomingShipRoundDto } from 'src/Dto/incoming-ship-round.dto';
 import { normalizeOperationalRareza } from 'src/constants/item-rareza';
-
 
 @Controller('incoming/ship-round')
 export class IncomingShipRoundController {
@@ -54,7 +59,10 @@ export class IncomingShipRoundController {
 
     await this.shipRoundItemRepository.createMany(roundItems);
 
-    return { round_id: round._id.toString(), included_items: roundItems.length };
+    return {
+      round_id: round._id.toString(),
+      included_items: roundItems.length,
+    };
   }
 
   /** Incorpora al round en revisión los batch_item en camino que no estaban en el snapshot inicial. */
@@ -68,13 +76,16 @@ export class IncomingShipRoundController {
       throw new Error('Solo se pueden incorporar líneas en tandas en revisión');
     }
 
-    const roundItems = await this.shipRoundItemRepository.findByRoundId(roundId);
+    const roundItems =
+      await this.shipRoundItemRepository.findByRoundId(roundId);
     const existingIds = new Set(roundItems.map((ri) => ri.batch_item_id));
 
     const allInRoute =
       await this.incomingBatchItemRepository.findByRemainingQuantityGreaterThanZero();
 
-    const toAdd = allInRoute.filter((bi) => !existingIds.has(bi._id.toString()));
+    const toAdd = allInRoute.filter(
+      (bi) => !existingIds.has(bi._id.toString()),
+    );
 
     if (toAdd.length === 0) {
       return { added: 0, round_id: round._id.toString() };
@@ -115,7 +126,9 @@ export class IncomingShipRoundController {
   }
 
   @Delete(':roundId')
-  async deleteShipRound(@Param('roundId') roundId: string): Promise<{ success: boolean; message?: string }> {
+  async deleteShipRound(
+    @Param('roundId') roundId: string,
+  ): Promise<{ success: boolean; message?: string }> {
     const round = await this.shipRoundRepository.findById(roundId);
     if (!round) {
       return { success: false, message: 'Ship round no encontrada' };
@@ -137,15 +150,20 @@ export class IncomingShipRoundController {
     const round = await this.shipRoundRepository.findById(roundId);
     if (!round) throw new Error('Ship round no encontrada');
 
-    const roundItems = await this.shipRoundItemRepository.findByRoundId(roundId);
+    const roundItems =
+      await this.shipRoundItemRepository.findByRoundId(roundId);
     const batchItemIds = roundItems.map((ri) => ri.batch_item_id);
 
-    const batchItems = await this.incomingBatchItemRepository.findByIds(batchItemIds);
+    const batchItems =
+      await this.incomingBatchItemRepository.findByIds(batchItemIds);
     const batchItemMap = new Map<string, any>();
     batchItems.forEach((bi) => batchItemMap.set(bi._id.toString(), bi));
 
-    const uniqueBatchIds = [...new Set(batchItems.map((bi) => bi.batch_id.toString()))];
-    const batchDocs = await this.incomingBatchRepository.findByIds(uniqueBatchIds);
+    const uniqueBatchIds = [
+      ...new Set(batchItems.map((bi) => bi.batch_id.toString())),
+    ];
+    const batchDocs =
+      await this.incomingBatchRepository.findByIds(uniqueBatchIds);
     const batchMap = new Map<string, { purchase_date: Date }>();
     batchDocs.forEach((b) =>
       batchMap.set(b._id.toString(), { purchase_date: b.purchase_date }),
@@ -213,19 +231,22 @@ export class IncomingShipRoundController {
   ): Promise<{ success: boolean }> {
     const round = await this.shipRoundRepository.findById(roundId);
     if (!round) throw new Error('Ship round no encontrada');
-    if (round.status !== 'reviewing') throw new Error('Ship round ya finalizada');
+    if (round.status !== 'reviewing')
+      throw new Error('Ship round ya finalizada');
 
     const decisions = body?.decisions ?? [];
     if (!Array.isArray(decisions)) throw new Error('decisions es requerido');
 
-    const roundItems = await this.shipRoundItemRepository.findByRoundId(roundId);
+    const roundItems =
+      await this.shipRoundItemRepository.findByRoundId(roundId);
     if (decisions.length !== roundItems.length) {
       // mantenemos simple: exigir que incluyan todos los items del round
       throw new Error('decisions debe incluir TODOS los batch items del round');
     }
 
     const batchItemIds = decisions.map((d) => d.batch_item_id);
-    const batchItems = await this.incomingBatchItemRepository.findByIds(batchItemIds);
+    const batchItems =
+      await this.incomingBatchItemRepository.findByIds(batchItemIds);
     const batchItemMap = new Map<string, any>();
     batchItems.forEach((bi) => batchItemMap.set(bi._id.toString(), bi));
 
@@ -261,7 +282,10 @@ export class IncomingShipRoundController {
       };
     });
 
-    await this.shipRoundItemRepository.upsertManyDecisions(roundId, decisionsNormalized);
+    await this.shipRoundItemRepository.upsertManyDecisions(
+      roundId,
+      decisionsNormalized,
+    );
     return { success: true };
   }
 
@@ -269,11 +293,14 @@ export class IncomingShipRoundController {
   async finalizeShipRound(@Param('roundId') roundId: string) {
     const round = await this.shipRoundRepository.findById(roundId);
     if (!round) throw new Error('Ship round no encontrada');
-    if (round.status !== 'reviewing') throw new Error('Ship round ya finalizada');
+    if (round.status !== 'reviewing')
+      throw new Error('Ship round ya finalizada');
 
-    const roundItems = await this.shipRoundItemRepository.findByRoundId(roundId);
+    const roundItems =
+      await this.shipRoundItemRepository.findByRoundId(roundId);
     const batchItemIds = roundItems.map((ri) => ri.batch_item_id);
-    const batchItems = await this.incomingBatchItemRepository.findByIds(batchItemIds);
+    const batchItems =
+      await this.incomingBatchItemRepository.findByIds(batchItemIds);
     const batchItemMap = new Map<string, any>();
     batchItems.forEach((bi) => batchItemMap.set(bi._id.toString(), bi));
 
@@ -341,8 +368,11 @@ export class IncomingShipRoundController {
 
     // Actualizar remaining_quantity en cada batch_item
     for (const pair of itemsWithDecisions) {
-      const newRemaining = Number(pair.bi.remaining_quantity ?? 0) - Number(pair.ri.arrived_quantity ?? 0);
-      if (newRemaining < 0) throw new Error('remaining_quantity quedó negativo');
+      const newRemaining =
+        Number(pair.bi.remaining_quantity ?? 0) -
+        Number(pair.ri.arrived_quantity ?? 0);
+      if (newRemaining < 0)
+        throw new Error('remaining_quantity quedó negativo');
       await this.incomingBatchItemRepository.updateRemainingQuantity(
         pair.bi._id.toString(),
         newRemaining,
@@ -355,7 +385,8 @@ export class IncomingShipRoundController {
     );
     await Promise.all(
       affectedBatchIds.map(async (batchId) => {
-        const items = await this.incomingBatchItemRepository.findByBatchId(batchId);
+        const items =
+          await this.incomingBatchItemRepository.findByBatchId(batchId);
         const remainingTotal = items.reduce(
           (sum, it) => sum + (it.remaining_quantity ?? 0),
           0,
@@ -375,4 +406,3 @@ export class IncomingShipRoundController {
     };
   }
 }
-

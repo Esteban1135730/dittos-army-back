@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ClientRepository } from '../repository/client.repository';
 import { PvpRepository } from '../repository/pvp.repository';
 import { ReservaRepository } from '../repository/reserva.repository';
@@ -69,7 +73,10 @@ export class StoreWhatsAppReservationImportService {
     private readonly pvpRepository: PvpRepository,
   ) {}
 
-  async preview(clientId: string, message: string): Promise<ImportWhatsAppPlan> {
+  async preview(
+    clientId: string,
+    message: string,
+  ): Promise<ImportWhatsAppPlan> {
     await this.ensureClient(clientId);
     return this.buildPlan(clientId, message);
   }
@@ -80,19 +87,30 @@ export class StoreWhatsAppReservationImportService {
   ): Promise<
     ImportWhatsAppPlan & {
       created: ImportWhatsAppCreated[];
-      skipped: { line_index: number; reason: string; requested: number; matched: number }[];
+      skipped: {
+        line_index: number;
+        reason: string;
+        requested: number;
+        matched: number;
+      }[];
     }
   > {
     await this.ensureClient(clientId);
     const plan = await this.buildPlan(clientId, message);
     const created: ImportWhatsAppCreated[] = [];
-    const skipped: { line_index: number; reason: string; requested: number; matched: number }[] =
-      [];
+    const skipped: {
+      line_index: number;
+      reason: string;
+      requested: number;
+      matched: number;
+    }[] = [];
 
     for (const line of plan.lines) {
       let lineCreated = 0;
       for (const stockId of line.stock_ids) {
-        const precioCop = line.precio_cop_por_unidad[lineCreated] ?? line.precio_cop_por_unidad[0];
+        const precioCop =
+          line.precio_cop_por_unidad[lineCreated] ??
+          line.precio_cop_por_unidad[0];
         if (precioCop == null || precioCop <= 0) continue;
 
         const stock = await this.stockRepository.findById(stockId);
@@ -128,7 +146,9 @@ export class StoreWhatsAppReservationImportService {
       } else if (line.matched < line.requested) {
         skipped.push({
           line_index: line.index,
-          reason: line.issues.includes('no_pvp') ? 'no_pvp' : 'insufficient_stock',
+          reason: line.issues.includes('no_pvp')
+            ? 'no_pvp'
+            : 'insufficient_stock',
           requested: line.requested,
           matched: line.matched,
         });
@@ -152,13 +172,18 @@ export class StoreWhatsAppReservationImportService {
     if (!client) throw new NotFoundException('Cliente no encontrado');
   }
 
-  private async buildPlan(clientId: string, message: string): Promise<ImportWhatsAppPlan> {
+  private async buildPlan(
+    clientId: string,
+    message: string,
+  ): Promise<ImportWhatsAppPlan> {
     const text = message?.trim();
     if (!text) throw new BadRequestException('message es requerido');
 
     const parsedLines = parseStoreCatalogCartLines(text);
     if (parsedLines.length === 0) {
-      throw new BadRequestException('No se encontraron líneas de carta en el mensaje');
+      throw new BadRequestException(
+        'No se encontraron líneas de carta en el mensaje',
+      );
     }
 
     const [allStock, allReservas] = await Promise.all([
@@ -211,7 +236,12 @@ export class StoreWhatsAppReservationImportService {
       }
 
       const { parsed } = entry.result;
-      const assignments = this.matchLine(parsed, available, usedStockIds, pvpByCard);
+      const assignments = this.matchLine(
+        parsed,
+        available,
+        usedStockIds,
+        pvpByCard,
+      );
       const issues: string[] = [];
       const matched = assignments.length;
       const requested = parsed.quantity;
@@ -260,10 +290,23 @@ export class StoreWhatsAppReservationImportService {
   }
 
   private matchLine(
-    parsed: { card_id: string; language: string; rareza: string | null; quantity: number },
+    parsed: {
+      card_id: string;
+      language: string;
+      rareza: string | null;
+      quantity: number;
+    },
     available: StockRow[],
     usedStockIds: Set<string>,
-    pvpByCard: Map<string, { card_id: string; rareza?: string | null; pvp: number; currency: string }[]>,
+    pvpByCard: Map<
+      string,
+      {
+        card_id: string;
+        rareza?: string | null;
+        pvp: number;
+        currency: string;
+      }[]
+    >,
   ): ImportLineAssignment[] {
     const candidates = available.filter((s) => {
       const id = this.stockId(s);
@@ -293,7 +336,15 @@ export class StoreWhatsAppReservationImportService {
   private lineHasNoPvp(
     parsed: { card_id: string; language: string; rareza: string | null },
     available: StockRow[],
-    pvpByCard: Map<string, { card_id: string; rareza?: string | null; pvp: number; currency: string }[]>,
+    pvpByCard: Map<
+      string,
+      {
+        card_id: string;
+        rareza?: string | null;
+        pvp: number;
+        currency: string;
+      }[]
+    >,
   ): boolean {
     const candidates = available.filter(
       (s) =>
@@ -304,8 +355,15 @@ export class StoreWhatsAppReservationImportService {
     if (candidates.length === 0) return false;
     const pvps = pvpByCard.get(parsed.card_id) ?? [];
     return candidates.every((stock) => {
-      const pvpData = resolvePvpForLine(pvps, effectiveOperationalRarezaFromStock(stock));
-      return !pvpData || pvpData.pvp <= 0 || precioToCop(pvpData.pvp, pvpData.pvp_currency || 'COP') <= 0;
+      const pvpData = resolvePvpForLine(
+        pvps,
+        effectiveOperationalRarezaFromStock(stock),
+      );
+      return (
+        !pvpData ||
+        pvpData.pvp <= 0 ||
+        precioToCop(pvpData.pvp, pvpData.pvp_currency || 'COP') <= 0
+      );
     });
   }
 

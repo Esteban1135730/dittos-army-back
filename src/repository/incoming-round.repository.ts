@@ -1,12 +1,16 @@
 import { InjectModel } from '@nestjs/mongoose';
 import { Injectable } from '@nestjs/common';
 import { Model } from 'mongoose';
-import { IncomingRound, IncomingRoundDocument } from '../schema/incoming-round.schema';
+import {
+  IncomingRound,
+  IncomingRoundDocument,
+} from '../schema/incoming-round.schema';
 
 @Injectable()
 export class IncomingRoundRepository {
   constructor(
-    @InjectModel(IncomingRound.name) private roundModel: Model<IncomingRoundDocument>,
+    @InjectModel(IncomingRound.name)
+    private roundModel: Model<IncomingRoundDocument>,
   ) {}
 
   async create(data: {
@@ -33,9 +37,7 @@ export class IncomingRoundRepository {
       .exec();
   }
 
-  async setFinalized(
-    id: string,
-  ): Promise<IncomingRoundDocument | null> {
+  async setFinalized(id: string): Promise<IncomingRoundDocument | null> {
     return this.roundModel
       .findByIdAndUpdate(
         id,
@@ -46,8 +48,9 @@ export class IncomingRoundRepository {
   }
 
   async deleteByBatchId(batchId: string): Promise<number> {
-    const result = await this.roundModel.deleteMany({ batch_id: batchId }).exec();
+    const result = await this.roundModel
+      .deleteMany({ batch_id: batchId })
+      .exec();
     return result.deletedCount ?? 0;
   }
 }
-

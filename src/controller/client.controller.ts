@@ -29,7 +29,9 @@ export class ClientController {
   @Post()
   async create(@Body() dto: ClientDto): Promise<Client> {
     if (!dto.nombre || !dto.tienda_entrega || !dto.metodo_contacto) {
-      throw new Error('nombre, tienda_entrega y metodo_contacto son requeridos');
+      throw new Error(
+        'nombre, tienda_entrega y metodo_contacto son requeridos',
+      );
     }
     const contactErr = getClientContactValidationError(dto);
     if (contactErr) {

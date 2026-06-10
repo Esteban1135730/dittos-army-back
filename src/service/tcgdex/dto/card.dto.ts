@@ -85,13 +85,19 @@ const TCGPLAYER_VARIANT_KEY_MAP: Record<string, string> = {
  * TCGdex usa: lowPrice, midPrice, highPrice, marketPrice, directLowPrice por variante.
  */
 function mapTcgPlayerPricing(
-  tcgplayer: TCGdexPricingTcgplayer | undefined
+  tcgplayer: TCGdexPricingTcgplayer | undefined,
 ): Record<string, CardPriceVariant> | undefined {
   if (!tcgplayer || typeof tcgplayer !== 'object') return undefined;
   const prices: Record<string, CardPriceVariant> = {};
   for (const [key, data] of Object.entries(tcgplayer)) {
-    if (key === 'updated' || key === 'unit' || typeof data !== 'object' || !data) continue;
-    const variant = data as TCGdexPricingVariant;
+    if (
+      key === 'updated' ||
+      key === 'unit' ||
+      typeof data !== 'object' ||
+      !data
+    )
+      continue;
+    const variant = data;
     const targetKey = TCGPLAYER_VARIANT_KEY_MAP[key] ?? key;
     prices[targetKey] = {
       low: variant.lowPrice,
@@ -105,7 +111,7 @@ function mapTcgPlayerPricing(
 }
 
 function mapCardmarketPricing(
-  cardmarket: TCGdexPricingCardmarket | undefined
+  cardmarket: TCGdexPricingCardmarket | undefined,
 ): CardDto['cardmarket'] {
   if (!cardmarket || typeof cardmarket !== 'object') return undefined;
   return {
@@ -162,7 +168,11 @@ export function mapCard(src: Card, image_url: string): CardDto {
  * Documentación: https://tcgdex.dev/assets — formato {base}/{quality}.png
  * Add-stock usa getImageURL('low', 'png') → misma URL que devolvemos aquí.
  */
-function buildCardImageUrls(baseUrl: string): { image: string; small: string; large: string } {
+function buildCardImageUrls(baseUrl: string): {
+  image: string;
+  small: string;
+  large: string;
+} {
   if (!baseUrl || typeof baseUrl !== 'string') {
     return { image: '', small: '', large: '' };
   }
@@ -172,8 +182,12 @@ function buildCardImageUrls(baseUrl: string): { image: string; small: string; la
   if (/\.(png|jpg|jpeg|webp|gif)(\?|$)/i.test(base)) {
     return { image: base, small: base, large: base };
   }
-  const lowUrl = base.startsWith('http') ? `${base.replace(/\/+$/, '')}/low.png` : base;
-  const highUrl = base.startsWith('http') ? `${base.replace(/\/+$/, '')}/high.png` : base;
+  const lowUrl = base.startsWith('http')
+    ? `${base.replace(/\/+$/, '')}/low.png`
+    : base;
+  const highUrl = base.startsWith('http')
+    ? `${base.replace(/\/+$/, '')}/high.png`
+    : base;
   return {
     image: lowUrl,
     small: lowUrl,
@@ -181,7 +195,9 @@ function buildCardImageUrls(baseUrl: string): { image: string; small: string; la
   };
 }
 
-export function mapCardFromApi(raw: TCGdexCardApiResponse | null | undefined): CardDto {
+export function mapCardFromApi(
+  raw: TCGdexCardApiResponse | null | undefined,
+): CardDto {
   if (!raw || typeof raw !== 'object') {
     return {
       id: '',
@@ -197,7 +213,11 @@ export function mapCardFromApi(raw: TCGdexCardApiResponse | null | undefined): C
   }
   const id = raw.id ?? '';
   const localId = raw.localId ?? '';
-  const { image: imageUrl, small: imageSmall, large: imageLarge } = buildCardImageUrls(raw.image ?? '');
+  const {
+    image: imageUrl,
+    small: imageSmall,
+    large: imageLarge,
+  } = buildCardImageUrls(raw.image ?? '');
   const pricing = raw.pricing;
 
   return {

@@ -15,7 +15,10 @@ export class ReservaIncomingRepository {
 
   async sumQuantityForBatchItem(batchItemId: string): Promise<number> {
     const agg = await this.model
-      .aggregate<{ _id: null; total: number }>([
+      .aggregate<{
+        _id: null;
+        total: number;
+      }>([
         { $match: { batch_item_id: batchItemId } },
         { $group: { _id: null, total: { $sum: '$quantity' } } },
       ])
@@ -27,7 +30,9 @@ export class ReservaIncomingRepository {
     clientId: string,
     batchItemId: string,
   ): Promise<ReservaIncomingDocument | null> {
-    return this.model.findOne({ client_id: clientId, batch_item_id: batchItemId }).exec();
+    return this.model
+      .findOne({ client_id: clientId, batch_item_id: batchItemId })
+      .exec();
   }
 
   async upsertQuantity(
@@ -36,7 +41,9 @@ export class ReservaIncomingRepository {
     quantity: number,
   ): Promise<ReservaIncomingDocument | null> {
     if (quantity <= 0) {
-      await this.model.deleteOne({ client_id: clientId, batch_item_id: batchItemId }).exec();
+      await this.model
+        .deleteOne({ client_id: clientId, batch_item_id: batchItemId })
+        .exec();
       return null;
     }
     const now = new Date();
@@ -75,7 +82,9 @@ export class ReservaIncomingRepository {
    * Consume una unidad pendiente FIFO por batch_item_id.
    * Devuelve client_id si hubo fila y decremento atómico; null si no hay cupo pendiente.
    */
-  async consumeOneFifo(batchItemId: string): Promise<{ client_id: string } | null> {
+  async consumeOneFifo(
+    batchItemId: string,
+  ): Promise<{ client_id: string } | null> {
     for (let attempt = 0; attempt < 10; attempt++) {
       const doc = await this.model
         .findOne({ batch_item_id: batchItemId, quantity: { $gt: 0 } })

@@ -33,7 +33,9 @@ export type StockQrExportRow = {
 };
 
 /** @deprecated Usar StockQrExportRow */
-export type StockBarcodeExportRow = StockQrExportRow & { barcode_value: string };
+export type StockBarcodeExportRow = StockQrExportRow & {
+  barcode_value: string;
+};
 
 export type StockScanView = {
   stock_id: string;
@@ -91,9 +93,7 @@ export class StockScanService {
     if (eligible.length === 0) return [];
 
     const cardIds = [
-      ...new Set(
-        eligible.map((s) => (s as unknown as StockLineDoc).card_id),
-      ),
+      ...new Set(eligible.map((s) => (s as unknown as StockLineDoc).card_id)),
     ];
     const [pvps, expansionByCardId] = await Promise.all([
       this.pvpRepository.findByCardIds(cardIds),
@@ -105,7 +105,10 @@ export class StockScanService {
     for (const stock of eligible) {
       const doc = stock as unknown as StockLineDoc;
       const stockId = String(doc._id);
-      const priceCop = this.resolvePriceCop(doc, pvpByCard.get(doc.card_id) ?? []);
+      const priceCop = this.resolvePriceCop(
+        doc,
+        pvpByCard.get(doc.card_id) ?? [],
+      );
       if (priceCop == null || priceCop <= 0) continue;
 
       const opRareza = effectiveOperationalRarezaFromStock(doc);
@@ -136,7 +139,9 @@ export class StockScanService {
     if (!isValidObjectId(trimmed)) {
       throw new NotFoundException('Stock no encontrado');
     }
-    const stock = (await this.stockRepository.findById(trimmed)) as StockLineDoc | null;
+    const stock = (await this.stockRepository.findById(
+      trimmed,
+    )) as StockLineDoc | null;
     if (!stock) {
       throw new NotFoundException('Stock no encontrado');
     }

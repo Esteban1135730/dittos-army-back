@@ -1,7 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 
-export type IncomingShipRoundItemDocument = HydratedDocument<IncomingShipRoundItem>;
+export type IncomingShipRoundItemDocument =
+  HydratedDocument<IncomingShipRoundItem>;
 
 @Schema()
 export class IncomingShipRoundItem {
@@ -31,4 +32,3 @@ export class IncomingShipRoundItem {
 export const IncomingShipRoundItemSchema = SchemaFactory.createForClass(
   IncomingShipRoundItem,
 );
-

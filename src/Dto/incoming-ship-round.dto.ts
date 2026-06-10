@@ -12,4 +12,3 @@ export type ReviewIncomingShipRoundDecision = {
 export type ReviewIncomingShipRoundDto = {
   decisions: ReviewIncomingShipRoundDecision[];
 };
-

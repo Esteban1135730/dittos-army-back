@@ -104,7 +104,11 @@ export class StockController {
     if (stockDto.tags !== undefined) {
       normalizedTags = normalizeStockTagsInput(stockDto.tags);
     }
-    const { tags: _t, rareza: _drop, ...rest } = stockDto as StockDto & {
+    const {
+      tags: _t,
+      rareza: _drop,
+      ...rest
+    } = stockDto as StockDto & {
       rareza?: string;
     };
     const payload: StockDto = {
@@ -135,7 +139,7 @@ export class StockController {
     if (stockDto.tags !== undefined) {
       normalizedTags = normalizeStockTagsInput(stockDto.tags);
     }
-    const { tags: _tags, ...withoutTags } = stockDto as StockDto;
+    const { tags: _tags, ...withoutTags } = stockDto;
     const updated = await this.stockRepository.update({
       ...withoutTags,
       card_name: stockDto.card_name ?? '',
@@ -152,12 +156,22 @@ export class StockController {
   }
 
   @Post('export-store-inventory')
-  async exportStoreInventory(): Promise<{ success: boolean; path?: string; count?: number; error?: string }> {
+  async exportStoreInventory(): Promise<{
+    success: boolean;
+    path?: string;
+    count?: number;
+    error?: string;
+  }> {
     return this.storeInventoryService.exportStoreInventory();
   }
 
   @Post('export-store-upcoming')
-  async exportStoreUpcoming(): Promise<{ success: boolean; path?: string; count?: number; error?: string }> {
+  async exportStoreUpcoming(): Promise<{
+    success: boolean;
+    path?: string;
+    count?: number;
+    error?: string;
+  }> {
     return this.storeInventoryService.exportStoreUpcoming();
   }
 
@@ -190,7 +204,15 @@ export class StockController {
     const tagByCardId =
       await this.cardStockTagRepository.findMapByCardIds(cardIds);
 
-    const pvpByCard = new Map<string, { card_id: string; rareza?: string | null; pvp: number; currency: string }[]>();
+    const pvpByCard = new Map<
+      string,
+      {
+        card_id: string;
+        rareza?: string | null;
+        pvp: number;
+        currency: string;
+      }[]
+    >();
     try {
       const pvps = await this.pvpRepository.findByCardIds(cardIds);
       for (const [cid, list] of groupPvpsByCardId(pvps)) {
@@ -209,17 +231,13 @@ export class StockController {
       return {
         ...stock._doc,
         card_name: stock.card_name ?? '',
-        tags: this.resolveTagsForLine(
-          stock.card_id,
-          tagByCardId,
-          stock.tags,
-        ),
+        tags: this.resolveTagsForLine(stock.card_id, tagByCardId, stock.tags),
         card_cost: stock.shipment / stock.cards_in_shipmet + stock.unity_cost,
         pvp: pvpData?.pvp,
         pvp_currency: pvpData?.pvp_currency,
       };
     });
-    
+
     return response;
   }
 
@@ -262,11 +280,7 @@ export class StockController {
       return {
         ...findCard._doc,
         card_name: findCard.card_name ?? '',
-        tags: this.resolveTagsForLine(
-          findCard.card_id,
-          tagMap,
-          findCard.tags,
-        ),
+        tags: this.resolveTagsForLine(findCard.card_id, tagMap, findCard.tags),
         card_cost:
           findCard.shipment / findCard.cards_in_shipmet + findCard.unity_cost,
       };
@@ -297,7 +311,7 @@ export class StockController {
     });
     card_value_EUR = quantity_EUR > 0 ? card_value_EUR / quantity_EUR : 0;
     card_value_COP = quantity_COP > 0 ? card_value_COP / quantity_COP : 0;
-    
+
     // Determinar moneda principal (la que tiene más items)
     let primaryCurrency = 'EUR';
     if (quantity_COP > quantity_EUR) {

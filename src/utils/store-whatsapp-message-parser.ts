@@ -12,13 +12,17 @@ export type ParseLineResult =
   | { ok: true; parsed: ParsedStoreCartLine }
   | { ok: false; issue: 'missing_card_id' | 'invalid_line' };
 
-export function extractClientNameFromStoreMessage(message: string): string | null {
+export function extractClientNameFromStoreMessage(
+  message: string,
+): string | null {
   const m = message.match(/A nombre de:\s*(.+?)(?:\r?\n|$)/i);
   if (!m) return null;
   return m[1].trim() || null;
 }
 
-export function parseStoreCatalogCartLines(message: string): { raw: string; result: ParseLineResult }[] {
+export function parseStoreCatalogCartLines(
+  message: string,
+): { raw: string; result: ParseLineResult }[] {
   const lines = message.split(/\r?\n/);
   const out: { raw: string; result: ParseLineResult }[] = [];
   for (const raw of lines) {

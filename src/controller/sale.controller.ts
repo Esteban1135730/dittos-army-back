@@ -85,7 +85,10 @@ export class SaleController {
     },
   ) {
     if (!body.stock_id || !body.card_id || body.amount_cop === undefined) {
-      return { success: false, message: 'stock_id, card_id y amount_cop son requeridos' };
+      return {
+        success: false,
+        message: 'stock_id, card_id y amount_cop son requeridos',
+      };
     }
 
     await this.saleRepository.create({
@@ -242,7 +245,8 @@ export class SaleController {
         }
 
         // Calcular costo de compra
-        const cardCost = stock.shipment / stock.cards_in_shipmet + stock.unity_cost;
+        const cardCost =
+          stock.shipment / stock.cards_in_shipmet + stock.unity_cost;
 
         return {
           _id: sale._id.toString(),
@@ -262,7 +266,7 @@ export class SaleController {
             unity_cost: stock.unity_cost,
           },
         };
-      })
+      }),
     );
 
     return salesWithStockInfo.filter((sale) => sale !== null);
@@ -271,21 +275,47 @@ export class SaleController {
   @Get('consistency')
   async getSalesConsistency(): Promise<{
     stockVendidas: Array<{ _id: string; stock_id: string; card_id: string }>;
-    salesVentas: Array<{ _id: string; stock_id: string; card_id: string; amount_cop: number; created_at: Date }>;
-    onlyInStock: Array<{ _id: string; stock_id: string; card_id: string; card_name?: string; image_url?: string }>;
-    onlyInSales: Array<{ _id: string; stock_id: string; card_id: string; amount_cop: number; created_at: Date }>;
-    summary: { totalStockVendida: number; totalSales: number; onlyInStockCount: number; onlyInSalesCount: number; matchingCount: number };
+    salesVentas: Array<{
+      _id: string;
+      stock_id: string;
+      card_id: string;
+      amount_cop: number;
+      created_at: Date;
+    }>;
+    onlyInStock: Array<{
+      _id: string;
+      stock_id: string;
+      card_id: string;
+      card_name?: string;
+      image_url?: string;
+    }>;
+    onlyInSales: Array<{
+      _id: string;
+      stock_id: string;
+      card_id: string;
+      amount_cop: number;
+      created_at: Date;
+    }>;
+    summary: {
+      totalStockVendida: number;
+      totalSales: number;
+      onlyInStockCount: number;
+      onlyInSalesCount: number;
+      matchingCount: number;
+    };
   }> {
     const [stockVendidas, salesVentas] = await Promise.all([
       this.stockRepository.findByCardState('vendida'),
       this.saleRepository.findActiveVentas(),
     ]);
 
-    const stockVendidasNormalized = stockVendidas.map((s) => ({
-      _id: (s as any)._id?.toString?.(),
-      stock_id: (s as any)._id?.toString?.(),
-      card_id: s.card_id,
-    })).filter((s) => s._id && s.stock_id);
+    const stockVendidasNormalized = stockVendidas
+      .map((s) => ({
+        _id: (s as any)._id?.toString?.(),
+        stock_id: (s as any)._id?.toString?.(),
+        card_id: s.card_id,
+      }))
+      .filter((s) => s._id && s.stock_id);
 
     const salesVentasNormalized = salesVentas.map((s) => ({
       _id: (s as any)._id?.toString?.(),
@@ -298,9 +328,15 @@ export class SaleController {
     const stockIds = new Set(stockVendidasNormalized.map((s) => s.stock_id));
     const saleStockIds = new Set(salesVentasNormalized.map((s) => s.stock_id));
 
-    const onlyInStockRaw = stockVendidasNormalized.filter((s) => !saleStockIds.has(s.stock_id));
-    const onlyInSales = salesVentasNormalized.filter((s) => !stockIds.has(s.stock_id));
-    const matchingCount = stockVendidasNormalized.filter((s) => saleStockIds.has(s.stock_id)).length;
+    const onlyInStockRaw = stockVendidasNormalized.filter(
+      (s) => !saleStockIds.has(s.stock_id),
+    );
+    const onlyInSales = salesVentasNormalized.filter(
+      (s) => !stockIds.has(s.stock_id),
+    );
+    const matchingCount = stockVendidasNormalized.filter((s) =>
+      saleStockIds.has(s.stock_id),
+    ).length;
 
     // Enriquecer onlyInStock con datos de TCG Dex (nombre e imagen)
     const onlyInStock = await Promise.all(
@@ -336,7 +372,11 @@ export class SaleController {
   }
 
   @Post('close-cycle')
-  async closeCycle(): Promise<{ success: boolean; closedCount?: number; message?: string }> {
+  async closeCycle(): Promise<{
+    success: boolean;
+    closedCount?: number;
+    message?: string;
+  }> {
     const closedCount = await this.saleRepository.closeCurrentCycle();
     return { success: true, closedCount };
   }
@@ -389,7 +429,8 @@ export class SaleController {
           }
         }
 
-        const cardCost = stock.shipment / stock.cards_in_shipmet + stock.unity_cost;
+        const cardCost =
+          stock.shipment / stock.cards_in_shipmet + stock.unity_cost;
 
         return {
           _id: sale._id.toString(),
@@ -410,7 +451,7 @@ export class SaleController {
             unity_cost: stock.unity_cost,
           },
         };
-      })
+      }),
     );
 
     return salesWithStockInfo.filter((sale) => sale !== null);
@@ -459,7 +500,10 @@ export class SaleController {
       return { success: false, message: 'Stock no encontrado' };
     }
     if (stock.card_state !== 'vendida') {
-      return { success: false, message: 'La carta no está marcada como vendida en stock' };
+      return {
+        success: false,
+        message: 'La carta no está marcada como vendida en stock',
+      };
     }
     const pvps = await this.pvpRepository.findAllByCardId(stock.card_id);
     const resolved = resolvePvpForLine(
@@ -481,13 +525,18 @@ export class SaleController {
   }
 
   @Post('reopen/:id')
-  async reopenSale(@Param('id') id: string): Promise<{ success: boolean; message?: string }> {
+  async reopenSale(
+    @Param('id') id: string,
+  ): Promise<{ success: boolean; message?: string }> {
     if (!id) {
       return { success: false, message: 'ID de venta es requerido' };
     }
     const reopened = await this.saleRepository.reopenSale(id);
     if (!reopened) {
-      return { success: false, message: 'Venta no encontrada o no está en histórico' };
+      return {
+        success: false,
+        message: 'Venta no encontrada o no está en histórico',
+      };
     }
     return { success: true };
   }
@@ -543,4 +592,3 @@ export class SaleController {
     return { success: true };
   }
 }
-

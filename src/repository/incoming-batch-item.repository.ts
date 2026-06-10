@@ -21,7 +21,9 @@ export class IncomingBatchItemRepository {
     return this.itemModel.find({ batch_id: batchId }).exec();
   }
 
-  async findByRemainingQuantityGreaterThanZero(): Promise<IncomingBatchItemDocument[]> {
+  async findByRemainingQuantityGreaterThanZero(): Promise<
+    IncomingBatchItemDocument[]
+  > {
     return this.itemModel.find({ remaining_quantity: { $gt: 0 } }).exec();
   }
 
@@ -38,12 +40,18 @@ export class IncomingBatchItemRepository {
     remainingQuantity: number,
   ): Promise<IncomingBatchItemDocument | null> {
     return this.itemModel
-      .findByIdAndUpdate(batchItemId, { remaining_quantity: remainingQuantity }, { new: true })
+      .findByIdAndUpdate(
+        batchItemId,
+        { remaining_quantity: remainingQuantity },
+        { new: true },
+      )
       .exec();
   }
 
   async deleteByBatchId(batchId: string): Promise<number> {
-    const result = await this.itemModel.deleteMany({ batch_id: batchId }).exec();
+    const result = await this.itemModel
+      .deleteMany({ batch_id: batchId })
+      .exec();
     return result.deletedCount ?? 0;
   }
 
@@ -70,4 +78,3 @@ export class IncomingBatchItemRepository {
     return result.modifiedCount ?? 0;
   }
 }
-

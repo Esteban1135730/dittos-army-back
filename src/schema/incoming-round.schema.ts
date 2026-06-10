@@ -28,4 +28,3 @@ export class IncomingRound {
 }
 
 export const IncomingRoundSchema = SchemaFactory.createForClass(IncomingRound);
-

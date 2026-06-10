@@ -44,7 +44,9 @@ export class PvpController {
   }
 
   @Get(':card_id')
-  async getPvpByCardId(@Param() params: { card_id: string }): Promise<PvpCardRowDto[]> {
+  async getPvpByCardId(
+    @Param() params: { card_id: string },
+  ): Promise<PvpCardRowDto[]> {
     return await this.pvpCardRowsService.buildRowsForCard(params.card_id);
   }
 

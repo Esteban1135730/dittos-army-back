@@ -3,10 +3,12 @@ import { SaleRepository } from './sale.repository';
 describe('SaleRepository.finalizeCycleForSale', () => {
   const saleId = '507f1f77bcf86cd799439011';
 
-  function setupRepo(saleDoc: {
-    type: string;
-    cycle_closed_at?: Date | null;
-  } | null) {
+  function setupRepo(
+    saleDoc: {
+      type: string;
+      cycle_closed_at?: Date | null;
+    } | null,
+  ) {
     const findByIdExec = jest.fn().mockResolvedValue(saleDoc);
     const updateOneExec = jest.fn().mockResolvedValue({ acknowledged: true });
     const mockModel = {
@@ -38,7 +40,9 @@ describe('SaleRepository.finalizeCycleForSale', () => {
       type: 'venta',
       cycle_closed_at: new Date('2025-01-01'),
     });
-    await expect(repo.finalizeCycleForSale(saleId)).resolves.toBe('already_closed');
+    await expect(repo.finalizeCycleForSale(saleId)).resolves.toBe(
+      'already_closed',
+    );
     expect(mockModel.updateOne).not.toHaveBeenCalled();
   });
 

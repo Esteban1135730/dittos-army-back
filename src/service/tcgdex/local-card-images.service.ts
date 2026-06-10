@@ -250,7 +250,9 @@ export class LocalCardImagesService implements OnModuleInit {
     let existing: PendingManifest = { updatedAt: '', entries: [] };
     if (existsSync(manifestPath)) {
       try {
-        existing = JSON.parse(readFileSync(manifestPath, 'utf8')) as PendingManifest;
+        existing = JSON.parse(
+          readFileSync(manifestPath, 'utf8'),
+        ) as PendingManifest;
       } catch {
         existing = { updatedAt: '', entries: [] };
       }
@@ -266,8 +268,9 @@ export class LocalCardImagesService implements OnModuleInit {
 
     const payload: PendingManifest = {
       updatedAt: new Date().toISOString(),
-      entries: [...merged.values()].sort((a, b) =>
-        a.lang.localeCompare(b.lang) || a.cardId.localeCompare(b.cardId),
+      entries: [...merged.values()].sort(
+        (a, b) =>
+          a.lang.localeCompare(b.lang) || a.cardId.localeCompare(b.cardId),
       ),
     };
 

@@ -26,7 +26,9 @@ describe('store-whatsapp-message-parser', () => {
   });
 
   it('extrae nombre del mensaje', () => {
-    const msg = ['Hola', sampleLine, '', 'A nombre de: Juan Pérez', ''].join('\n');
+    const msg = ['Hola', sampleLine, '', 'A nombre de: Juan Pérez', ''].join(
+      '\n',
+    );
     expect(extractClientNameFromStoreMessage(msg)).toBe('Juan Pérez');
   });
 

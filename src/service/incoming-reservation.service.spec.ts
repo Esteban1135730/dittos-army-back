@@ -13,10 +13,17 @@ describe('IncomingReservationService.addQuantity (cupo)', () => {
       sumQuantityForBatchItem: jest.fn().mockResolvedValue(deps.sumPending),
       findByClientAndBatchItem: jest.fn().mockResolvedValue(
         deps.existingQty > 0
-          ? { quantity: deps.existingQty, _id: 'rid', client_id: 'c1', batch_item_id: 'b1' }
+          ? {
+              quantity: deps.existingQty,
+              _id: 'rid',
+              client_id: 'c1',
+              batch_item_id: 'b1',
+            }
           : null,
       ),
-      upsertQuantity: jest.fn().mockResolvedValue({ toObject: () => ({ ok: true }) }),
+      upsertQuantity: jest
+        .fn()
+        .mockResolvedValue({ toObject: () => ({ ok: true }) }),
     } as unknown as ReservaIncomingRepository;
 
     const batchItemRepo = {
@@ -43,6 +50,8 @@ describe('IncomingReservationService.addQuantity (cupo)', () => {
 
   it('lanza ConflictException cuando se supera remaining_quantity', async () => {
     const svc = makeService({ sumPending: 2, remaining: 5, existingQty: 2 });
-    await expect(svc.addQuantity('c1', 'b1', 10)).rejects.toBeInstanceOf(ConflictException);
+    await expect(svc.addQuantity('c1', 'b1', 10)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
   });
 });

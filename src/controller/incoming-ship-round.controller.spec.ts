@@ -16,7 +16,9 @@ describe('IncomingShipRoundController.syncMissingShipRoundItems', () => {
       createMany: jest.fn().mockResolvedValue([]),
     };
     const incomingBatchItemRepository = {
-      findByRemainingQuantityGreaterThanZero: jest.fn().mockResolvedValue(deps.inRoute),
+      findByRemainingQuantityGreaterThanZero: jest
+        .fn()
+        .mockResolvedValue(deps.inRoute),
     };
 
     const ctrl = new IncomingShipRoundController(
@@ -35,7 +37,10 @@ describe('IncomingShipRoundController.syncMissingShipRoundItems', () => {
     const { ctrl, shipRoundItemRepository } = makeController({
       round: { _id: { toString: () => roundId }, status: 'reviewing' },
       roundItems: [{ batch_item_id: 'a' }],
-      inRoute: [{ _id: { toString: () => 'a' } }, { _id: { toString: () => 'b' } }],
+      inRoute: [
+        { _id: { toString: () => 'a' } },
+        { _id: { toString: () => 'b' } },
+      ],
     });
 
     const res = await ctrl.syncMissingShipRoundItems(roundId);
@@ -85,6 +90,8 @@ describe('IncomingShipRoundController.syncMissingShipRoundItems', () => {
       inRoute: [],
     });
 
-    await expect(ctrl.syncMissingShipRoundItems(roundId)).rejects.toThrow('Ship round no encontrada');
+    await expect(ctrl.syncMissingShipRoundItems(roundId)).rejects.toThrow(
+      'Ship round no encontrada',
+    );
   });
 });
