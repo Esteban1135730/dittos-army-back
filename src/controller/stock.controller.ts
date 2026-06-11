@@ -23,6 +23,7 @@ import { FromOpenedSealedBodyDto } from 'src/Dto/from-opened-sealed.dto';
 import { StoreInventoryService } from 'src/service/store-inventory.service';
 import { OpenedSealedStockService } from 'src/service/opened-sealed-stock.service';
 import { StockScanService } from 'src/service/stock-scan.service';
+import { StockReviewService } from 'src/service/stock-review.service';
 import {
   effectiveOperationalRarezaFromStock,
   groupPvpsByCardId,
@@ -60,6 +61,7 @@ export class StockController {
     private readonly reservaRepository: ReservaRepository,
     private readonly saleRepository: SaleRepository,
     private readonly stockScanService: StockScanService,
+    private readonly stockReviewService: StockReviewService,
   ) {}
 
   private validatedRareza(stockDto: StockDto): string | null {
@@ -175,10 +177,21 @@ export class StockController {
     return this.storeInventoryService.exportStoreUpcoming();
   }
 
+  @Post('publish-store-catalog')
+  async publishStoreCatalog() {
+    return this.storeInventoryService.publishStoreCatalog();
+  }
+
   @Post('from-opened-sealed')
   @HttpCode(HttpStatus.CREATED)
   async fromOpenedSealed(@Body() body: FromOpenedSealedBodyDto) {
     return this.openedSealedStockService.createFromOpenedSealed(body);
+  }
+
+  @Get('perdidas')
+  async listPerdidas() {
+    const items = await this.stockReviewService.listPerdidas();
+    return { items };
   }
 
   @Get('qr-export')

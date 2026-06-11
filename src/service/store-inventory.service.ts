@@ -6,6 +6,7 @@ import { PvpRepository } from '../repository/pvp.repository';
 import { IncomingBatchRepository } from '../repository/incoming-batch.repository';
 import { IncomingBatchItemRepository } from '../repository/incoming-batch-item.repository';
 import { TCGDexService } from './tcgdex/tcgdex.service';
+import { LocalCardImagesService } from './tcgdex/local-card-images.service';
 import {
   effectiveOperationalRarezaFromStock,
   groupPvpsByCardId,
@@ -15,8 +16,31 @@ import {
   storeCardMetaFromDto,
   type StoreCardExportMeta,
 } from '../utils/store-card-meta';
+import {
+  isStoreAutoPublishEnabled,
+  publishStoreCatalogToGit,
+  resolveStorePublishBranch,
+  resolveStoreRepoPath,
+  type StoreGitPublishResult,
+} from '../utils/store-git-publish';
+import { localizeStoreItemImages } from '../utils/store-image-localize';
 
-const EXCLUDED_STATES = new Set(['vendida', 'propiedad', 'reserva']);
+export type StoreExportResult = {
+  success: boolean;
+  path?: string;
+  count?: number;
+  error?: string;
+};
+
+export type PublishStoreCatalogResult = {
+  success: boolean;
+  inventory: StoreExportResult;
+  upcoming: StoreExportResult;
+  publish?: StoreGitPublishResult & { enabled: boolean };
+  error?: string;
+};
+
+const EXCLUDED_STATES = new Set(['vendida', 'propiedad', 'reserva', 'perdida']);
 
 function inventoryLineKey(
   cardId: string,
@@ -66,7 +90,19 @@ export class StoreInventoryService {
     private readonly incomingBatchRepository: IncomingBatchRepository,
     private readonly incomingBatchItemRepository: IncomingBatchItemRepository,
     private readonly tcgDexService: TCGDexService,
+    private readonly localCardImagesService: LocalCardImagesService,
   ) {}
+
+  private async localizeImagesForStore<
+    T extends { image: string; card_id: string; language?: string },
+  >(items: T[]): Promise<T[]> {
+    return localizeStoreItemImages(items, {
+      storeRepoPath: resolveStoreRepoPath(),
+      localImagesRoot: this.localCardImagesService.getImagesRoot(),
+      resolveRemoteImage: (cardId, language) =>
+        this.tcgDexService.getRemoteStoreCardImageUrl(cardId, language),
+    });
+  }
 
   private pvpToCop(pvp: number, currency: string): number {
     if (currency === 'COP') return Math.round(pvp);
@@ -81,12 +117,7 @@ export class StoreInventoryService {
     return Math.round(pvp);
   }
 
-  async exportStoreInventory(): Promise<{
-    success: boolean;
-    path?: string;
-    count?: number;
-    error?: string;
-  }> {
+  async exportStoreInventory(): Promise<StoreExportResult> {
     const outputPath =
       process.env.STORE_INVENTORY_PATH ||
       path.join(
@@ -212,22 +243,23 @@ export class StoreInventoryService {
         }
       }
 
-      const inventory: StoreInventoryItem[] = Array.from(byLine.entries()).map(
-        ([lineId, data]) => ({
-          lineId,
-          card_id: data.card_id,
-          name: data.name,
-          language: data.language,
-          pvp: data.pvp,
-          quantity: data.quantity,
-          image: data.image,
-          status: 'available' as const,
-          ...(data.rareza != null ? { rareza: data.rareza } : {}),
-          ...(data.expansion ? { expansion: data.expansion } : {}),
-          ...(data.card_number ? { card_number: data.card_number } : {}),
-        }),
-      );
+      const inventoryRaw: StoreInventoryItem[] = Array.from(
+        byLine.entries(),
+      ).map(([lineId, data]) => ({
+        lineId,
+        card_id: data.card_id,
+        name: data.name,
+        language: data.language,
+        pvp: data.pvp,
+        quantity: data.quantity,
+        image: data.image,
+        status: 'available' as const,
+        ...(data.rareza != null ? { rareza: data.rareza } : {}),
+        ...(data.expansion ? { expansion: data.expansion } : {}),
+        ...(data.card_number ? { card_number: data.card_number } : {}),
+      }));
 
+      const inventory = await this.localizeImagesForStore(inventoryRaw);
       await this.writeInventory(outputPath, inventory);
       return { success: true, path: outputPath, count: inventory.length };
     } catch (err) {
@@ -249,12 +281,7 @@ export class StoreInventoryService {
     await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
   }
 
-  async exportStoreUpcoming(): Promise<{
-    success: boolean;
-    path?: string;
-    count?: number;
-    error?: string;
-  }> {
+  async exportStoreUpcoming(): Promise<StoreExportResult> {
     const outputPath =
       process.env.STORE_UPCOMING_PATH ||
       path.join(
@@ -353,10 +380,10 @@ export class StoreInventoryService {
         }
       }
 
-      const rows: StoreUpcomingItem[] = Array.from(byKey.values());
+      const rowsRaw: StoreUpcomingItem[] = Array.from(byKey.values());
+      rowsRaw.sort((a, b) => a.name.localeCompare(b.name, 'es'));
 
-      rows.sort((a, b) => a.name.localeCompare(b.name, 'es'));
-
+      const rows = await this.localizeImagesForStore(rowsRaw);
       await this.writeUpcomingJson(outputPath, rows);
       return { success: true, path: outputPath, count: rows.length };
     } catch (err) {
@@ -376,5 +403,72 @@ export class StoreInventoryService {
     const dir = path.dirname(filePath);
     await fs.mkdir(dir, { recursive: true });
     await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
+  }
+
+  async publishStoreCatalog(): Promise<PublishStoreCatalogResult> {
+    const inventory = await this.exportStoreInventory();
+    const upcoming = await this.exportStoreUpcoming();
+
+    if (!inventory.success || !upcoming.success) {
+      return {
+        success: false,
+        inventory,
+        upcoming,
+        error: 'No se pudo generar el catálogo de la tienda',
+      };
+    }
+
+    const publishEnabled = isStoreAutoPublishEnabled();
+    if (!publishEnabled) {
+      return {
+        success: true,
+        inventory,
+        upcoming,
+        publish: {
+          enabled: false,
+          published: false,
+          pushed: false,
+          branch: resolveStorePublishBranch(),
+          repoPath: resolveStoreRepoPath(),
+          skippedReason:
+            'Publicación git desactivada (STORE_AUTO_PUBLISH=false)',
+        },
+      };
+    }
+
+    try {
+      const publish = await publishStoreCatalogToGit({
+        repoPath: resolveStoreRepoPath(),
+        branch: resolveStorePublishBranch(),
+      });
+
+      const publishFailed = Boolean(publish.error);
+      return {
+        success: !publishFailed,
+        inventory,
+        upcoming,
+        publish: { enabled: true, ...publish },
+        ...(publishFailed
+          ? { error: publish.error || 'Error al publicar en git' }
+          : {}),
+      };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('StoreInventoryService.publishStoreCatalog git error:', message);
+      return {
+        success: false,
+        inventory,
+        upcoming,
+        publish: {
+          enabled: true,
+          published: false,
+          pushed: false,
+          branch: resolveStorePublishBranch(),
+          repoPath: resolveStoreRepoPath(),
+          error: message,
+        },
+        error: message,
+      };
+    }
   }
 }

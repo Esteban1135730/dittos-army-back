@@ -23,6 +23,12 @@ import {
   INCOMING_ITEM_RAREZA_VALUES,
   normalizeOperationalRareza,
 } from 'src/constants/item-rareza';
+import {
+  cardIdsNeedingTcgDexEnrichment,
+  resolveIncomingBatchItemCardName,
+  resolveIncomingBatchItemImageUrl,
+  type TcgDexBatchEnrichment,
+} from 'src/utils/incoming-batch-item-meta';
 import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
 import { StockRepository } from 'src/repository/stock.repository';
 import { StockDto } from 'src/Dto/stock.dto';
@@ -107,8 +113,8 @@ export class IncomingController {
       real_euro_rate_cop_per_eur,
     });
 
-    const cardIds = [...new Set(items.map((it) => it.card_id))];
-    const cardMap = new Map<string, { name: string; image: string }>();
+    const cardIds = cardIdsNeedingTcgDexEnrichment(items);
+    const cardMap = new Map<string, TcgDexBatchEnrichment>();
     await Promise.all(
       cardIds.map(async (cardId) => {
         try {
@@ -121,7 +127,7 @@ export class IncomingController {
             });
           }
         } catch {
-          // dejar vac?o si falla la API
+          // dejar vacío si falla la API
         }
       }),
     );
@@ -129,7 +135,7 @@ export class IncomingController {
     const batchItemsToInsert = items.map((it) => {
       const eur_unit_price = it.eur_total_lot / it.quantity;
       const unit_cost_cop = eur_unit_price * real_euro_rate_cop_per_eur;
-      const card = cardMap.get(it.card_id);
+      const tcgDex = cardMap.get(it.card_id);
       const rarezaNorm = normalizeOperationalRareza(it.rareza) ?? undefined;
 
       return {
@@ -141,14 +147,8 @@ export class IncomingController {
         eur_unit_price,
         unit_cost_cop,
         remaining_quantity: it.quantity,
-        card_name:
-          (card?.name && String(card.name).trim()) ||
-          (it.card_name && String(it.card_name).trim()) ||
-          '',
-        image_url:
-          (card?.image && String(card.image).trim()) ||
-          (it.image_url && String(it.image_url).trim()) ||
-          '',
+        card_name: resolveIncomingBatchItemCardName(it, tcgDex),
+        image_url: resolveIncomingBatchItemImageUrl(it, tcgDex),
         rareza: rarezaNorm,
         created_at: new Date(),
       };

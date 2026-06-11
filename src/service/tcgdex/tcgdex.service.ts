@@ -3,6 +3,7 @@ import TCGdex, { CardResume, Query } from '@tcgdex/sdk';
 import _ from 'lodash';
 import { mapSetResume, SetResumeDto } from './dto/set.resume.dto';
 import { CardDto, mapCardFromApi } from './dto/card.dto';
+import { isPublicRemoteImageUrl } from '../../utils/store-image-localize';
 import type { TCGdexCardApiResponse } from './dto/tcgdex-api.types';
 import { CardResumeDto, mapCardResume } from './dto/card.resume.dto';
 import { SetNameHomologsService } from './set-name-homologs.service';
@@ -23,6 +24,38 @@ export const TCGDEX_SUPPORTED_LOCALES = [
 export type TcgDexLocale = (typeof TCGDEX_SUPPORTED_LOCALES)[number];
 const DEFAULT_LOCALE: TcgDexLocale = 'en';
 
+/** Locales to try when a card id exists only in a regional catalog (e.g. ja / zh-cn). */
+export function buildCardLocaleFallbackChain(
+  preferred: TcgDexLocale,
+): TcgDexLocale[] {
+  const chain: TcgDexLocale[] = [preferred];
+  for (const locale of ['ja', 'zh-cn', 'en'] as const) {
+    if (!chain.includes(locale)) {
+      chain.push(locale);
+    }
+  }
+  return chain;
+}
+
+export const TCGDEX_PRODUCTION_API_BASE = 'https://api.tcgdex.net/v2';
+
+/**
+ * Base URL de la API v2 (sin barra final).
+ * Dev local: `TCGDEX_PORT` → `http://localhost:{puerto}/v2`.
+ * Override explícito: `TCGDEX_API_BASE_URL`.
+ */
+export function resolveTcgdexApiBaseUrl(): string {
+  const fromEnv = process.env.TCGDEX_API_BASE_URL?.trim();
+  if (fromEnv) {
+    return fromEnv.replace(/\/$/, '');
+  }
+  const localPort = process.env.TCGDEX_PORT?.trim();
+  if (localPort) {
+    return `http://localhost:${localPort}/v2`;
+  }
+  return TCGDEX_PRODUCTION_API_BASE;
+}
+
 type CacheEntry<T> = {
   expiresAt: number;
   value: T;
@@ -30,10 +63,18 @@ type CacheEntry<T> = {
 
 @Injectable()
 export class TCGDexService {
+  private readonly apiBaseUrl = resolveTcgdexApiBaseUrl();
+
   constructor(
     private readonly setNameHomologs: SetNameHomologsService,
     private readonly localCardImages: LocalCardImagesService,
-  ) {}
+  ) {
+    if (this.apiBaseUrl !== TCGDEX_PRODUCTION_API_BASE) {
+      console.warn(
+        `[TCGDexService] API TCGdex local: ${this.apiBaseUrl}`,
+      );
+    }
+  }
 
   private readonly clients = new Map<TcgDexLocale, TCGdex>();
   private readonly cache = new Map<string, CacheEntry<unknown>>();
@@ -50,6 +91,7 @@ export class TCGDexService {
     }
     // El SDK tipa menos locales que los realmente disponibles en la API.
     const created = new TCGdex(locale as any);
+    created.setEndpoint(this.apiBaseUrl);
     this.clients.set(locale, created);
     return created;
   }
@@ -196,7 +238,7 @@ export class TCGDexService {
 
   /**
    * Obtiene una carta con precios de mercado desde la API TCGdex (pricing TCGplayer/Cardmarket).
-   * Usa el id tal cual; sin mapeo entre APIs.
+   * Usa el id tal cual; sin mapeo entre APIs. Si falla en el locale pedido, prueba ja / zh-cn / en.
    */
   async getCard(cardId: string, locale?: string): Promise<CardDto | undefined> {
     if (!cardId || typeof cardId !== 'string') {
@@ -211,37 +253,34 @@ export class TCGDexService {
       return undefined;
     }
 
-    const normalizedLocale = this.normalizeLocale(locale);
+    const preferredLocale = this.normalizeLocale(locale);
+    for (const tryLocale of buildCardLocaleFallbackChain(preferredLocale)) {
+      const card = await this.fetchCardForLocale(id, tryLocale);
+      if (card) {
+        return card;
+      }
+    }
+    return undefined;
+  }
+
+  private async fetchCardForLocale(
+    id: string,
+    normalizedLocale: TcgDexLocale,
+  ): Promise<CardDto | undefined> {
     const cacheKey = `${normalizedLocale}:card:${id}`;
     const cached = this.getCached<CardDto | undefined>(cacheKey);
     if (cached !== undefined) {
       return cached;
     }
 
-    const url = `https://api.tcgdex.net/v2/${normalizedLocale}/cards/${encodeURIComponent(id)}`;
+    const url = `${this.apiBaseUrl}/${normalizedLocale}/cards/${encodeURIComponent(id)}`;
     try {
       const res = await fetch(url);
       if (!res.ok) {
-        console.error(
-          '[TCGDexService] getCard: API TCGdex respondió con error',
-          {
-            cardId: id,
-            status: res.status,
-            statusText: res.statusText,
-          },
-        );
         return undefined;
       }
       const raw = (await res.json()) as TCGdexCardApiResponse;
       if (!raw || typeof raw !== 'object' || !raw.name) {
-        console.error(
-          '[TCGDexService] getCard: respuesta sin nombre de carta',
-          {
-            cardId: id,
-            hasRaw: !!raw,
-            hasName: !!(raw && raw.name),
-          },
-        );
         return undefined;
       }
       const dto = mapCardFromApi(raw);
@@ -268,6 +307,63 @@ export class TCGDexService {
         error: err instanceof Error ? err.message : String(err),
       });
       return undefined;
+    }
+  }
+
+  /**
+   * Imagen pública en CDN TCGdex (API de producción), sin sustituir por archivos locales.
+   * Usar en export de tienda para no subir assets al hosting cuando hay URL remota.
+   */
+  async getRemoteStoreCardImageUrl(
+    cardId: string,
+    locale?: string,
+  ): Promise<string | undefined> {
+    if (!cardId || typeof cardId !== 'string') return undefined;
+    const id = cardId.trim();
+    if (!id) return undefined;
+
+    const preferredLocale = this.normalizeLocale(locale);
+    for (const tryLocale of buildCardLocaleFallbackChain(preferredLocale)) {
+      const image = await this.fetchRemoteStoreImageForLocale(id, tryLocale);
+      if (image) return image;
+    }
+    return undefined;
+  }
+
+  private async fetchRemoteStoreImageForLocale(
+    id: string,
+    normalizedLocale: TcgDexLocale,
+  ): Promise<string | undefined> {
+    const cacheKey = `remote-store-img:${normalizedLocale}:${id}`;
+    const cached = this.getCached<string | undefined>(cacheKey);
+    if (cached !== undefined) {
+      return cached || undefined;
+    }
+
+    const url = `${TCGDEX_PRODUCTION_API_BASE}/${normalizedLocale}/cards/${encodeURIComponent(id)}`;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) {
+        return this.setCached(cacheKey, undefined, this.TTL_CARD_DETAIL_MS);
+      }
+      const raw = (await res.json()) as TCGdexCardApiResponse;
+      if (!raw || typeof raw !== 'object' || !raw.name) {
+        return this.setCached(cacheKey, undefined, this.TTL_CARD_DETAIL_MS);
+      }
+      const dto = mapCardFromApi(raw);
+      const candidate = dto.images?.small || dto.image || '';
+      if (!isPublicRemoteImageUrl(candidate)) {
+        return this.setCached(cacheKey, undefined, this.TTL_CARD_DETAIL_MS);
+      }
+      return this.setCached(cacheKey, candidate, this.TTL_CARD_DETAIL_MS);
+    } catch (err) {
+      console.warn('[TCGDexService] getRemoteStoreCardImageUrl falló', {
+        cardId: id,
+        locale: normalizedLocale,
+        url,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return this.setCached(cacheKey, undefined, this.TTL_CARD_DETAIL_MS);
     }
   }
 

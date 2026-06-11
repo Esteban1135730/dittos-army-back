@@ -6,8 +6,9 @@ export type IncomingBatchItemInput = {
   eur_total_lot: number;
   /** Opcional; null o ausente = sin rareza */
   rareza?: string | null;
-  /** Si TCGdex no resuelve el card_id, se conservan estos valores en el ítem */
+  /** Etiqueta canónica de la carta (p. ej. CardTrader). Tiene prioridad sobre TCGdex al crear el batch. */
   card_name?: string;
+  /** Imagen opcional del cliente; TCGdex solo rellena si falta. */
   image_url?: string;
 };
 

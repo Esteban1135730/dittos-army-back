@@ -73,6 +73,13 @@ import { CardTraderTcgdexResolveService } from './service/cardtrader/cardtrader-
 import { StockScanService } from './service/stock-scan.service';
 import { DashboardController } from './controller/dashboard.controller';
 import { DashboardOverviewService } from './service/dashboard-overview.service';
+import { StockReviewController } from './controller/stock-review.controller';
+import { StockReviewService } from './service/stock-review.service';
+import { StockReviewSessionRepository } from './repository/stock-review-session.repository';
+import {
+  StockReviewSession,
+  StockReviewSessionSchema,
+} from './schema/stock-review-session.schema';
 
 @Module({
   controllers: [
@@ -87,6 +94,7 @@ import { DashboardOverviewService } from './service/dashboard-overview.service';
     IncomingShipRoundController,
     CardTraderController,
     DashboardController,
+    StockReviewController,
   ],
   providers: [
     SetNameHomologsService,
@@ -114,6 +122,8 @@ import { DashboardOverviewService } from './service/dashboard-overview.service';
     CardTraderTcgdexResolveService,
     StockScanService,
     DashboardOverviewService,
+    StockReviewService,
+    StockReviewSessionRepository,
   ],
   imports: [
     MongooseModule.forRoot(
@@ -133,6 +143,7 @@ import { DashboardOverviewService } from './service/dashboard-overview.service';
       { name: IncomingRoundItem.name, schema: IncomingRoundItemSchema },
       { name: IncomingShipRound.name, schema: IncomingShipRoundSchema },
       { name: IncomingShipRoundItem.name, schema: IncomingShipRoundItemSchema },
+      { name: StockReviewSession.name, schema: StockReviewSessionSchema },
     ]),
   ],
 })

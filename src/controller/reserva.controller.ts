@@ -13,10 +13,8 @@ import {
 import { Reserva } from 'src/schema/reserva.schema';
 import { ReservaRepository } from 'src/repository/reserva.repository';
 import { StockRepository } from 'src/repository/stock.repository';
-import { PvpRepository } from 'src/repository/pvp.repository';
 import { SaleRepository } from 'src/repository/sale.repository';
 import { ReservaDto } from 'src/Dto/reserva.dto';
-import { effectiveOperationalRarezaFromStock } from 'src/utils/pvp-resolve';
 import { IncomingReservationService } from 'src/service/incoming-reservation.service';
 import { StoreWhatsAppReservationImportService } from 'src/service/store-whatsapp-reservation-import.service';
 import { precioToCop } from 'src/utils/precio-to-cop';
@@ -30,7 +28,6 @@ export class ReservaController {
   constructor(
     private readonly reservaRepository: ReservaRepository,
     private readonly stockRepository: StockRepository,
-    private readonly pvpRepository: PvpRepository,
     private readonly saleRepository: SaleRepository,
     private readonly incomingReservationService: IncomingReservationService,
     private readonly storeWhatsAppImportService: StoreWhatsAppReservationImportService,
@@ -228,12 +225,6 @@ export class ReservaController {
         reserva.stock_id,
         ESTADO_VENDIDA,
       );
-      await this.pvpRepository.update({
-        card_id: stock.card_id,
-        pvp: reserva.precio,
-        currency: reserva.currency ?? 'COP',
-        rareza: effectiveOperationalRarezaFromStock(stock as any),
-      });
       await this.reservaRepository.deleteByStockId(reserva.stock_id);
     }
     return { success: true, vendidas: reservas.length };

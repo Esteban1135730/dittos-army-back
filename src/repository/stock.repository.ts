@@ -75,6 +75,17 @@ export class StockRepository {
     return this.stockModel.find({ card_state: cardState }).exec();
   }
 
+  async findByCardIdsInStates(
+    cardIds: string[],
+    states: string[],
+  ): Promise<Stock[]> {
+    const ids = [...new Set(cardIds.map((c) => String(c ?? '').trim()).filter(Boolean))];
+    if (ids.length === 0 || states.length === 0) return [];
+    return this.stockModel
+      .find({ card_id: { $in: ids }, card_state: { $in: states } })
+      .exec();
+  }
+
   async updateCardState(
     stockId: string,
     cardState: string,
