@@ -19,6 +19,7 @@ export class IncomingBatchRepository {
     total_eur_cards_cost: number;
     total_cop_cards_cost: number;
     real_euro_rate_cop_per_eur: number;
+    cards_cost_currency?: string;
   }): Promise<IncomingBatchDocument> {
     const created = new this.batchModel({
       ...data,

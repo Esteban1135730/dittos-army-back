@@ -80,6 +80,28 @@ import {
   StockReviewSession,
   StockReviewSessionSchema,
 } from './schema/stock-review-session.schema';
+import { IncomingHomologController } from './controller/incoming-homolog.controller';
+import { IncomingHomologService } from './service/incoming-homolog.service';
+import { CardtraderSentUnitRepository } from './repository/cardtrader-sent-unit.repository';
+import { IncomingHomologSessionRepository } from './repository/incoming-homolog-session.repository';
+import { IncomingBatchNovedadRepository } from './repository/incoming-batch-novedad.repository';
+import { IncomingShipRoundCardUnitRepository } from './repository/incoming-ship-round-card-unit.repository';
+import {
+  CardtraderSentUnit,
+  CardtraderSentUnitSchema,
+} from './schema/cardtrader-sent-unit.schema';
+import {
+  IncomingHomologSession,
+  IncomingHomologSessionSchema,
+} from './schema/incoming-homolog-session.schema';
+import {
+  IncomingBatchNovedad,
+  IncomingBatchNovedadSchema,
+} from './schema/incoming-batch-novedad.schema';
+import {
+  IncomingShipRoundCardUnit,
+  IncomingShipRoundCardUnitSchema,
+} from './schema/incoming-ship-round-card-unit.schema';
 
 @Module({
   controllers: [
@@ -95,6 +117,7 @@ import {
     CardTraderController,
     DashboardController,
     StockReviewController,
+    IncomingHomologController,
   ],
   providers: [
     SetNameHomologsService,
@@ -124,6 +147,11 @@ import {
     DashboardOverviewService,
     StockReviewService,
     StockReviewSessionRepository,
+    IncomingHomologService,
+    CardtraderSentUnitRepository,
+    IncomingHomologSessionRepository,
+    IncomingBatchNovedadRepository,
+    IncomingShipRoundCardUnitRepository,
   ],
   imports: [
     MongooseModule.forRoot(
@@ -144,6 +172,13 @@ import {
       { name: IncomingShipRound.name, schema: IncomingShipRoundSchema },
       { name: IncomingShipRoundItem.name, schema: IncomingShipRoundItemSchema },
       { name: StockReviewSession.name, schema: StockReviewSessionSchema },
+      { name: CardtraderSentUnit.name, schema: CardtraderSentUnitSchema },
+      { name: IncomingHomologSession.name, schema: IncomingHomologSessionSchema },
+      { name: IncomingBatchNovedad.name, schema: IncomingBatchNovedadSchema },
+      {
+        name: IncomingShipRoundCardUnit.name,
+        schema: IncomingShipRoundCardUnitSchema,
+      },
     ]),
   ],
 })

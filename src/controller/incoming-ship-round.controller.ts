@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { IncomingShipRoundRepository } from 'src/repository/incoming-ship-round.repository';
 import { IncomingShipRoundItemRepository } from 'src/repository/incoming-ship-round-item.repository';
+import { IncomingShipRoundCardUnitRepository } from 'src/repository/incoming-ship-round-card-unit.repository';
 import { IncomingBatchItemRepository } from 'src/repository/incoming-batch-item.repository';
 import { IncomingBatchRepository } from 'src/repository/incoming-batch.repository';
 import { StockRepository } from 'src/repository/stock.repository';
@@ -23,6 +24,7 @@ export class IncomingShipRoundController {
   constructor(
     private readonly shipRoundRepository: IncomingShipRoundRepository,
     private readonly shipRoundItemRepository: IncomingShipRoundItemRepository,
+    private readonly shipRoundCardUnitRepository: IncomingShipRoundCardUnitRepository,
     private readonly incomingBatchItemRepository: IncomingBatchItemRepository,
     private readonly incomingBatchRepository: IncomingBatchRepository,
     private readonly stockRepository: StockRepository,
@@ -331,32 +333,76 @@ export class IncomingShipRoundController {
 
     const shipping_total_cop = round.shipping_total_cop;
 
+    const cardUnits =
+      await this.shipRoundCardUnitRepository.findByRoundId(roundId);
+
     const stockDtos: StockDto[] = [];
     const batchItemIdsMeta: string[] = [];
-    for (const pair of itemsWithDecisions) {
-      const arrived_quantity = Number(pair.ri.arrived_quantity ?? 0);
-      const novedad_quantity = Number(pair.ri.novedad_quantity ?? 0);
-      const novedad_notes = (pair.ri.novedad_notes ?? '').toString();
-      if (arrived_quantity <= 0) continue;
 
-      const bi = pair.bi;
-      const rarezaStock = normalizeOperationalRareza(bi.rareza) ?? undefined;
-      const bid = bi._id.toString();
-      for (let i = 0; i < arrived_quantity; i++) {
+    if (cardUnits.length > 0) {
+      const nonNovedad = cardUnits.filter((cu) => !cu.is_novedad);
+      arrivedTotalQuantity = nonNovedad.length;
+
+      if (arrivedTotalQuantity <= 0) {
+        throw new Error(
+          'No hay cartas arribadas registradas en esta tanda para pasar a stock.',
+        );
+      }
+
+      const batchItemIdsForUnits = [
+        ...new Set(nonNovedad.map((cu) => cu.batch_item_id)),
+      ];
+      const batchItemsForUnits =
+        await this.incomingBatchItemRepository.findByIds(batchItemIdsForUnits);
+      const biMap = new Map(
+        batchItemsForUnits.map((bi) => [bi._id.toString(), bi]),
+      );
+
+      for (const cu of nonNovedad) {
+        const bi = biMap.get(cu.batch_item_id);
+        if (!bi) continue;
+        const rarezaStock = normalizeOperationalRareza(bi.rareza) ?? undefined;
         stockDtos.push({
           card_id: bi.card_id,
           card_name: bi.card_name ?? '',
           shipment: shipping_total_cop,
-          unity_cost: bi.unit_cost_cop,
+          unity_cost: cu.unit_cost_cop,
           cards_in_shipmet: arrivedTotalQuantity,
           image_url: bi.image_url ?? '',
           card_state: 'disponible',
           language: bi.language,
           currency: 'COP',
-          incoming_notes: i < novedad_quantity ? novedad_notes : '',
+          incoming_notes: cu.novedad_notes ?? '',
           rareza: rarezaStock,
         });
-        batchItemIdsMeta.push(bid);
+        batchItemIdsMeta.push(cu.batch_item_id);
+      }
+    } else {
+      for (const pair of itemsWithDecisions) {
+        const arrived_quantity = Number(pair.ri.arrived_quantity ?? 0);
+        const novedad_quantity = Number(pair.ri.novedad_quantity ?? 0);
+        const novedad_notes = (pair.ri.novedad_notes ?? '').toString();
+        if (arrived_quantity <= 0) continue;
+
+        const bi = pair.bi;
+        const rarezaStock = normalizeOperationalRareza(bi.rareza) ?? undefined;
+        const bid = bi._id.toString();
+        for (let i = 0; i < arrived_quantity; i++) {
+          stockDtos.push({
+            card_id: bi.card_id,
+            card_name: bi.card_name ?? '',
+            shipment: shipping_total_cop,
+            unity_cost: bi.unit_cost_cop,
+            cards_in_shipmet: arrivedTotalQuantity,
+            image_url: bi.image_url ?? '',
+            card_state: 'disponible',
+            language: bi.language,
+            currency: 'COP',
+            incoming_notes: i < novedad_quantity ? novedad_notes : '',
+            rareza: rarezaStock,
+          });
+          batchItemIdsMeta.push(bid);
+        }
       }
     }
 

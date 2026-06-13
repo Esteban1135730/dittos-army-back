@@ -22,9 +22,13 @@ export class IncomingBatch {
   @Prop({ required: true })
   total_cop_cards_cost: number;
 
-  // COP por 1 EUR calculado como: total_cop_cards_cost / total_eur_cards_cost
+  // COP por 1 unidad de moneda de compra (EUR o USD): total_cop / total_fx_cards_cost
   @Prop({ required: true })
   real_euro_rate_cop_per_eur: number;
+
+  /** Moneda en la que se registraron los costos de cartas (eur_* almacenan esa moneda). */
+  @Prop({ default: 'EUR' })
+  cards_cost_currency: string;
 
   @Prop({ default: Date.now })
   created_at: Date;

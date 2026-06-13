@@ -18,6 +18,8 @@ export type CreateIncomingBatchDto = {
   total_cop_cards_cost: number;
   // Fecha de compra del lote (ISO date)
   purchase_date: string;
+  /** EUR o USD — los montos en eur_total_lot usan esta moneda. */
+  cards_cost_currency?: string;
 };
 
 export type CreateIncomingRoundDto = {

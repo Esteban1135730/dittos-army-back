@@ -23,6 +23,7 @@ import {
   INCOMING_ITEM_RAREZA_VALUES,
   normalizeOperationalRareza,
 } from 'src/constants/item-rareza';
+import { normalizeCardsCostCurrency } from 'src/utils/purchase-currency';
 import {
   cardIdsNeedingTcgDexEnrichment,
   resolveIncomingBatchItemCardName,
@@ -105,12 +106,17 @@ export class IncomingController {
       throw new Error('real_euro_rate_cop_per_eur calculado inv?lido');
     }
 
+    const cards_cost_currency = normalizeCardsCostCurrency(
+      body.cards_cost_currency,
+    );
+
     const batch = await this.incomingBatchRepository.create({
       status: 'open',
       purchase_date: purchaseDate,
       total_eur_cards_cost,
       total_cop_cards_cost: body.total_cop_cards_cost,
       real_euro_rate_cop_per_eur,
+      cards_cost_currency,
     });
 
     const cardIds = cardIdsNeedingTcgDexEnrichment(items);
@@ -168,6 +174,7 @@ export class IncomingController {
       created_at: Date;
       total_eur_cards_cost: number;
       total_cop_cards_cost: number;
+      cards_cost_currency: string;
       remaining_total_quantity: number;
     }>
   > {
@@ -195,6 +202,7 @@ export class IncomingController {
       created_at: b.created_at,
       total_eur_cards_cost: b.total_eur_cards_cost,
       total_cop_cards_cost: b.total_cop_cards_cost,
+      cards_cost_currency: normalizeCardsCostCurrency(b.cards_cost_currency),
       remaining_total_quantity: itemsByBatchId.get(b._id.toString()) ?? 0,
     }));
   }
@@ -254,6 +262,7 @@ export class IncomingController {
       total_eur_cards_cost: batch.total_eur_cards_cost,
       total_cop_cards_cost: batch.total_cop_cards_cost,
       real_euro_rate_cop_per_eur: batch.real_euro_rate_cop_per_eur,
+      cards_cost_currency: normalizeCardsCostCurrency(batch.cards_cost_currency),
       created_at: batch.created_at,
     };
   }
@@ -265,6 +274,7 @@ export class IncomingController {
     body: {
       purchase_date?: string;
       total_cop_cards_cost?: number;
+      cards_cost_currency?: string;
     },
   ): Promise<{ success: boolean; message?: string }> {
     const batch = await this.incomingBatchRepository.findById(batchId);
@@ -303,6 +313,12 @@ export class IncomingController {
       await this.incomingBatchItemRepository.updateUnitCostByBatchId(
         batchId,
         newRate,
+      );
+    }
+
+    if (body.cards_cost_currency != null) {
+      updateData.cards_cost_currency = normalizeCardsCostCurrency(
+        body.cards_cost_currency,
       );
     }
 
