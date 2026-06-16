@@ -13,6 +13,11 @@ import { IncomingBatchRepository } from '../repository/incoming-batch.repository
 import { IncomingShipRoundRepository } from '../repository/incoming-ship-round.repository';
 import { IncomingShipRoundItemRepository } from '../repository/incoming-ship-round-item.repository';
 import { IncomingShipRoundCardUnitRepository } from '../repository/incoming-ship-round-card-unit.repository';
+import { IncomingHomologNovedadStockRepository } from '../repository/incoming-homolog-novedad-stock.repository';
+import { StockRepository } from '../repository/stock.repository';
+import { ReservaRepository } from '../repository/reserva.repository';
+import { CardTraderTcgdexResolveService } from './cardtrader/cardtrader-tcgdex-resolve.service';
+import { TCGDexService } from './tcgdex/tcgdex.service';
 import {
   expandSentUnitsFromOrders,
   inferSentUnitRareza,
@@ -32,6 +37,13 @@ import {
   normalizeCardsCostCurrency,
 } from '../utils/purchase-currency';
 import type { IncomingBatchItemDocument } from '../schema/incoming-batch-item.schema';
+import { normalizeStockLanguage } from '../utils/stock-language';
+import {
+  resolveHomologNovedadUnitCostCop,
+  FALLBACK_NOVEDAD_UNIT_COST_COP,
+  type HomologTrmRates,
+} from '../utils/homolog-novedad-pricing';
+import { normalizeOperationalRareza } from '../constants/item-rareza';
 
 @Injectable()
 export class IncomingHomologService {
@@ -45,10 +57,17 @@ export class IncomingHomologService {
     private readonly shipRoundRepository: IncomingShipRoundRepository,
     private readonly shipRoundItemRepository: IncomingShipRoundItemRepository,
     private readonly shipRoundCardUnitRepository: IncomingShipRoundCardUnitRepository,
+    private readonly novedadStockRepository: IncomingHomologNovedadStockRepository,
+    private readonly stockRepository: StockRepository,
+    private readonly reservaRepository: ReservaRepository,
+    private readonly tcgdexResolve: CardTraderTcgdexResolveService,
+    private readonly tcgdexService: TCGDexService,
   ) {}
 
   async getActiveSession() {
-    const session = await this.sessionRepository.findActive();
+    let session =
+      (await this.sessionRepository.findActive()) ??
+      (await this.sessionRepository.findLatestConverted());
     if (!session) return { session: null, panel_items: [], batches_summary: [] };
     const enriched = await this.enrichSessionUnits(session);
     const panelItems = await this.loadPanelItems({ units: enriched });
@@ -328,6 +347,10 @@ export class IncomingHomologService {
       verified_at: new Date(),
     });
 
+    if (!batchItem) {
+      await this.upsertNovedadStockTracking(sessionId, homologUnit, notes.trim());
+    }
+
     return {
       session: this.serializeSession(updated),
       panel_items: await this.loadPanelItems(updated),
@@ -412,6 +435,245 @@ export class IncomingHomologService {
     return { success: true };
   }
 
+  async listNovedadStockCards() {
+    const rows = await this.novedadStockRepository.listOpen();
+    return rows.map((r) => this.serializeNovedadStockRow(r));
+  }
+
+  async syncNovedadStockFromSession(sessionId?: string) {
+    const session = sessionId
+      ? await this.requireSession(sessionId)
+      : await this.sessionRepository.findActive();
+    if (!session) {
+      throw new NotFoundException('No hay sesión de homologación activa');
+    }
+
+    const enriched = await this.enrichSessionUnits(session);
+    const orphanNovedad = enriched.filter(
+      (u) => u.status === 'novedad' && !u.batch_item_id,
+    );
+
+    let synced = 0;
+    for (const unit of orphanNovedad) {
+      await this.upsertNovedadStockTracking(
+        session._id.toString(),
+        unit,
+        unit.novedad_notes ?? '',
+      );
+      synced += 1;
+    }
+
+    const items = await this.novedadStockRepository.listBySession(
+      session._id.toString(),
+    );
+
+    return {
+      session_id: session._id.toString(),
+      synced,
+      items: items
+        .filter((r) => r.status !== 'resolved')
+        .map((r) => this.serializeNovedadStockRow(r)),
+    };
+  }
+
+  async previewMaterializeNovedadStock(body: {
+    session_id?: string;
+    euro_to_cop: number;
+    usd_to_cop: number;
+  }) {
+    const rates = this.parseTrmRates(body);
+    const session = await this.resolveMaterializeSession(body.session_id);
+    const plan = await this.buildNovedadMaterializePlan(
+      session._id.toString(),
+      rates,
+      session,
+    );
+    return {
+      session_id: session._id.toString(),
+      summary: this.summarizeNovedadPreview(plan),
+      items: plan,
+    };
+  }
+
+  async materializeNovedadStock(body: {
+    session_id?: string;
+    euro_to_cop: number;
+    usd_to_cop: number;
+  }) {
+    const rates = this.parseTrmRates(body);
+    const session = await this.resolveMaterializeSession(body.session_id);
+    const plan = await this.buildNovedadMaterializePlan(
+      session._id.toString(),
+      rates,
+      session,
+    );
+
+    if (plan.length === 0) {
+      return {
+        session_id: session._id.toString(),
+        created: 0,
+        items: [],
+      };
+    }
+
+    const unitByKey = new Map(
+      (await this.enrichSessionUnits(session)).map((u) => [u.sent_unit_key, u]),
+    );
+
+    let created = 0;
+    const results: ReturnType<IncomingHomologService['serializeNovedadStockRow']>[] =
+      [];
+
+    for (const item of plan) {
+      const homologUnit = unitByKey.get(item.sent_unit_key);
+      if (!homologUnit) continue;
+
+      const rarezaStock =
+        normalizeOperationalRareza(homologUnit.rareza ?? null) ?? undefined;
+
+      const stock = await this.stockRepository.create({
+        card_id: item.card_id,
+        card_name: item.card_name,
+        shipment: 0,
+        unity_cost: item.unit_cost_cop,
+        cards_in_shipmet: 1,
+        image_url: item.image_url,
+        card_state: 'disponible',
+        language: item.language,
+        currency: 'COP',
+        incoming_notes: `[novedad homolog] ${item.novedad_notes}`.trim(),
+        rareza: rarezaStock,
+      });
+
+      const stockId = String((stock as { _id?: unknown })._id ?? '');
+
+      const updatedRow = await this.novedadStockRepository.markInStock(
+        item.tracking_id,
+        {
+          stock_id: stockId,
+          card_id: item.card_id,
+          card_name: item.card_name,
+          image_url: item.image_url,
+          language: item.language,
+          unit_cost_cop: item.unit_cost_cop,
+          purchase_price_fx: item.purchase_price_fx,
+          price_currency: item.price_currency,
+        },
+      );
+
+      const priceCurrency = normalizeCardsCostCurrency(item.price_currency);
+      await this.persistUnitPatch(session._id.toString(), item.sent_unit_key, {
+        unit_cost_cop: item.unit_cost_cop,
+        purchase_price_fx: item.purchase_price_fx,
+        purchase_price_currency: priceCurrency,
+        purchase_price_eur:
+          priceCurrency === 'EUR'
+            ? item.purchase_price_fx
+            : homologUnit.purchase_price_eur,
+      });
+
+      if (updatedRow) {
+        created += 1;
+        results.push(this.serializeNovedadStockRow(updatedRow));
+      }
+    }
+
+    return {
+      session_id: session._id.toString(),
+      created,
+      items: results,
+    };
+  }
+
+  async undoNovedadStockMaterialize(body: {
+    session_id?: string;
+    tracking_ids?: string[];
+  }) {
+    const trackingIds = (body.tracking_ids ?? []).map((id) => id.trim()).filter(Boolean);
+    let rows;
+    if (trackingIds.length > 0) {
+      rows = await this.novedadStockRepository.findInStockByIds(trackingIds);
+    } else {
+      const session = body.session_id
+        ? await this.requireSession(body.session_id)
+        : await this.sessionRepository.findActive();
+      if (!session) {
+        throw new NotFoundException('No hay sesión de homologación');
+      }
+      rows = await this.novedadStockRepository.findInStockBySession(
+        session._id.toString(),
+      );
+    }
+
+    if (rows.length === 0) {
+      return { reverted: 0, failed: [], items: [] as unknown[] };
+    }
+
+    const reverted: ReturnType<IncomingHomologService['serializeNovedadStockRow']>[] =
+      [];
+    const failed: Array<{ tracking_id: string; card_name: string; reason: string }> =
+      [];
+
+    for (const row of rows) {
+      const stockId = row.stock_id?.trim();
+      if (!stockId) {
+        failed.push({
+          tracking_id: row._id.toString(),
+          card_name: row.card_name,
+          reason: 'Sin stock asociado',
+        });
+        continue;
+      }
+
+      const stock = await this.stockRepository.findById(stockId);
+      if (!stock) {
+        await this.novedadStockRepository.revertToPending(row._id.toString());
+        await this.clearHomologUnitCostAfterUndo(row.session_id, row.sent_unit_key);
+        const updated = await this.novedadStockRepository.findById(row._id.toString());
+        if (updated) reverted.push(this.serializeNovedadStockRow(updated));
+        continue;
+      }
+
+      if (String(stock.card_state ?? '').toLowerCase() !== 'disponible') {
+        failed.push({
+          tracking_id: row._id.toString(),
+          card_name: row.card_name,
+          reason: `Stock en estado "${stock.card_state}"`,
+        });
+        continue;
+      }
+
+      const reserva = await this.reservaRepository.findByStockId(stockId);
+      if (reserva) {
+        failed.push({
+          tracking_id: row._id.toString(),
+          card_name: row.card_name,
+          reason: 'Stock con reserva activa',
+        });
+        continue;
+      }
+
+      await this.stockRepository.deleteById(stockId);
+      const updated = await this.novedadStockRepository.revertToPending(
+        row._id.toString(),
+      );
+      await this.clearHomologUnitCostAfterUndo(row.session_id, row.sent_unit_key);
+      if (updated) reverted.push(this.serializeNovedadStockRow(updated));
+    }
+
+    return {
+      reverted: reverted.length,
+      failed,
+      items: reverted,
+    };
+  }
+
+  async resolveNovedadStockCard(id: string) {
+    const row = await this.novedadStockRepository.resolve(id);
+    if (!row) throw new NotFoundException('Registro de novedad no encontrado');
+    return { success: true, item: this.serializeNovedadStockRow(row) };
+  }
+
   async createTanda(sessionId: string, body: CreateHomologTandaDto) {
     const session = await this.requireSession(sessionId);
     if (session.status === 'converted') {
@@ -429,6 +691,32 @@ export class IncomingHomologService {
       throw new BadRequestException(
         `Quedan ${pending.length} cartas sent sin verificar ni marcar como novedad`,
       );
+    }
+
+    const orphanNovedad = units.filter(
+      (u) => u.status === 'novedad' && !u.batch_item_id?.trim(),
+    );
+    if (orphanNovedad.length > 0) {
+      const pendingStock = await this.novedadStockRepository.findPendingBySession(
+        sessionId,
+      );
+      if (pendingStock.length > 0) {
+        throw new BadRequestException(
+          `Hay ${pendingStock.length} novedad(es) sin pasar a stock. Materializa el paso 1 antes de crear la tanda.`,
+        );
+      }
+      const inStock = await this.novedadStockRepository.findInStockBySession(
+        sessionId,
+      );
+      const inStockKeys = new Set(inStock.map((r) => r.sent_unit_key));
+      const missing = orphanNovedad.filter(
+        (u) => !inStockKeys.has(u.sent_unit_key),
+      );
+      if (missing.length > 0) {
+        throw new BadRequestException(
+          `Hay ${missing.length} novedad(es) sin inventario que aún no están en stock. Usa novedad → stock antes de crear la tanda.`,
+        );
+      }
     }
 
     const cards = body.cards ?? [];
@@ -532,6 +820,67 @@ export class IncomingHomologService {
     }
     await this.sessionRepository.cancel(sessionId);
     return { success: true };
+  }
+
+  /** Deshace create-tanda: elimina la tanda en revisión y reactiva la sesión de homologación. */
+  async revertConversion(sessionId: string) {
+    const session = await this.requireSession(sessionId);
+    if (session.status !== 'converted') {
+      throw new BadRequestException('Solo se puede restaurar una sesión convertida');
+    }
+
+    const roundId = session.ship_round_id?.trim();
+    if (!roundId) {
+      throw new BadRequestException('La sesión no tiene tanda asociada');
+    }
+
+    const active = await this.sessionRepository.findActive();
+    if (active && active._id.toString() !== sessionId) {
+      throw new ConflictException(
+        'Ya hay otra sesión de homologación activa. Cancélala antes de restaurar esta.',
+      );
+    }
+
+    const round = await this.shipRoundRepository.findById(roundId);
+    if (!round) {
+      const restored = await this.sessionRepository.revertConverted(sessionId);
+      if (!restored) {
+        throw new NotFoundException('Sesión no encontrada al restaurar');
+      }
+      return {
+        success: true,
+        session: this.serializeSession(restored),
+        panel_items: await this.loadPanelItems(restored),
+        batches_summary: await this.loadBatchesSummary(),
+        deleted_round_id: null,
+        round_already_missing: true,
+      };
+    }
+    if (round.status !== 'reviewing') {
+      throw new BadRequestException(
+        'La tanda ya fue finalizada; no se puede deshacer la conversión automáticamente',
+      );
+    }
+
+    await this.shipRoundCardUnitRepository.deleteByRoundId(roundId);
+    await this.shipRoundItemRepository.deleteByRoundId(roundId);
+    const deletedRound = await this.shipRoundRepository.deleteById(roundId);
+    if (!deletedRound) {
+      throw new BadRequestException('No se pudo eliminar la tanda en revisión');
+    }
+
+    const restored = await this.sessionRepository.revertConverted(sessionId);
+    if (!restored) {
+      throw new NotFoundException('Sesión no encontrada al restaurar');
+    }
+
+    return {
+      success: true,
+      session: this.serializeSession(restored),
+      panel_items: await this.loadPanelItems(restored),
+      batches_summary: await this.loadBatchesSummary(),
+      deleted_round_id: roundId,
+    };
   }
 
   private async requireSession(sessionId: string) {
@@ -762,5 +1111,347 @@ export class IncomingHomologService {
       updated_at: session.updated_at,
       converted_at: session.converted_at ?? null,
     };
+  }
+
+  private serializeNovedadStockRow(row: {
+    _id: { toString(): string };
+    session_id: string;
+    sent_unit_key: string;
+    stock_id?: string | null;
+    card_name: string;
+    card_id: string;
+    expansion: string;
+    language: string;
+    blueprint_id: number;
+    rareza?: string | null;
+    order_code: string;
+    purchase_price_fx?: number | null;
+    price_currency: string;
+    unit_cost_cop?: number | null;
+    novedad_notes: string;
+    image_url: string;
+    status: string;
+    created_at?: Date;
+    stock_created_at?: Date | null;
+    resolved_at?: Date | null;
+  }) {
+    return {
+      id: row._id.toString(),
+      session_id: row.session_id,
+      sent_unit_key: row.sent_unit_key,
+      stock_id: row.stock_id ?? null,
+      card_name: row.card_name,
+      card_id: row.card_id,
+      expansion: row.expansion,
+      language: row.language,
+      blueprint_id: row.blueprint_id,
+      rareza: row.rareza ?? null,
+      order_code: row.order_code,
+      purchase_price_fx: row.purchase_price_fx ?? null,
+      price_currency: row.price_currency,
+      unit_cost_cop: row.unit_cost_cop ?? null,
+      novedad_notes: row.novedad_notes,
+      image_url: row.image_url,
+      status: row.status,
+      created_at: row.created_at,
+      stock_created_at: row.stock_created_at ?? null,
+      resolved_at: row.resolved_at ?? null,
+    };
+  }
+
+  private async upsertNovedadStockTracking(
+    sessionId: string,
+    unit: IncomingHomologUnit,
+    notes: string,
+  ) {
+    const existing = await this.novedadStockRepository.findBySentUnitKey(
+      unit.sent_unit_key,
+    );
+    if (existing?.status === 'in_stock' && existing.stock_id) {
+      return existing;
+    }
+
+    const language =
+      normalizeStockLanguage(unit.language) ?? unit.language ?? 'en';
+
+    return this.novedadStockRepository.upsertBySentUnitKey(unit.sent_unit_key, {
+      session_id: sessionId,
+      sent_unit_key: unit.sent_unit_key,
+      card_name: unit.name,
+      card_id: existing?.card_id ?? '',
+      expansion: unit.expansion ?? '',
+      language,
+      blueprint_id: unit.blueprint_id ?? 0,
+      rareza: unit.rareza ?? null,
+      order_code: unit.order_code ?? '',
+      novedad_notes: notes,
+      image_url: existing?.image_url ?? '',
+      status: existing?.status === 'in_stock' ? 'in_stock' : 'pending',
+      stock_id: existing?.stock_id ?? null,
+    });
+  }
+
+  private async resolveNovedadCardMeta(
+    unit: IncomingHomologUnit,
+    ct: {
+      collector_number?: string | null;
+      expansion?: string;
+      name?: string;
+    } | null,
+  ): Promise<{
+    card_id: string;
+    card_name: string;
+    image_url: string;
+    language: string;
+    tcgdx_resolved: boolean;
+    tcgdx_error: string | null;
+  }> {
+    const language =
+      normalizeStockLanguage(unit.language) ?? 'en';
+    const expansion = unit.expansion || ct?.expansion || '';
+    const collectorNumber = ct?.collector_number ?? undefined;
+
+    const resolved = this.tcgdexResolve.resolveTcgdexCardId({
+      expansionName: expansion || undefined,
+      collectorNumber,
+    });
+
+    if (resolved.tcgdex_card_id) {
+      const card = await this.tcgdexService.getCard(
+        resolved.tcgdex_card_id,
+        language,
+      );
+      return {
+        card_id: resolved.tcgdex_card_id,
+        card_name: card?.name ?? unit.name,
+        image_url: card?.image ?? '',
+        language,
+        tcgdx_resolved: true,
+        tcgdx_error: null,
+      };
+    }
+
+    let imageUrl = '';
+    if (unit.blueprint_id > 0) {
+      try {
+        const bp = (await this.cardTraderService.getBlueprintById(
+          unit.blueprint_id,
+        )) as { image?: { url?: string }; name?: string };
+        imageUrl = bp?.image?.url ?? '';
+      } catch {
+        imageUrl = '';
+      }
+    }
+
+    return {
+      card_id:
+        unit.blueprint_id > 0
+          ? `ct-bp-${unit.blueprint_id}`
+          : `novedad-${unit.sent_unit_key}`,
+      card_name: unit.name,
+      image_url: imageUrl,
+      language,
+      tcgdx_resolved: false,
+      tcgdx_error: resolved.error,
+    };
+  }
+
+  private parseTrmRates(body: {
+    euro_to_cop: number;
+    usd_to_cop: number;
+  }): HomologTrmRates {
+    const rates: HomologTrmRates = {
+      euro_to_cop: body.euro_to_cop,
+      usd_to_cop: body.usd_to_cop,
+    };
+    if (
+      !Number.isFinite(rates.euro_to_cop) ||
+      rates.euro_to_cop <= 0 ||
+      !Number.isFinite(rates.usd_to_cop) ||
+      rates.usd_to_cop <= 0
+    ) {
+      throw new BadRequestException('Tasas TRM inválidas');
+    }
+    return rates;
+  }
+
+  private async resolveMaterializeSession(sessionId?: string) {
+    const session = sessionId
+      ? await this.requireSession(sessionId)
+      : await this.sessionRepository.findActive();
+    if (!session) {
+      throw new NotFoundException('No hay sesión de homologación');
+    }
+    return session;
+  }
+
+  private summarizeNovedadPreview(
+    plan: Array<{ quantity: number; unit_cost_cop: number; errors: string[] }>,
+  ) {
+    const totalCards = plan.reduce((sum, item) => sum + item.quantity, 0);
+    const totalCop = plan.reduce(
+      (sum, item) => sum + item.unit_cost_cop * item.quantity,
+      0,
+    );
+    const errorCount = plan.filter((item) => item.errors.length > 0).length;
+    return {
+      total_cards: totalCards,
+      total_cop: totalCop,
+      error_count: errorCount,
+      ok_count: plan.length - errorCount,
+    };
+  }
+
+  private buildNovedadPreviewErrors(args: {
+    homologUnit: IncomingHomologUnit | undefined;
+    purchaseFx: number | null;
+    unitCostCop: number;
+    cardMeta: {
+      card_id: string;
+      tcgdx_resolved: boolean;
+      tcgdx_error: string | null;
+      image_url: string;
+    };
+    ct: { collector_number?: string | null } | null;
+  }): string[] {
+    const errors: string[] = [];
+    if (!args.homologUnit) {
+      errors.push('Unidad no encontrada en la sesión de homologación');
+      return errors;
+    }
+    if (args.purchaseFx == null || args.purchaseFx <= 0) {
+      errors.push('Sin precio CardTrader (se usará $1 COP)');
+    }
+    if (!args.cardMeta.tcgdx_resolved) {
+      errors.push(
+        args.cardMeta.tcgdx_error ??
+          'ID TCGdex no resuelto (se usará ID temporal)',
+      );
+    }
+    if (args.cardMeta.card_id.startsWith('novedad-')) {
+      errors.push('No se pudo identificar la carta en catálogo');
+    }
+    if (!args.ct?.collector_number?.trim()) {
+      errors.push('Sin collector number en CardTrader');
+    }
+    if (!args.cardMeta.image_url.trim()) {
+      errors.push('Sin imagen de carta');
+    }
+    return errors;
+  }
+
+  private async buildNovedadMaterializePlan(
+    sessionId: string,
+    rates: HomologTrmRates,
+    session: { units?: IncomingHomologUnit[] },
+  ) {
+    await this.syncNovedadStockFromSession(sessionId);
+
+    const pending = await this.novedadStockRepository.findPendingBySession(sessionId);
+    if (pending.length === 0) return [];
+
+    const unitKeys = pending.map((p) => p.sent_unit_key);
+    const catalog = await this.sentUnitRepository.findByUnitKeys(unitKeys);
+    const catalogByKey = new Map(catalog.map((c) => [c.unit_key, c]));
+
+    const sessionUnits = await this.enrichSessionUnits(session);
+    const unitByKey = new Map(sessionUnits.map((u) => [u.sent_unit_key, u]));
+
+    const plan: Array<{
+      tracking_id: string;
+      sent_unit_key: string;
+      card_name: string;
+      card_id: string;
+      language: string;
+      image_url: string;
+      expansion: string;
+      quantity: number;
+      purchase_price_fx: number | null;
+      price_currency: string;
+      unit_cost_cop: number;
+      novedad_notes: string;
+      errors: string[];
+    }> = [];
+
+    for (const row of pending) {
+      const homologUnit = unitByKey.get(row.sent_unit_key);
+      const ct = catalogByKey.get(row.sent_unit_key) ?? null;
+
+      const purchaseFx = homologUnit
+        ? fxUnitPriceFromSentUnit({
+            ...homologUnit,
+            unit_price_fx:
+              homologUnit.unit_price_fx ??
+              (ct?.unit_price_raw != null && ct.unit_price_raw > 0
+                ? ct.unit_price_raw
+                : null),
+            unit_price_eur:
+              homologUnit.unit_price_eur ?? ct?.unit_price_eur ?? null,
+            price_currency:
+              homologUnit.price_currency ?? ct?.price_currency ?? 'USD',
+          })
+        : null;
+
+      const priceCurrency = normalizeCardsCostCurrency(
+        homologUnit?.price_currency ?? ct?.price_currency ?? 'USD',
+      );
+
+      const unitCostCop = homologUnit
+        ? resolveHomologNovedadUnitCostCop(homologUnit, rates, ct)
+        : FALLBACK_NOVEDAD_UNIT_COST_COP;
+
+      const cardMeta = homologUnit
+        ? await this.resolveNovedadCardMeta(homologUnit, ct)
+        : {
+            card_id: '',
+            card_name: row.card_name,
+            image_url: '',
+            language: row.language || 'en',
+            tcgdx_resolved: false,
+            tcgdx_error: 'Unidad no encontrada',
+          };
+
+      const errors = this.buildNovedadPreviewErrors({
+        homologUnit,
+        purchaseFx,
+        unitCostCop,
+        cardMeta,
+        ct,
+      });
+
+      plan.push({
+        tracking_id: row._id.toString(),
+        sent_unit_key: row.sent_unit_key,
+        card_name: cardMeta.card_name,
+        card_id: cardMeta.card_id,
+        language: cardMeta.language,
+        image_url: cardMeta.image_url,
+        expansion: homologUnit?.expansion ?? row.expansion ?? '',
+        quantity: 1,
+        purchase_price_fx: purchaseFx,
+        price_currency: priceCurrency,
+        unit_cost_cop: unitCostCop,
+        novedad_notes: row.novedad_notes || homologUnit?.novedad_notes || '',
+        errors,
+      });
+    }
+
+    return plan;
+  }
+
+  private async clearHomologUnitCostAfterUndo(
+    sessionId: string,
+    sentUnitKey: string,
+  ) {
+    try {
+      await this.persistUnitPatch(sessionId, sentUnitKey, {
+        unit_cost_cop: null,
+        purchase_price_fx: null,
+        purchase_price_currency: null,
+        purchase_price_eur: null,
+      });
+    } catch {
+      // La sesión puede estar convertida; el stock ya se revirtió.
+    }
   }
 }

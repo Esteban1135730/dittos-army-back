@@ -142,6 +142,7 @@ export class IncomingShipRoundController {
       };
     }
 
+    await this.shipRoundCardUnitRepository.deleteByRoundId(roundId);
     await this.shipRoundItemRepository.deleteByRoundId(roundId);
     const deleted = await this.shipRoundRepository.deleteById(roundId);
     return { success: deleted };

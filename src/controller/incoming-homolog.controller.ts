@@ -11,6 +11,8 @@ import { IncomingHomologService } from '../service/incoming-homolog.service';
 import type {
   CreateHomologTandaDto,
   CreateBatchNovedadDto,
+  MaterializeNovedadStockDto,
+  UndoNovedadStockDto,
   NovedadHomologUnitDto,
   VerifyHomologUnitDto,
 } from '../Dto/incoming-homolog.dto';
@@ -91,6 +93,11 @@ export class IncomingHomologController {
     return this.homologService.cancelSession(sessionId);
   }
 
+  @Post('sessions/:sessionId/revert-conversion')
+  async revertConversion(@Param('sessionId') sessionId: string) {
+    return this.homologService.revertConversion(sessionId);
+  }
+
   @Get('novedades')
   async listNovedades() {
     return this.homologService.listNovedades();
@@ -104,5 +111,35 @@ export class IncomingHomologController {
   @Patch('novedades/:novedadId/resolve')
   async resolveNovedad(@Param('novedadId') novedadId: string) {
     return this.homologService.resolveNovedad(novedadId);
+  }
+
+  @Get('novedad-stock')
+  async listNovedadStock() {
+    return this.homologService.listNovedadStockCards();
+  }
+
+  @Post('novedad-stock/sync')
+  async syncNovedadStock(@Body() body: { session_id?: string }) {
+    return this.homologService.syncNovedadStockFromSession(body?.session_id);
+  }
+
+  @Post('novedad-stock/preview')
+  async previewMaterializeNovedadStock(@Body() body: MaterializeNovedadStockDto) {
+    return this.homologService.previewMaterializeNovedadStock(body);
+  }
+
+  @Post('novedad-stock/materialize')
+  async materializeNovedadStock(@Body() body: MaterializeNovedadStockDto) {
+    return this.homologService.materializeNovedadStock(body);
+  }
+
+  @Post('novedad-stock/undo-materialize')
+  async undoNovedadStockMaterialize(@Body() body: UndoNovedadStockDto) {
+    return this.homologService.undoNovedadStockMaterialize(body);
+  }
+
+  @Patch('novedad-stock/:id/resolve')
+  async resolveNovedadStock(@Param('id') id: string) {
+    return this.homologService.resolveNovedadStockCard(id);
   }
 }

@@ -85,6 +85,7 @@ import { IncomingHomologService } from './service/incoming-homolog.service';
 import { CardtraderSentUnitRepository } from './repository/cardtrader-sent-unit.repository';
 import { IncomingHomologSessionRepository } from './repository/incoming-homolog-session.repository';
 import { IncomingBatchNovedadRepository } from './repository/incoming-batch-novedad.repository';
+import { IncomingHomologNovedadStockRepository } from './repository/incoming-homolog-novedad-stock.repository';
 import { IncomingShipRoundCardUnitRepository } from './repository/incoming-ship-round-card-unit.repository';
 import {
   CardtraderSentUnit,
@@ -102,6 +103,10 @@ import {
   IncomingShipRoundCardUnit,
   IncomingShipRoundCardUnitSchema,
 } from './schema/incoming-ship-round-card-unit.schema';
+import {
+  IncomingHomologNovedadStock,
+  IncomingHomologNovedadStockSchema,
+} from './schema/incoming-homolog-novedad-stock.schema';
 
 @Module({
   controllers: [
@@ -152,6 +157,7 @@ import {
     IncomingHomologSessionRepository,
     IncomingBatchNovedadRepository,
     IncomingShipRoundCardUnitRepository,
+    IncomingHomologNovedadStockRepository,
   ],
   imports: [
     MongooseModule.forRoot(
@@ -178,6 +184,10 @@ import {
       {
         name: IncomingShipRoundCardUnit.name,
         schema: IncomingShipRoundCardUnitSchema,
+      },
+      {
+        name: IncomingHomologNovedadStock.name,
+        schema: IncomingHomologNovedadStockSchema,
       },
     ]),
   ],

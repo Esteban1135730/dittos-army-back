@@ -40,6 +40,14 @@ export class IncomingHomologSessionRepository {
       .exec();
   }
 
+  /** Última sesión convertida (para pantalla de recuperación si no hay activa). */
+  async findLatestConverted(): Promise<IncomingHomologSessionDocument | null> {
+    return this.model
+      .findOne({ status: 'converted' })
+      .sort({ converted_at: -1, updated_at: -1 })
+      .exec();
+  }
+
   async updateUnits(
     id: string,
     units: IncomingHomologUnit[],
@@ -133,5 +141,23 @@ export class IncomingHomologSessionRepository {
       })
       .exec();
     return Boolean(result);
+  }
+
+  async revertConverted(id: string): Promise<IncomingHomologSessionDocument | null> {
+    return this.model
+      .findByIdAndUpdate(
+        id,
+        {
+          $set: {
+            status: 'in_progress',
+            ship_round_id: null,
+            shipping_total_cop: null,
+            updated_at: new Date(),
+          },
+          $unset: { converted_at: '' },
+        },
+        { new: true },
+      )
+      .exec();
   }
 }

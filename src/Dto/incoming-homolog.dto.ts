@@ -26,3 +26,14 @@ export type CreateBatchNovedadDto = {
   sent_unit_key?: string;
   session_id?: string;
 };
+
+export type MaterializeNovedadStockDto = {
+  session_id?: string;
+  euro_to_cop: number;
+  usd_to_cop: number;
+};
+
+export type UndoNovedadStockDto = {
+  session_id?: string;
+  tracking_ids?: string[];
+};

@@ -27,4 +27,9 @@ export class IncomingShipRoundCardUnitRepository {
   ): Promise<IncomingShipRoundCardUnitDocument[]> {
     return this.model.find({ ship_round_id: roundId }).exec();
   }
+
+  async deleteByRoundId(roundId: string): Promise<number> {
+    const result = await this.model.deleteMany({ ship_round_id: roundId }).exec();
+    return result.deletedCount ?? 0;
+  }
 }
