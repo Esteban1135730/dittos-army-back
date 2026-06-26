@@ -68,8 +68,10 @@ import { IncomingShipRoundController } from './controller/incoming-ship-round.co
 import { IncomingShipRoundRepository } from './repository/incoming-ship-round.repository';
 import { IncomingShipRoundItemRepository } from './repository/incoming-ship-round-item.repository';
 import { CardTraderController } from './controller/cardtrader.controller';
+import { CardtraderTransitLotController } from './controller/cardtrader-transit-lot.controller';
 import { CardTraderService } from './service/cardtrader/cardtrader.service';
 import { CardTraderTcgdexResolveService } from './service/cardtrader/cardtrader-tcgdex-resolve.service';
+import { CardtraderTransitLotService } from './service/cardtrader/cardtrader-transit-lot.service';
 import { StockScanService } from './service/stock-scan.service';
 import { DashboardController } from './controller/dashboard.controller';
 import { DashboardOverviewService } from './service/dashboard-overview.service';
@@ -107,6 +109,16 @@ import {
   IncomingHomologNovedadStock,
   IncomingHomologNovedadStockSchema,
 } from './schema/incoming-homolog-novedad-stock.schema';
+import {
+  CardtraderTransitLot,
+  CardtraderTransitLotSchema,
+} from './schema/cardtrader-transit-lot.schema';
+import {
+  CardtraderTransitLine,
+  CardtraderTransitLineSchema,
+} from './schema/cardtrader-transit-line.schema';
+import { CardtraderTransitLotRepository } from './repository/cardtrader-transit-lot.repository';
+import { CardtraderTransitLineRepository } from './repository/cardtrader-transit-line.repository';
 
 @Module({
   controllers: [
@@ -120,6 +132,7 @@ import {
     IncomingController,
     IncomingShipRoundController,
     CardTraderController,
+    CardtraderTransitLotController,
     DashboardController,
     StockReviewController,
     IncomingHomologController,
@@ -148,6 +161,7 @@ import {
     IncomingShipRoundItemRepository,
     CardTraderService,
     CardTraderTcgdexResolveService,
+    CardtraderTransitLotService,
     StockScanService,
     DashboardOverviewService,
     StockReviewService,
@@ -158,6 +172,8 @@ import {
     IncomingBatchNovedadRepository,
     IncomingShipRoundCardUnitRepository,
     IncomingHomologNovedadStockRepository,
+    CardtraderTransitLotRepository,
+    CardtraderTransitLineRepository,
   ],
   imports: [
     MongooseModule.forRoot(
@@ -189,6 +205,8 @@ import {
         name: IncomingHomologNovedadStock.name,
         schema: IncomingHomologNovedadStockSchema,
       },
+      { name: CardtraderTransitLot.name, schema: CardtraderTransitLotSchema },
+      { name: CardtraderTransitLine.name, schema: CardtraderTransitLineSchema },
     ]),
   ],
 })
