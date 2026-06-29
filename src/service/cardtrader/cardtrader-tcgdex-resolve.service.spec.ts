@@ -59,4 +59,13 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(result.tcgdex_card_id).toBeNull();
     expect(result.error).toContain('homologación');
   });
+  it('resolveTcgdexCardIdBatch resuelve múltiples líneas', () => {
+    const results = service.resolveTcgdexCardIdBatch([
+      { expansionName: 'Base Set', collectorNumber: '004' },
+      { expansionName: 'Expansion Inventada XYZ', collectorNumber: '1' },
+    ]);
+    expect(results).toHaveLength(2);
+    expect(results[0].tcgdex_card_id).toBe('base1-4');
+    expect(results[1].tcgdex_card_id).toBeNull();
+  });
 });

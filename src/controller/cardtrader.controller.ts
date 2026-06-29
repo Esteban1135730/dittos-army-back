@@ -239,6 +239,48 @@ export class CardTraderController {
     });
   }
 
+  @Post('tcgdex/resolve-batch')
+  async resolveTcgdexBatch(
+    @Body()
+    body: {
+      lines?: Array<{
+        expansion?: string;
+        expansion_id?: number;
+        collector_number?: string;
+      }>;
+    },
+  ): Promise<{ results: unknown[] }> {
+    if (!body || !Array.isArray(body.lines) || body.lines.length === 0) {
+      throw new BadRequestException('lines es obligatorio y debe ser un array');
+    }
+    if (body.lines.length > 500) {
+      throw new BadRequestException('máximo 500 líneas por solicitud');
+    }
+
+    const normalized = body.lines.map((line, index) => {
+      const expName = line?.expansion?.trim() || undefined;
+      const expId =
+        line?.expansion_id != null ? Number(line.expansion_id) : undefined;
+      if (expId !== undefined && (!Number.isInteger(expId) || expId < 1)) {
+        throw new BadRequestException(`expansion_id inválido en línea ${index + 1}`);
+      }
+      if (!expName && expId === undefined) {
+        throw new BadRequestException(
+          `expansion o expansion_id obligatorio en línea ${index + 1}`,
+        );
+      }
+      return {
+        expansionName: expName,
+        expansionId: expId,
+        collectorNumber: line?.collector_number?.trim() || undefined,
+      };
+    });
+
+    return {
+      results: this.tcgdxResolve.resolveTcgdexCardIdBatch(normalized),
+    };
+  }
+
   @Get('images/proxy')
   async proxyImage(
     @Query('url') url: string,

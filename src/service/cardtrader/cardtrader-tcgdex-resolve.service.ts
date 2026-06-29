@@ -150,4 +150,20 @@ export class CardTraderTcgdexResolveService {
       error: null,
     };
   }
+
+  resolveTcgdexCardIdBatch(
+    lines: Array<{
+      expansionName?: string;
+      expansionId?: number;
+      collectorNumber?: string;
+    }>,
+  ): TcgdexResolveResult[] {
+    return lines.map((line) =>
+      this.resolveTcgdexCardId({
+        expansionName: line.expansionName,
+        expansionId: line.expansionId,
+        collectorNumber: line.collectorNumber,
+      }),
+    );
+  }
 }
