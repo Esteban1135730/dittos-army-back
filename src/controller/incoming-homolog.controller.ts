@@ -138,6 +138,11 @@ export class IncomingHomologController {
     return this.homologService.undoNovedadStockMaterialize(body);
   }
 
+  @Post('novedad-stock/apply-manual-tcgdex')
+  async applyManualNovedadTcgdex() {
+    return this.homologService.applyManualNovedadTcgdexFixes();
+  }
+
   @Patch('novedad-stock/:id/resolve')
   async resolveNovedadStock(@Param('id') id: string) {
     return this.homologService.resolveNovedadStockCard(id);

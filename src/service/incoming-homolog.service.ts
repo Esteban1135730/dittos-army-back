@@ -4,6 +4,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
 import { CardTraderService } from './cardtrader/cardtrader.service';
 import { CardtraderSentUnitRepository } from '../repository/cardtrader-sent-unit.repository';
 import { IncomingHomologSessionRepository } from '../repository/incoming-homolog-session.repository';
@@ -44,6 +46,11 @@ import {
   type HomologTrmRates,
 } from '../utils/homolog-novedad-pricing';
 import { normalizeOperationalRareza } from '../constants/item-rareza';
+import {
+  buildNovedadTcgdexResolveInput,
+  readBlueprintImageUrl,
+  type CtBlueprintLike,
+} from '../utils/novedad-card-resolve';
 
 @Injectable()
 export class IncomingHomologService {
@@ -674,6 +681,109 @@ export class IncomingHomologService {
     return { success: true, item: this.serializeNovedadStockRow(row) };
   }
 
+  async applyManualNovedadTcgdexFixes(): Promise<{
+    updated_stock: number;
+    updated_novedad: number;
+    items: Array<{
+      stock_id: string;
+      novedad_id: string;
+      card_name: string;
+      from_card_id: string;
+      to_card_id: string;
+    }>;
+  }> {
+    const manual = this.loadManualNovedadTcgdexMap();
+    const rows = await this.novedadStockRepository.findByCardIdPrefix('ct-bp-');
+    const items: Array<{
+      stock_id: string;
+      novedad_id: string;
+      card_name: string;
+      from_card_id: string;
+      to_card_id: string;
+    }> = [];
+
+    for (const row of rows) {
+      const bpId =
+        row.blueprint_id > 0
+          ? row.blueprint_id
+          : this.blueprintIdFromCtCardId(row.card_id);
+      const entry = bpId > 0 ? manual.get(bpId) : undefined;
+      if (!entry) continue;
+
+      const stockId = row.stock_id?.trim();
+      if (!stockId) continue;
+
+      const payload = {
+        card_id: entry.card_id,
+        card_name: entry.card_name || row.card_name,
+        image_url: entry.image_url,
+      };
+
+      await this.stockRepository.updateById(stockId, payload);
+      await this.novedadStockRepository.updateCardMeta(
+        row._id.toString(),
+        payload,
+      );
+
+      items.push({
+        stock_id: stockId,
+        novedad_id: row._id.toString(),
+        card_name: payload.card_name,
+        from_card_id: row.card_id,
+        to_card_id: payload.card_id,
+      });
+    }
+
+    return {
+      updated_stock: items.length,
+      updated_novedad: items.length,
+      items,
+    };
+  }
+
+  private blueprintIdFromCtCardId(cardId: string): number {
+    const match = /^ct-bp-(\d+)$/.exec(String(cardId ?? '').trim());
+    if (!match) return 0;
+    const n = Number(match[1]);
+    return Number.isInteger(n) && n > 0 ? n : 0;
+  }
+
+  private loadManualNovedadTcgdexMap(): Map<
+    number,
+    { card_id: string; card_name: string; image_url: string }
+  > {
+    const filePath = path.join(
+      process.cwd(),
+      'data',
+      'novedad-manual-tcgdex.json',
+    );
+    if (!fs.existsSync(filePath)) {
+      throw new NotFoundException(
+        'Falta data/novedad-manual-tcgdex.json en el backend',
+      );
+    }
+    const raw = JSON.parse(fs.readFileSync(filePath, 'utf8')) as {
+      by_blueprint_id?: Record<
+        string,
+        { card_id: string; card_name: string; image_url: string }
+      >;
+    };
+    const map = new Map<
+      number,
+      { card_id: string; card_name: string; image_url: string }
+    >();
+    for (const [key, value] of Object.entries(raw.by_blueprint_id ?? {})) {
+      const id = Number(key);
+      if (!Number.isInteger(id) || id <= 0 || !value?.card_id?.trim()) continue;
+      map.set(id, {
+        card_id: value.card_id.trim(),
+        card_name: value.card_name?.trim() ?? '',
+        image_url: value.image_url?.trim() ?? '',
+      });
+    }
+    return map;
+  }
+
   async createTanda(sessionId: string, body: CreateHomologTandaDto) {
     const session = await this.requireSession(sessionId);
     if (session.status === 'converted') {
@@ -1191,6 +1301,19 @@ export class IncomingHomologService {
     });
   }
 
+  private async fetchBlueprintMeta(
+    blueprintId: number,
+  ): Promise<CtBlueprintLike | null> {
+    if (blueprintId <= 0) return null;
+    try {
+      return (await this.cardTraderService.getBlueprintById(
+        blueprintId,
+      )) as CtBlueprintLike;
+    } catch {
+      return null;
+    }
+  }
+
   private async resolveNovedadCardMeta(
     unit: IncomingHomologUnit,
     ct: {
@@ -1211,10 +1334,24 @@ export class IncomingHomologService {
     const expansion = unit.expansion || ct?.expansion || '';
     const collectorNumber = ct?.collector_number ?? undefined;
 
-    const resolved = this.tcgdexResolve.resolveTcgdexCardId({
-      expansionName: expansion || undefined,
-      collectorNumber,
-    });
+    let resolved = this.tcgdexResolve.resolveTcgdexCardId(
+      buildNovedadTcgdexResolveInput({
+        expansionName: expansion || undefined,
+        collectorNumber,
+      }),
+    );
+
+    let blueprint: CtBlueprintLike | null = null;
+    if (!resolved.tcgdex_card_id && unit.blueprint_id > 0) {
+      blueprint = await this.fetchBlueprintMeta(unit.blueprint_id);
+      resolved = this.tcgdexResolve.resolveTcgdexCardId(
+        buildNovedadTcgdexResolveInput({
+          expansionName: expansion || undefined,
+          collectorNumber,
+          blueprint,
+        }),
+      );
+    }
 
     if (resolved.tcgdex_card_id) {
       const card = await this.tcgdexService.getCard(
@@ -1231,17 +1368,11 @@ export class IncomingHomologService {
       };
     }
 
-    let imageUrl = '';
-    if (unit.blueprint_id > 0) {
-      try {
-        const bp = (await this.cardTraderService.getBlueprintById(
-          unit.blueprint_id,
-        )) as { image?: { url?: string }; name?: string };
-        imageUrl = bp?.image?.url ?? '';
-      } catch {
-        imageUrl = '';
-      }
+    let imageBlueprint = blueprint;
+    if (!imageBlueprint && unit.blueprint_id > 0) {
+      imageBlueprint = await this.fetchBlueprintMeta(unit.blueprint_id);
     }
+    const imageUrl = readBlueprintImageUrl(imageBlueprint);
 
     return {
       card_id:

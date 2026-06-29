@@ -67,6 +67,16 @@ export class StockRepository {
     return this.stockModel.findById(id);
   }
 
+  async updateById(
+    id: string,
+    patch: Partial<Pick<Stock, 'card_id' | 'card_name' | 'image_url'>>,
+  ): Promise<Stock | null> {
+    if (!id?.trim()) return null;
+    return this.stockModel
+      .findByIdAndUpdate(id, { $set: patch }, { new: true })
+      .exec();
+  }
+
   async findByCardId(cardId: string): Promise<Stock[] | null> {
     return this.stockModel.find({ card_id: cardId }).exec();
   }

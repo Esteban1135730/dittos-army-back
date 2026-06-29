@@ -4565,6 +4565,53 @@
         "code": "pre"
       }
     },
+    "en:sv08.5-poke": {
+      "tcgdex_set_id": "sv08.5",
+      "locale": "en",
+      "names": {
+        "en_cardtrader": "Prismatic Evolutions - Poké Ball Reverse Holo",
+        "database": {
+          "en": "Prismatic Evolutions"
+        },
+        "englishName": "Prismatic Evolutions"
+      },
+      "cardtrader": {
+        "id": 4053,
+        "code": "pre-poke-rh"
+      }
+    },
+    "ja:M2": {
+      "tcgdex_set_id": "M2",
+      "locale": "ja",
+      "names": {
+        "en_cardtrader": "Inferno X",
+        "database": {
+          "ja": "2025-09-26",
+          "en": "Inferno X"
+        },
+        "englishName": "Inferno X"
+      },
+      "cardtrader": {
+        "id": 4313,
+        "code": "m2"
+      }
+    },
+    "zh-cn:CSV2C": {
+      "tcgdex_set_id": "CSV2C",
+      "locale": "zh-cn",
+      "names": {
+        "en_cardtrader": "CSV2: Miracle Journey",
+        "database": {
+          "zh-cn": "CSV2C",
+          "en": "Miracle Journey"
+        },
+        "englishName": "Miracle Journey"
+      },
+      "cardtrader": {
+        "id": 4160,
+        "code": "csv2c"
+      }
+    },
     "ja:SM5+": {
       "tcgdex_set_id": "SM5+",
       "locale": "ja",
@@ -6328,11 +6375,6 @@
       "name": "Quick Starter Gift Set 1998"
     },
     {
-      "id": 4160,
-      "code": "csv2",
-      "name": "CSV2: Miracle Journey"
-    },
-    {
       "id": 4161,
       "code": "m-csv2",
       "name": "CSV2: Miracle Journey - Master ball Reverse Holo"
@@ -6406,11 +6448,6 @@
       "id": 4312,
       "code": "cbb3c",
       "name": "Gem Pack Vol.3"
-    },
-    {
-      "id": 4313,
-      "code": "m2",
-      "name": "Inferno X"
     },
     {
       "id": 4314,

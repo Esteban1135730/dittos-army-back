@@ -92,6 +92,30 @@ export class IncomingHomologNovedadStockRepository {
     return this.model.findById(id).exec();
   }
 
+  async findByCardIdPrefix(
+    prefix: string,
+  ): Promise<IncomingHomologNovedadStockDocument[]> {
+    const escaped = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return this.model
+      .find({ card_id: { $regex: `^${escaped}` } })
+      .exec();
+  }
+
+  async updateCardMeta(
+    id: string,
+    patch: Partial<
+      Pick<IncomingHomologNovedadStock, 'card_id' | 'card_name' | 'image_url'>
+    >,
+  ): Promise<IncomingHomologNovedadStockDocument | null> {
+    return this.model
+      .findByIdAndUpdate(
+        id,
+        { $set: { ...patch, updated_at: new Date() } },
+        { new: true },
+      )
+      .exec();
+  }
+
   async markInStock(
     id: string,
     patch: {
