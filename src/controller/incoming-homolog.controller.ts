@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -47,10 +48,14 @@ export class IncomingHomologController {
     @Param('sentUnitKey') sentUnitKey: string,
     @Body() body: VerifyHomologUnitDto,
   ) {
+    const transitLineId = body.transit_line_id?.trim() || body.batch_item_id?.trim();
+    if (!transitLineId) {
+      throw new BadRequestException('transit_line_id es requerido');
+    }
     return this.homologService.verifyUnit(
       sessionId,
       decodeURIComponent(sentUnitKey),
-      body.batch_item_id,
+      transitLineId,
       body.match_score,
     );
   }
@@ -61,11 +66,13 @@ export class IncomingHomologController {
     @Param('sentUnitKey') sentUnitKey: string,
     @Body() body: NovedadHomologUnitDto,
   ) {
+    const panelLineId =
+      body.transit_line_id?.trim() || body.batch_item_id?.trim();
     return this.homologService.markNovedad(
       sessionId,
       decodeURIComponent(sentUnitKey),
       body.notes,
-      body.batch_item_id,
+      panelLineId,
     );
   }
 
@@ -116,6 +123,11 @@ export class IncomingHomologController {
   @Get('novedad-stock')
   async listNovedadStock() {
     return this.homologService.listNovedadStockCards();
+  }
+
+  @Delete('novedad-stock')
+  async clearNovedadStock() {
+    return this.homologService.clearNovedadStockTable();
   }
 
   @Post('novedad-stock/sync')

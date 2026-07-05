@@ -17,6 +17,11 @@ import { CardtraderTransitLotService } from 'src/service/cardtrader/cardtrader-t
 export class CardtraderTransitLotController {
   constructor(private readonly transitLotService: CardtraderTransitLotService) {}
 
+  @Get('open/catalog')
+  listOpenCatalog() {
+    return this.transitLotService.listOpenCatalogLines();
+  }
+
   @Get('open')
   listOpenLots() {
     return this.transitLotService.listOpenLots();
@@ -30,6 +35,12 @@ export class CardtraderTransitLotController {
   @Post()
   createLot(@Body() body: CreateCardtraderTransitLotDto) {
     return this.transitLotService.createLot(body);
+  }
+
+  /** Vacía lotes y líneas de tránsito CardTrader (reimportación limpia). */
+  @Delete()
+  clearAllLots() {
+    return this.transitLotService.clearAllLots();
   }
 
   @Get(':lotId')

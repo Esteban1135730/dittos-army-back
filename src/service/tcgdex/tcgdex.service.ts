@@ -8,6 +8,20 @@ import type { TCGdexCardApiResponse } from './dto/tcgdex-api.types';
 import { CardResumeDto, mapCardResume } from './dto/card.resume.dto';
 import { SetNameHomologsService } from './set-name-homologs.service';
 import { LocalCardImagesService } from './local-card-images.service';
+import {
+  storeCardMetaFromDto,
+  resolveStoreExportCardMeta,
+  isUnreliableStoreCardName,
+  type StoreCardExportMeta,
+} from '../../utils/store-card-meta';
+import {
+  buildTcgdexCardIdLookupCandidates,
+  tcgDexCatalogLocaleForExpansion,
+} from '../../utils/tcgdex-set-resolve';
+import {
+  parseExpansionFromSetField,
+  parseSetIdFromSetField,
+} from '../../utils/store-card-meta';
 
 export const TCGDEX_SUPPORTED_LOCALES = [
   'en',
@@ -311,6 +325,48 @@ export class TCGDexService {
   }
 
   /**
+   * Metadatos para export de tienda: prueba variantes de id TCGdex y descarta nombres corruptos.
+   */
+  async resolveStoreExportMeta(
+    cardId: string,
+    language?: string,
+    sourceName?: string | null,
+  ): Promise<StoreCardExportMeta | undefined> {
+    const candidates = buildTcgdexCardIdLookupCandidates(cardId, language);
+    if (candidates.length === 0) return undefined;
+
+    let localizedMeta: StoreCardExportMeta | undefined;
+    let englishMeta: StoreCardExportMeta | undefined;
+
+    for (const id of candidates) {
+      const card = await this.getCard(id, language);
+      if (card && !isUnreliableStoreCardName(card.name)) {
+        localizedMeta = storeCardMetaFromDto(card);
+        break;
+      }
+    }
+
+    for (const id of candidates) {
+      const card = await this.getCard(id, 'en');
+      if (card && !isUnreliableStoreCardName(card.name)) {
+        englishMeta = storeCardMetaFromDto(card);
+        break;
+      }
+    }
+
+    if (!localizedMeta && !englishMeta && isUnreliableStoreCardName(sourceName)) {
+      return undefined;
+    }
+
+    return resolveStoreExportCardMeta({
+      cardId,
+      sourceName,
+      localized: localizedMeta,
+      english: englishMeta,
+    });
+  }
+
+  /**
    * Imagen pública en CDN TCGdex (API de producción), sin sustituir por archivos locales.
    * Usar en export de tienda para no subir assets al hosting cuando hay URL remota.
    */
@@ -323,9 +379,15 @@ export class TCGDexService {
     if (!id) return undefined;
 
     const preferredLocale = this.normalizeLocale(locale);
+    const candidates = buildTcgdexCardIdLookupCandidates(id, locale);
     for (const tryLocale of buildCardLocaleFallbackChain(preferredLocale)) {
-      const image = await this.fetchRemoteStoreImageForLocale(id, tryLocale);
-      if (image) return image;
+      for (const candidateId of candidates) {
+        const image = await this.fetchRemoteStoreImageForLocale(
+          candidateId,
+          tryLocale,
+        );
+        if (image) return image;
+      }
     }
     return undefined;
   }
@@ -365,6 +427,71 @@ export class TCGDexService {
       });
       return this.setCached(cacheKey, undefined, this.TTL_CARD_DETAIL_MS);
     }
+  }
+
+  /**
+   * Carta en un locale concreto (sin cadena ja/zh/en). Prueba variantes de id según idioma.
+   */
+  async getCardStrictLocale(
+    cardId: string,
+    locale: TcgDexLocale,
+    language?: string | null,
+  ): Promise<CardDto | undefined> {
+    const candidates = buildTcgdexCardIdLookupCandidates(cardId, language);
+    for (const id of candidates) {
+      const card = await this.fetchCardForLocale(id, locale);
+      if (card) return card;
+    }
+    return undefined;
+  }
+
+  /**
+   * Nombre de expansión en inglés para etiquetas/escaneo:
+   * catálogo regional según idioma de stock (en / ja / zh-cn) + homologación EN en BD.
+   */
+  async resolveEnglishExpansionName(
+    cardId: string,
+    language?: string | null,
+  ): Promise<string> {
+    const catalogLocale = tcgDexCatalogLocaleForExpansion(language);
+    const fetchLocale: TcgDexLocale =
+      catalogLocale === 'zh-tw' ? 'zh-cn' : catalogLocale;
+    const candidates = buildTcgdexCardIdLookupCandidates(cardId, language);
+
+    let setId = '';
+    let localizedSetName = '';
+
+    for (const id of candidates) {
+      const card = await this.fetchCardForLocale(id, fetchLocale);
+      if (card?.set) {
+        setId = parseSetIdFromSetField(card.set) ?? '';
+        localizedSetName = parseExpansionFromSetField(card.set) ?? '';
+        break;
+      }
+    }
+
+    if (setId) {
+      const homologEnglish = this.setNameHomologs.getEnglishLabel(
+        catalogLocale,
+        setId,
+        localizedSetName,
+      );
+      if (homologEnglish) return homologEnglish;
+    }
+
+    for (const id of candidates) {
+      const enCard = await this.fetchCardForLocale(id, 'en');
+      if (enCard?.set) {
+        const enName = parseExpansionFromSetField(enCard.set);
+        if (enName) return enName;
+      }
+    }
+
+    if (catalogLocale === 'en' && localizedSetName) {
+      return localizedSetName;
+    }
+
+    return '';
   }
 
   async getCardSet(

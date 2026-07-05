@@ -1,20 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
-
-type HomologSetEntry = {
-  tcgdex_set_id?: string;
-  locale?: string;
-  names?: {
-    en_cardtrader?: string | null;
-    englishName?: string | null;
-    database?: Record<string, string | null>;
-  };
-  cardtrader?: {
-    id?: number;
-    code?: string;
-  };
-};
+import {
+  expansionLabel,
+  formatLocalIdForLocale,
+  normExpansionKey,
+  catalogLocaleForLanguage,
+  adjustSetIdForCatalog,
+  resolveSetFromLocaleAliases,
+  resolveSetFromLocaleMap,
+} from '../../utils/tcgdex-set-resolve';
+import {
+  loadTcgdexSetResolveIndex,
+  type SetResolveMeta,
+  type TcgdexSetResolveIndex,
+} from '../../utils/tcgdex-homolog-loader';
 
 export type TcgdexResolveResult = {
   tcgdex_card_id: string | null;
@@ -25,103 +23,121 @@ export type TcgdexResolveResult = {
 
 @Injectable()
 export class CardTraderTcgdexResolveService {
-  private readonly byCtExpansionId = new Map<
-    number,
-    { tcgdex_set_id: string; locale: string }
-  >();
-  private readonly byCtExpansionName = new Map<
-    string,
-    { tcgdex_set_id: string; locale: string }
-  >();
+  private readonly index: TcgdexSetResolveIndex;
 
   constructor() {
-    this.loadHomolog();
+    this.index = loadTcgdexSetResolveIndex();
   }
 
-  private normalizeName(value: string | null | undefined): string {
-    return String(value ?? '')
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, ' ');
+  /** Expuesto para tests/diagnóstico de cobertura de homologación. */
+  getIndexStats(): {
+    expansionNames: number;
+    expansionIds: number;
+    localeAliases: number;
+    knownSetIds: number;
+  } {
+    return {
+      expansionNames: this.index.byCtExpansionName.size,
+      expansionIds: this.index.byCtExpansionId.size,
+      localeAliases: Object.keys(this.index.localeAliases).length,
+      knownSetIds: this.index.setLocaleById.size,
+    };
   }
 
-  private registerSet(entry: HomologSetEntry): void {
-    const setId = entry.tcgdex_set_id?.trim();
-    const locale = entry.locale?.trim() || 'en';
-    if (!setId) return;
-
-    const meta = { tcgdex_set_id: setId, locale };
-    const ctId = entry.cardtrader?.id;
-    if (typeof ctId === 'number' && ctId > 0) {
-      this.byCtExpansionId.set(ctId, meta);
-    }
-
-    const names = new Set<string>();
-    if (entry.names?.en_cardtrader)
-      names.add(this.normalizeName(entry.names.en_cardtrader));
-    if (entry.names?.englishName)
-      names.add(this.normalizeName(entry.names.englishName));
-    const db = entry.names?.database;
-    if (db && typeof db === 'object') {
-      for (const v of Object.values(db)) {
-        if (v) names.add(this.normalizeName(v));
-      }
-    }
-    for (const name of names) {
-      if (name) this.byCtExpansionName.set(name, meta);
-    }
+  private finalizeSetMeta(
+    hit: SetResolveMeta | null,
+    language?: string,
+  ): SetResolveMeta | null {
+    if (!hit) return null;
+    const catalog = catalogLocaleForLanguage(language) ?? 'en';
+    const adjusted = adjustSetIdForCatalog(hit.tcgdex_set_id, catalog);
+    return {
+      tcgdex_set_id: adjusted.tcgdex_set_id,
+      locale: adjusted.locale,
+    };
   }
 
-  private loadHomolog(): void {
-    const filePath = path.join(
-      process.cwd(),
-      'data',
-      'cardtrader_tcgdex_homolog.json',
-    );
-    if (!fs.existsSync(filePath)) return;
-
-    try {
-      const raw = JSON.parse(fs.readFileSync(filePath, 'utf8')) as {
-        sets?: Record<string, HomologSetEntry>;
-      };
-      const sets = raw.sets ?? {};
-      for (const entry of Object.values(sets)) {
-        this.registerSet(entry);
-      }
-    } catch {
-      /* homolog opcional para demo */
+  private preferLocaleAwareMatch(
+    hit: SetResolveMeta | null,
+    args: { expansionName?: string; language?: string },
+  ): SetResolveMeta | null {
+    if (!hit) return null;
+    const catalog = catalogLocaleForLanguage(args.language);
+    if (
+      catalog &&
+      catalog !== 'en' &&
+      hit.locale === 'en' &&
+      this.index.localeMap
+    ) {
+      const fromMap = resolveSetFromLocaleMap({
+        expansionName: args.expansionName,
+        language: args.language,
+        localeMap: this.index.localeMap,
+      });
+      if (fromMap) return this.finalizeSetMeta(fromMap, args.language);
     }
-  }
-
-  private normalizeCollectorNumber(
-    raw: string | null | undefined,
-  ): string | null {
-    const s = String(raw ?? '').trim();
-    if (!s) return null;
-    const withoutLeadingZeros = s.replace(/^0+(?=\d)/, '');
-    return withoutLeadingZeros || '0';
+    return this.finalizeSetMeta(hit, args.language);
   }
 
   private findSet(args: {
     expansionName?: string;
     expansionId?: number;
-  }): { tcgdex_set_id: string; locale: string } | null {
+    language?: string;
+  }): SetResolveMeta | null {
     if (typeof args.expansionId === 'number' && args.expansionId > 0) {
-      const byId = this.byCtExpansionId.get(args.expansionId);
-      if (byId) return byId;
+      const byId = this.index.byCtExpansionId.get(args.expansionId);
+      if (byId) {
+        return this.preferLocaleAwareMatch(byId, args);
+      }
     }
-    const nameKey = this.normalizeName(args.expansionName);
-    if (nameKey) {
-      const byName = this.byCtExpansionName.get(nameKey);
-      if (byName) return byName;
+
+    const label = expansionLabel(args.expansionName);
+    for (const candidate of [label, args.expansionName ?? '']) {
+      const nameKey = normExpansionKey(candidate);
+      if (!nameKey) continue;
+      const byName = this.index.byCtExpansionName.get(nameKey);
+      if (byName) {
+        return this.preferLocaleAwareMatch(byName, args);
+      }
     }
-    return null;
+
+    const fromAliases = resolveSetFromLocaleAliases({
+      expansionName: args.expansionName,
+      language: args.language,
+      aliases: this.index.localeAliases,
+    });
+
+    const catalog = catalogLocaleForLanguage(args.language);
+    const fromLocaleMap = this.index.localeMap
+      ? resolveSetFromLocaleMap({
+          expansionName: args.expansionName,
+          language: args.language,
+          localeMap: this.index.localeMap,
+        })
+      : null;
+
+    if (
+      fromLocaleMap &&
+      catalog &&
+      catalog !== 'en' &&
+      (!fromAliases || fromAliases.locale === 'en')
+    ) {
+      return this.finalizeSetMeta(fromLocaleMap, args.language);
+    }
+
+    if (fromAliases) {
+      return this.finalizeSetMeta(fromAliases, args.language);
+    }
+    return fromLocaleMap
+      ? this.finalizeSetMeta(fromLocaleMap, args.language)
+      : null;
   }
 
   resolveTcgdexCardId(args: {
     expansionName?: string;
     expansionId?: number;
     collectorNumber?: string;
+    language?: string;
   }): TcgdexResolveResult {
     const set = this.findSet(args);
     if (!set) {
@@ -133,12 +149,18 @@ export class CardTraderTcgdexResolveService {
       };
     }
 
-    const localId = this.normalizeCollectorNumber(args.collectorNumber);
+    const locale =
+      this.index.setLocaleById.get(set.tcgdex_set_id) ?? set.locale;
+    const localId = formatLocalIdForLocale(
+      args.collectorNumber?.trim() || undefined,
+      locale,
+      set.tcgdex_set_id,
+    );
     if (!localId) {
       return {
         tcgdex_card_id: null,
         tcgdex_set_id: set.tcgdex_set_id,
-        locale: set.locale,
+        locale,
         error: 'sin collector_number en el ítem',
       };
     }
@@ -146,7 +168,7 @@ export class CardTraderTcgdexResolveService {
     return {
       tcgdex_card_id: `${set.tcgdex_set_id}-${localId}`,
       tcgdex_set_id: set.tcgdex_set_id,
-      locale: set.locale,
+      locale,
       error: null,
     };
   }
@@ -156,14 +178,9 @@ export class CardTraderTcgdexResolveService {
       expansionName?: string;
       expansionId?: number;
       collectorNumber?: string;
+      language?: string;
     }>,
   ): TcgdexResolveResult[] {
-    return lines.map((line) =>
-      this.resolveTcgdexCardId({
-        expansionName: line.expansionName,
-        expansionId: line.expansionId,
-        collectorNumber: line.collectorNumber,
-      }),
-    );
+    return lines.map((line) => this.resolveTcgdexCardId(line));
   }
 }

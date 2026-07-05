@@ -66,6 +66,11 @@ export class CardtraderTransitLotRepository {
     return (result.deletedCount ?? 0) > 0;
   }
 
+  async deleteAll(): Promise<number> {
+    const result = await this.lotModel.deleteMany({}).exec();
+    return result.deletedCount ?? 0;
+  }
+
   async updateById(
     id: string,
     data: Partial<{

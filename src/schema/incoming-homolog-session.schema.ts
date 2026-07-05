@@ -71,6 +71,19 @@ export class IncomingHomologUnit {
   @Prop({ type: String, default: null })
   batch_item_card_name: string | null;
 
+  /** Línea en cardtrader_transit_lines (flujo CT). */
+  @Prop({ type: String, default: null })
+  transit_line_id: string | null;
+
+  @Prop({ type: String, default: null })
+  transit_lot_id: string | null;
+
+  @Prop({ type: String, default: null })
+  transit_line_card_id: string | null;
+
+  @Prop({ type: String, default: null })
+  transit_line_card_name: string | null;
+
   @Prop({ type: Number, default: null })
   unit_cost_cop: number | null;
 

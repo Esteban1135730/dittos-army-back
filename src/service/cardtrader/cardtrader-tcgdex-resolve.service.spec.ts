@@ -39,18 +39,71 @@ describe('CardTraderTcgdexResolveService', () => {
       expansionId: 4053,
       collectorNumber: '071',
     });
-    expect(result.tcgdex_card_id).toBe('sv08.5-71');
+    expect(result.tcgdex_card_id).toBe('sv08.5-071');
     expect(result.error).toBeNull();
   });
 
-  it('resuelve Inferno X por expansion_id', () => {
+  it('resuelve Inferno X por expansion_id con localId de 3 dígitos', () => {
     const result = service.resolveTcgdexCardId({
       expansionId: 4313,
       collectorNumber: '083',
+      language: 'jp',
     });
-    expect(result.tcgdex_card_id).toBe('M2-83');
+    expect(result.tcgdex_card_id).toBe('M2-083');
+    expect(result.tcgdex_set_id).toBe('M2');
+    expect(result.locale).toBe('ja');
     expect(result.error).toBeNull();
   });
+
+  it('resuelve SV Black Star Promos EN → svp (no Svpromo JA)', () => {
+    const byName = service.resolveTcgdexCardId({
+      expansionName: 'SV Black Star Promos',
+      collectorNumber: '145',
+      language: 'en',
+    });
+    expect(byName.tcgdex_set_id).toBe('svp');
+    expect(byName.tcgdex_card_id).toBe('svp-145');
+
+    const byId = service.resolveTcgdexCardId({
+      expansionId: 3221,
+      collectorNumber: '012',
+      language: 'en',
+    });
+    expect(byId.tcgdex_set_id).toBe('svp');
+    expect(byId.tcgdex_card_id).toBe('svp-12');
+  });
+
+  it('resuelve CSV5 zh-cn → CSV5C-134', () => {
+    const result = service.resolveTcgdexCardId({
+      expansionName: 'CSV5: Dark Crystal Blaze',
+      collectorNumber: '134',
+      language: 'zh',
+    });
+    expect(result.tcgdex_set_id).toBe('CSV5C');
+    expect(result.tcgdex_card_id).toBe('CSV5C-134');
+  });
+
+  it('resuelve Gem Pack CBB1C con collector 03-06/09', () => {
+    const result = service.resolveTcgdexCardId({
+      expansionName: 'Gem Pack Vol.1',
+      collectorNumber: '03-06/09',
+      language: 'zh',
+    });
+    expect(result.tcgdex_set_id).toBe('CBB1C');
+    expect(result.tcgdex_card_id).toBe('CBB1C-03-06_09');
+  });
+
+  it('resuelve sets japoneses por alias CardTrader en inglés', () => {
+    const result = service.resolveTcgdexCardId({
+      expansionName: 'MEGA Dream ex',
+      collectorNumber: '211',
+      language: 'jp',
+    });
+    expect(result.tcgdex_set_id).toBe('M2a');
+    expect(result.tcgdex_card_id).toBe('M2a-211');
+    expect(result.error).toBeNull();
+  });
+
   it('devuelve error si expansión no está homologada', () => {
     const result = service.resolveTcgdexCardId({
       expansionName: 'Expansion Inventada XYZ',
@@ -59,6 +112,34 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(result.tcgdex_card_id).toBeNull();
     expect(result.error).toContain('homologación');
   });
+
+  it('expone cobertura amplia del índice de homologación', () => {
+    const stats = service.getIndexStats();
+    expect(stats.expansionNames).toBeGreaterThan(500);
+    expect(stats.localeAliases).toBeGreaterThan(500);
+    expect(stats.expansionIds).toBeGreaterThan(200);
+  });
+
+  it('resuelve set por nombre japonés del catálogo', () => {
+    const result = service.resolveTcgdexCardId({
+      expansionName: 'メガロキャノン',
+      collectorNumber: '001',
+      language: 'jp',
+    });
+    expect(result.tcgdex_set_id).toBe('BW9');
+    expect(result.tcgdex_card_id).toBe('BW9-001');
+  });
+
+  it('resuelve Surging Sparks JP vía set_locale_map', () => {
+    const result = service.resolveTcgdexCardId({
+      expansionName: 'Surging Sparks',
+      collectorNumber: '108',
+      language: 'jp',
+    });
+    expect(result.tcgdex_set_id).toBe('SV8');
+    expect(result.tcgdex_card_id).toBe('SV8-108');
+  });
+
   it('resolveTcgdexCardIdBatch resuelve múltiples líneas', () => {
     const results = service.resolveTcgdexCardIdBatch([
       { expansionName: 'Base Set', collectorNumber: '004' },

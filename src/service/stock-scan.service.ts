@@ -18,7 +18,6 @@ import {
 import {
   languageLabel,
   operationalRarezaLabel,
-  parseTcgdexSetName,
 } from 'src/utils/stock-scan-labels';
 import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
 
@@ -95,9 +94,9 @@ export class StockScanService {
     const cardIds = [
       ...new Set(eligible.map((s) => (s as unknown as StockLineDoc).card_id)),
     ];
-    const [pvps, expansionByCardId] = await Promise.all([
+    const [pvps, expansionByStockId] = await Promise.all([
       this.pvpRepository.findByCardIds(cardIds),
-      this.resolveExpansionByCardId(cardIds),
+      this.resolveExpansionByStockLines(eligible),
     ]);
     const pvpByCard = groupPvpsByCardId(pvps);
 
@@ -116,7 +115,7 @@ export class StockScanService {
         stock_id: stockId,
         qr_value: encodeStockQrPayload(stockId),
         card_name: doc.card_name ?? '',
-        expansion: expansionByCardId.get(doc.card_id) ?? '',
+        expansion: expansionByStockId.get(stockId) ?? '',
         rareza: operationalRarezaLabel(opRareza),
         language: languageLabel(doc.language ?? doc.languaje),
         price_cop: priceCop,
@@ -146,33 +145,56 @@ export class StockScanService {
       throw new NotFoundException('Stock no encontrado');
     }
 
-    const [pvps, expansionByCardId] = await Promise.all([
+    const [pvps, expansion] = await Promise.all([
       this.pvpRepository.findByCardIds([stock.card_id]),
-      this.resolveExpansionByCardId([stock.card_id]),
+      this.tcgDexService.resolveEnglishExpansionName(
+        stock.card_id,
+        stock.language ?? stock.languaje,
+      ),
     ]);
     const grouped = groupPvpsByCardId(pvps);
     return this.buildScanView(
       stock,
       grouped.get(stock.card_id) ?? [],
-      expansionByCardId.get(stock.card_id) ?? '',
+      expansion,
     );
   }
 
-  private async resolveExpansionByCardId(
-    cardIds: string[],
+  private async resolveExpansionByStockLines(
+    stockItems: unknown[],
   ): Promise<Map<string, string>> {
-    const unique = [...new Set(cardIds.filter(Boolean))];
-    const entries = await Promise.all(
-      unique.map(async (cardId) => {
+    const docs = stockItems.map((s) => s as StockLineDoc);
+    const uniqueKeys = new Map<string, { cardId: string; language: string }>();
+    for (const doc of docs) {
+      const language = doc.language ?? doc.languaje ?? '';
+      const key = `${doc.card_id}:${language}`;
+      if (!uniqueKeys.has(key)) {
+        uniqueKeys.set(key, { cardId: doc.card_id, language });
+      }
+    }
+
+    const expansionByKey = new Map<string, string>();
+    await Promise.all(
+      [...uniqueKeys.entries()].map(async ([key, { cardId, language }]) => {
         try {
-          const card = await this.tcgDexService.getCard(cardId);
-          return [cardId, parseTcgdexSetName(card?.set)] as const;
+          const expansion = await this.tcgDexService.resolveEnglishExpansionName(
+            cardId,
+            language,
+          );
+          expansionByKey.set(key, expansion);
         } catch {
-          return [cardId, ''] as const;
+          expansionByKey.set(key, '');
         }
       }),
     );
-    return new Map(entries);
+
+    const result = new Map<string, string>();
+    for (const doc of docs) {
+      const language = doc.language ?? doc.languaje ?? '';
+      const key = `${doc.card_id}:${language}`;
+      result.set(String(doc._id), expansionByKey.get(key) ?? '');
+    }
+    return result;
   }
 
   private resolvePriceCop(

@@ -1,0 +1,8 @@
+---
+description: Agent skills available in dittos-army-back workspace
+alwaysApply: true
+---
+
+# Skills locales (`dittos-army-back`)
+
+Skills en `.cursor/skills/`: **backend-spec-driven**, **fullstack-spec-driven**, **module-authoring**. Specs compartidas: `docs/backend/features/` (raíz del monorepo).

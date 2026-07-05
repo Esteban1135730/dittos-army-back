@@ -3,8 +3,8 @@ import { promises as fs } from 'fs';
 import * as path from 'path';
 import { StockRepository } from '../repository/stock.repository';
 import { PvpRepository } from '../repository/pvp.repository';
-import { IncomingBatchRepository } from '../repository/incoming-batch.repository';
-import { IncomingBatchItemRepository } from '../repository/incoming-batch-item.repository';
+import { CardtraderTransitLotRepository } from '../repository/cardtrader-transit-lot.repository';
+import { CardtraderTransitLineRepository } from '../repository/cardtrader-transit-line.repository';
 import { TCGDexService } from './tcgdex/tcgdex.service';
 import { LocalCardImagesService } from './tcgdex/local-card-images.service';
 import {
@@ -13,7 +13,6 @@ import {
   resolvePvpForLine,
 } from '../utils/pvp-resolve';
 import {
-  storeCardMetaFromDto,
   type StoreCardExportMeta,
 } from '../utils/store-card-meta';
 import {
@@ -42,6 +41,14 @@ export type PublishStoreCatalogResult = {
 
 const EXCLUDED_STATES = new Set(['vendida', 'propiedad', 'reserva', 'perdida']);
 
+function storeMetaCacheKey(cardId: string, lang: string): string {
+  return `${cardId}::${lang}`;
+}
+
+function normalizeExportLanguage(raw: unknown): string {
+  return (raw || 'en').toString().trim().toLowerCase() || 'en';
+}
+
 function inventoryLineKey(
   cardId: string,
   lang: string,
@@ -69,7 +76,7 @@ export type StoreInventoryItem = {
   card_number?: string;
 };
 
-/** Cartas en compras abiertas con unidades pendientes (compras en camino), para la tienda pública */
+/** Cartas en tránsito CardTrader (lotes abiertos) para la tienda pública */
 export type StoreUpcomingItem = {
   id: string;
   card_id: string;
@@ -87,8 +94,8 @@ export class StoreInventoryService {
   constructor(
     private readonly stockRepository: StockRepository,
     private readonly pvpRepository: PvpRepository,
-    private readonly incomingBatchRepository: IncomingBatchRepository,
-    private readonly incomingBatchItemRepository: IncomingBatchItemRepository,
+    private readonly transitLotRepository: CardtraderTransitLotRepository,
+    private readonly transitLineRepository: CardtraderTransitLineRepository,
     private readonly tcgDexService: TCGDexService,
     private readonly localCardImagesService: LocalCardImagesService,
   ) {}
@@ -161,21 +168,47 @@ export class StoreInventoryService {
         console.warn('StoreInventory: error loading PVP', e);
       }
 
+      const metaLoads = new Map<
+        string,
+        { cardId: string; lang: string; sourceName?: string | null }
+      >();
+      for (const stock of filtered) {
+        const lang = normalizeExportLanguage(
+          stock.language || stock.languaje || 'en',
+        );
+        const key = storeMetaCacheKey(stock.card_id, lang);
+        if (!metaLoads.has(key)) {
+          metaLoads.set(key, {
+            cardId: stock.card_id,
+            lang,
+            sourceName: stock.card_name,
+          });
+        }
+      }
+
       await Promise.all(
-        cardIds.map(async (cardId) => {
+        [...metaLoads.entries()].map(async ([key, load]) => {
           try {
-            const card = await this.tcgDexService.getCard(cardId);
-            if (card) {
-              cardMap.set(cardId, storeCardMetaFromDto(card));
-            }
+            const meta = await this.tcgDexService.resolveStoreExportMeta(
+              load.cardId,
+              load.lang,
+              load.sourceName,
+            );
+            if (meta) cardMap.set(key, meta);
           } catch (e) {
-            console.warn(`StoreInventory: error loading card ${cardId}`, e);
+            console.warn(
+              `StoreInventory: error loading card ${load.cardId} (${load.lang})`,
+              e,
+            );
           }
         }),
       );
 
       const enriched = filtered.map((stock) => {
-        const card = cardMap.get(stock.card_id);
+        const lang = normalizeExportLanguage(
+          stock.language || stock.languaje || 'en',
+        );
+        const card = cardMap.get(storeMetaCacheKey(stock.card_id, lang));
         const list = pvpByCard.get(stock.card_id) ?? [];
         const rzLine = effectiveOperationalRarezaFromStock(stock);
         const pvpData = resolvePvpForLine(list, rzLine);
@@ -185,11 +218,7 @@ export class StoreInventoryService {
           image_url: stock.image_url || card?.image || '',
           pvp: pvpData?.pvp,
           pvp_currency: pvpData?.pvp_currency,
-          language:
-            (stock.language || stock.languaje || 'en')
-              .toString()
-              .trim()
-              .toLowerCase() || 'en',
+          language: lang,
         };
       });
 
@@ -220,15 +249,14 @@ export class StoreInventoryService {
           pvpData != null
             ? this.pvpToCop(pvpData.pvp, pvpData.pvp_currency)
             : 0;
-        const card = cardMap.get(cardId);
-        const name = card?.name || item.card_name || '';
+        const card = cardMap.get(storeMetaCacheKey(cardId, lang));
+        const name = card?.name || item.card_name || cardId;
         const image = item.image_url || card?.image || '';
 
         if (byLine.has(key)) {
           const existing = byLine.get(key)!;
           existing.quantity += 1;
         } else {
-          const meta = cardMap.get(cardId);
           byLine.set(key, {
             card_id: cardId,
             name,
@@ -237,8 +265,8 @@ export class StoreInventoryService {
             image,
             quantity: 1,
             rareza: rzEff,
-            ...(meta?.expansion ? { expansion: meta.expansion } : {}),
-            ...(meta?.card_number ? { card_number: meta.card_number } : {}),
+            ...(card?.expansion ? { expansion: card.expansion } : {}),
+            ...(card?.card_number ? { card_number: card.card_number } : {}),
           });
         }
       }
@@ -293,29 +321,56 @@ export class StoreInventoryService {
       );
 
     try {
-      const openBatches = await this.incomingBatchRepository.findOpenBatches();
-      const openIds = new Set(openBatches.map((b) => b._id.toString()));
-      if (openIds.size === 0) {
+      const transitLines =
+        await this.transitLineRepository.findByRemainingQuantityGreaterThanZero();
+      const openLotIds = new Set(
+        (await this.transitLotRepository.findOpenLots()).map((l) =>
+          l._id.toString(),
+        ),
+      );
+      const openTransitLines = transitLines
+        .filter((line) => openLotIds.has(String(line.lot_id)))
+        .map((line) => ({
+          card_id: line.card_id,
+          card_name: line.card_name,
+          image_url: line.image_url,
+          language: line.language,
+          rareza: line.rareza,
+          remaining_quantity: line.remaining_quantity ?? 0,
+        }));
+
+      if (openTransitLines.length === 0) {
         await this.writeUpcomingJson(outputPath, []);
         return { success: true, path: outputPath, count: 0 };
       }
 
-      const pending =
-        await this.incomingBatchItemRepository.findByRemainingQuantityGreaterThanZero();
-      const filtered = pending.filter(
-        (it) =>
-          openIds.has(String(it.batch_id)) && (it.remaining_quantity ?? 0) > 0,
-      );
-
-      const cardIds = [...new Set(filtered.map((it) => it.card_id))];
       const cardMap = new Map<string, StoreCardExportMeta>();
+
+      const metaLoads = new Map<
+        string,
+        { cardId: string; lang: string; sourceName?: string | null }
+      >();
+      for (const line of openTransitLines) {
+        const lang = normalizeExportLanguage(line.language);
+        const key = storeMetaCacheKey(line.card_id, lang);
+        if (!metaLoads.has(key)) {
+          metaLoads.set(key, {
+            cardId: line.card_id,
+            lang,
+            sourceName: line.card_name,
+          });
+        }
+      }
+
       await Promise.all(
-        cardIds.map(async (cardId) => {
+        [...metaLoads.entries()].map(async ([key, load]) => {
           try {
-            const card = await this.tcgDexService.getCard(cardId);
-            if (card) {
-              cardMap.set(cardId, storeCardMetaFromDto(card));
-            }
+            const meta = await this.tcgDexService.resolveStoreExportMeta(
+              load.cardId,
+              load.lang,
+              load.sourceName,
+            );
+            if (meta) cardMap.set(key, meta);
           } catch {
             // ignorar
           }
@@ -335,16 +390,11 @@ export class StoreInventoryService {
       };
       const byKey = new Map<string, Agg>();
 
-      for (const it of filtered) {
-        const meta = cardMap.get(it.card_id);
-        const name =
-          (it.card_name && String(it.card_name).trim()) ||
-          meta?.name ||
-          it.card_id;
-        const image =
-          (it.image_url && String(it.image_url).trim()) || meta?.image || '';
-        const lang =
-          (it.language || 'en').toString().trim().toLowerCase() || 'en';
+      for (const it of openTransitLines) {
+        const lang = normalizeExportLanguage(it.language);
+        const meta = cardMap.get(storeMetaCacheKey(it.card_id, lang));
+        const name = meta?.name || it.card_id;
+        const image = (it.image_url && String(it.image_url).trim()) || meta?.image || '';
         const rz =
           it.rareza == null || String(it.rareza).trim() === ''
             ? null
@@ -365,7 +415,6 @@ export class StoreInventoryService {
           }
           if (!existing.image && image) existing.image = image;
         } else {
-          const meta = cardMap.get(it.card_id);
           byKey.set(key, {
             id: key,
             card_id: it.card_id,

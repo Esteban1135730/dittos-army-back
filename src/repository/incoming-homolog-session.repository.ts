@@ -113,25 +113,22 @@ export class IncomingHomologSessionRepository {
 
   async markConverted(
     id: string,
-    shipRoundId: string,
+    shipRoundId: string | null,
     shippingTotalCop: number,
   ): Promise<IncomingHomologSessionDocument | null> {
     const now = new Date();
-    return this.model
-      .findByIdAndUpdate(
-        id,
-        {
-          $set: {
-            status: 'converted',
-            ship_round_id: shipRoundId,
-            shipping_total_cop: shippingTotalCop,
-            converted_at: now,
-            updated_at: now,
-          },
-        },
-        { new: true },
-      )
-      .exec();
+    const $set: Record<string, unknown> = {
+      status: 'converted',
+      shipping_total_cop: shippingTotalCop,
+      converted_at: now,
+      updated_at: now,
+    };
+    if (shipRoundId?.trim()) {
+      $set.ship_round_id = shipRoundId.trim();
+    } else {
+      $set.ship_round_id = null;
+    }
+    return this.model.findByIdAndUpdate(id, { $set }, { new: true }).exec();
   }
 
   async cancel(id: string): Promise<boolean> {

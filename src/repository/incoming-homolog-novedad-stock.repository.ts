@@ -182,4 +182,9 @@ export class IncomingHomologNovedadStockRepository {
       )
       .exec();
   }
+
+  async deleteAll(): Promise<number> {
+    const result = await this.model.deleteMany({});
+    return result.deletedCount ?? 0;
+  }
 }

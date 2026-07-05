@@ -98,11 +98,13 @@ export function buildNovedadTcgdexResolveInput(args: {
   expansionName?: string;
   collectorNumber?: string | null;
   expansionId?: number;
+  language?: string | null;
   blueprint?: CtBlueprintLike | null;
 }): {
   expansionName?: string;
   expansionId?: number;
   collectorNumber?: string;
+  language?: string;
 } {
   const blueprint = args.blueprint;
   const collectorNumber =
@@ -120,9 +122,15 @@ export function buildNovedadTcgdexResolveInput(args: {
     readExpansionNameFromBlueprint(blueprint) ||
     undefined;
 
+  const language =
+    args.language != null && String(args.language).trim()
+      ? String(args.language).trim()
+      : undefined;
+
   return {
     expansionName,
     expansionId,
     collectorNumber: collectorNumber ?? undefined,
+    language,
   };
 }

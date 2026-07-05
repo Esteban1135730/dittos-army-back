@@ -1,10 +1,14 @@
 export type VerifyHomologUnitDto = {
-  batch_item_id: string;
+  /** Línea en tránsito CardTrader (flujo actual). */
+  transit_line_id: string;
   match_score?: number;
+  /** @deprecated Solo sesiones legacy. */
+  batch_item_id?: string;
 };
 
 export type NovedadHomologUnitDto = {
   notes: string;
+  transit_line_id?: string;
   batch_item_id?: string;
 };
 
@@ -12,7 +16,9 @@ export type CreateHomologTandaDto = {
   shipping_total_cop: number;
   cards: Array<{
     sent_unit_key: string;
-    batch_item_id: string;
+    transit_line_id?: string;
+    /** @deprecated Solo sesiones legacy. */
+    batch_item_id?: string;
     purchase_price_eur: number;
     unit_cost_cop: number;
     is_novedad?: boolean;

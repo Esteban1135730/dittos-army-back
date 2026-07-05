@@ -11,9 +11,12 @@ const otherId = '507f1f77bcf86cd799439012';
 
 describe('StockScanService', () => {
   const tcgDexMock = {
-    getCard: jest.fn(async (cardId: string) => ({
-      set: cardId === 'swsh3-136' ? "swsh3(Champion's Path)" : '',
-    })),
+    resolveEnglishExpansionName: jest.fn(
+      async (cardId: string, _language?: string) => {
+        if (cardId === 'swsh3-136') return "Champion's Path";
+        return '';
+      },
+    ),
   };
 
   it('exporta solo filas vendibles con PVP y metadatos', async () => {

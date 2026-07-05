@@ -191,6 +191,54 @@ export class CardtraderTransitLotService {
     return this.lotRepository.findOpenPackageKeys();
   }
 
+  /** Líneas abiertas aplanadas para catálogo (reservas, upcoming.json). */
+  async listOpenCatalogLines(): Promise<
+    Array<{
+      transit_line_id: string;
+      transit_lot_id: string;
+      card_id: string;
+      card_name: string;
+      image_url: string;
+      language: string;
+      rareza: string | null;
+      remaining_quantity: number;
+      unit_cost_cop: number;
+      purchase_date: Date;
+      created_at: Date;
+    }>
+  > {
+    const lots = await this.lotRepository.findOpenLots();
+    if (lots.length === 0) return [];
+
+    const rows = await Promise.all(
+      lots.map(async (lot) => {
+        const lotId = lot._id.toString();
+        const lines = await this.lineRepository.findByLotId(lotId);
+        return lines
+          .filter((line) => (line.remaining_quantity ?? 0) > 0)
+          .map((line) => ({
+            transit_line_id: line._id.toString(),
+            transit_lot_id: lotId,
+            card_id: line.card_id,
+            card_name: line.card_name ?? line.card_id,
+            image_url: line.image_url ?? '',
+            language: line.language,
+            rareza: line.rareza ?? null,
+            remaining_quantity: line.remaining_quantity,
+            unit_cost_cop: line.unit_cost_cop,
+            purchase_date: lot.purchase_date,
+            created_at: line.created_at,
+          }));
+      }),
+    );
+
+    return rows.flat().sort((a, b) => {
+      const pd = a.purchase_date.getTime() - b.purchase_date.getTime();
+      if (pd !== 0) return pd;
+      return a.created_at.getTime() - b.created_at.getTime();
+    });
+  }
+
   async createLot(body: CreateCardtraderTransitLotDto): Promise<{ lot_id: string }> {
     const items = body?.items ?? [];
     if (!Array.isArray(items) || items.length === 0) {
@@ -413,5 +461,14 @@ export class CardtraderTransitLotService {
     await this.lineRepository.deleteByLotId(lotId);
     const deleted = await this.lotRepository.deleteById(lotId);
     return { success: deleted };
+  }
+
+  async clearAllLots(): Promise<{
+    deleted_lots: number;
+    deleted_lines: number;
+  }> {
+    const deletedLines = await this.lineRepository.deleteAll();
+    const deletedLots = await this.lotRepository.deleteAll();
+    return { deleted_lots: deletedLots, deleted_lines: deletedLines };
   }
 }

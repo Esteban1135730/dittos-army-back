@@ -220,6 +220,7 @@ export class CardTraderController {
     @Query('expansion') expansion?: string,
     @Query('expansion_id') expansionId?: string,
     @Query('collector_number') collectorNumber?: string,
+    @Query('language') language?: string,
   ): Promise<unknown> {
     const expName = expansion?.trim() || undefined;
     const expId =
@@ -236,6 +237,7 @@ export class CardTraderController {
       expansionName: expName,
       expansionId: expId,
       collectorNumber: collectorNumber?.trim() || undefined,
+      language: language?.trim() || undefined,
     });
   }
 
@@ -247,6 +249,7 @@ export class CardTraderController {
         expansion?: string;
         expansion_id?: number;
         collector_number?: string;
+        language?: string;
       }>;
     },
   ): Promise<{ results: unknown[] }> {
@@ -273,6 +276,7 @@ export class CardTraderController {
         expansionName: expName,
         expansionId: expId,
         collectorNumber: line?.collector_number?.trim() || undefined,
+        language: line?.language?.trim() || undefined,
       };
     });
 
