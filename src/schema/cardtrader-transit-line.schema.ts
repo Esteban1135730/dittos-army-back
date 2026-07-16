@@ -43,6 +43,10 @@ export class CardtraderTransitLine {
   @Prop()
   ct0_item_id?: number;
 
+  /** Product CardTrader del que salió el CT0 box item (vínculo con order_items.product_id). */
+  @Prop()
+  product_id?: number;
+
   @Prop()
   blueprint_id?: number;
 

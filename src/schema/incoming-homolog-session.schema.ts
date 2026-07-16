@@ -41,6 +41,10 @@ export class IncomingHomologUnit {
   @Prop({ default: 0 })
   blueprint_id: number;
 
+  /** Product CardTrader del order_item (match 1:1 con transit_lines.product_id). */
+  @Prop({ type: Number, default: null })
+  product_id: number | null;
+
   @Prop({ type: Number, default: null })
   unit_price_eur: number | null;
 

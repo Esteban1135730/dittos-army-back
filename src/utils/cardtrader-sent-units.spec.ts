@@ -25,6 +25,7 @@ describe('cardtrader-sent-units', () => {
             name: 'Pikachu',
             quantity: 2,
             expansion: 'Base',
+            product_id: 555001,
             blueprint_id: 123,
             buyer_price: { cents: 150, currency: 'EUR' },
             properties: { pokemon_language: 'EN' },
@@ -38,6 +39,7 @@ describe('cardtrader-sent-units', () => {
     expect(units[1].unit_key).toBe('order-10-99#1');
     expect(units[0].unit_price_eur).toBe(1.5);
     expect(units[0].language).toBe('EN');
+    expect(units[0].product_id).toBe(555001);
   });
 
   it('infiere rareza pokeball desde expansion', () => {

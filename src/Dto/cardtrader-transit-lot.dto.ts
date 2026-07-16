@@ -7,6 +7,7 @@ export type CardtraderTransitLineInput = {
   card_name?: string;
   image_url?: string;
   ct0_item_id?: number;
+  product_id?: number;
   blueprint_id?: number;
   expansion?: string;
   collector_number?: string;

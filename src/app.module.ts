@@ -119,6 +119,18 @@ import {
 } from './schema/cardtrader-transit-line.schema';
 import { CardtraderTransitLotRepository } from './repository/cardtrader-transit-lot.repository';
 import { CardtraderTransitLineRepository } from './repository/cardtrader-transit-line.repository';
+import { CardtraderReceiptController } from './controller/cardtrader-receipt.controller';
+import { CardtraderReceiptService } from './service/cardtrader/cardtrader-receipt.service';
+import { CardtraderReceiptSessionRepository } from './repository/cardtrader-receipt-session.repository';
+import { CardtraderReceiptLineRepository } from './repository/cardtrader-receipt-line.repository';
+import {
+  CardtraderReceiptSession,
+  CardtraderReceiptSessionSchema,
+} from './schema/cardtrader-receipt-session.schema';
+import {
+  CardtraderReceiptLine,
+  CardtraderReceiptLineSchema,
+} from './schema/cardtrader-receipt-line.schema';
 
 @Module({
   controllers: [
@@ -136,6 +148,7 @@ import { CardtraderTransitLineRepository } from './repository/cardtrader-transit
     DashboardController,
     StockReviewController,
     IncomingHomologController,
+    CardtraderReceiptController,
   ],
   providers: [
     SetNameHomologsService,
@@ -174,6 +187,9 @@ import { CardtraderTransitLineRepository } from './repository/cardtrader-transit
     IncomingHomologNovedadStockRepository,
     CardtraderTransitLotRepository,
     CardtraderTransitLineRepository,
+    CardtraderReceiptService,
+    CardtraderReceiptSessionRepository,
+    CardtraderReceiptLineRepository,
   ],
   imports: [
     MongooseModule.forRoot(
@@ -207,6 +223,14 @@ import { CardtraderTransitLineRepository } from './repository/cardtrader-transit
       },
       { name: CardtraderTransitLot.name, schema: CardtraderTransitLotSchema },
       { name: CardtraderTransitLine.name, schema: CardtraderTransitLineSchema },
+      {
+        name: CardtraderReceiptSession.name,
+        schema: CardtraderReceiptSessionSchema,
+      },
+      {
+        name: CardtraderReceiptLine.name,
+        schema: CardtraderReceiptLineSchema,
+      },
     ]),
   ],
 })

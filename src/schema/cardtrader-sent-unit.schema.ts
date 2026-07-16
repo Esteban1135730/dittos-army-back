@@ -35,6 +35,9 @@ export class CardtraderSentUnit {
   @Prop({ default: 0 })
   blueprint_id: number;
 
+  @Prop({ type: Number, default: null })
+  product_id: number | null;
+
   @Prop({ type: String, default: null })
   collector_number: string | null;
 

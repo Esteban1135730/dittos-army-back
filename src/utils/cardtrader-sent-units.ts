@@ -8,6 +8,7 @@ export type CtOrderItem = {
   name: string;
   quantity?: number;
   expansion?: string;
+  product_id?: number;
   blueprint_id?: number;
   buyer_price?: CtOrderMoney;
   seller_price?: CtOrderMoney;
@@ -34,6 +35,7 @@ export type ParsedSentUnit = {
   name: string;
   expansion: string;
   language: string;
+  product_id: number | null;
   blueprint_id: number;
   collector_number: string | null;
   rareza: string | null;
@@ -166,6 +168,10 @@ export function expandSentUnitsFromOrders(orders: CtOrder[]): ParsedSentUnit[] {
           name: item.name,
           expansion: item.expansion ?? '',
           language: readCtLanguage(item.properties),
+          product_id:
+            typeof item.product_id === 'number' && item.product_id > 0
+              ? item.product_id
+              : null,
           blueprint_id: item.blueprint_id ?? 0,
           collector_number: readCollectorNumber(item.properties),
           rareza: inferSentUnitRareza(item.expansion ?? '', item.properties),

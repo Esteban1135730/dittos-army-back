@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Patch,
   Post,
@@ -40,6 +41,18 @@ export class IncomingHomologController {
   @Post('sessions/:sessionId/sync')
   async syncSent(@Param('sessionId') sessionId: string) {
     return this.homologService.syncCardtraderSent(sessionId);
+  }
+
+  @Post('sessions/:sessionId/auto-verify-by-blueprint')
+  @HttpCode(200)
+  async autoVerifyByBlueprint(@Param('sessionId') sessionId: string) {
+    return this.homologService.autoVerifyExact(sessionId);
+  }
+
+  @Post('sessions/:sessionId/auto-verify-by-product')
+  @HttpCode(200)
+  async autoVerifyByProduct(@Param('sessionId') sessionId: string) {
+    return this.homologService.autoVerifyExact(sessionId);
   }
 
   @Patch('sessions/:sessionId/units/:sentUnitKey/verify')

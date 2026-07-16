@@ -149,6 +149,7 @@ export class IncomingHomologService {
         name: u.name,
         expansion: u.expansion,
         language: u.language,
+        product_id: u.product_id,
         blueprint_id: u.blueprint_id,
         collector_number: u.collector_number,
         rareza: u.rareza,
@@ -181,6 +182,7 @@ export class IncomingHomologService {
           name: p.name,
           expansion: p.expansion,
           language: p.language,
+          product_id: p.product_id,
           blueprint_id: p.blueprint_id,
           unit_price_eur: p.unit_price_eur,
           unit_price_fx: unitPriceFx,
@@ -198,6 +200,7 @@ export class IncomingHomologService {
         name: p.name,
         expansion: p.expansion,
         language: p.language,
+        product_id: p.product_id,
         blueprint_id: p.blueprint_id,
         unit_price_eur: p.unit_price_eur,
         unit_price_fx: unitPriceFx,
@@ -243,6 +246,183 @@ export class IncomingHomologService {
       batches_summary: await this.loadBatchesSummary(),
       synced_count: parsed.length,
     };
+  }
+
+  /**
+   * Auto-verifica sent units contra tránsito:
+   * 1) product_id (track exacto CardTrader)
+   * 2) blueprint_id (fallback)
+   */
+  async autoVerifyByBlueprintId(sessionId: string) {
+    return this.autoVerifyExact(sessionId);
+  }
+
+  async autoVerifyByProductId(sessionId: string) {
+    return this.autoVerifyExact(sessionId);
+  }
+
+  async autoVerifyExact(sessionId: string) {
+    const session = await this.requireSession(sessionId);
+    this.assertSessionEditable(session);
+
+    const productIdsBackfilled = await this.enrichTransitProductIdsFromCt0();
+
+    let byProductId = 0;
+    let byBlueprintId = 0;
+
+    // Pass 1: product_id
+    {
+      const transitLines =
+        await this.transitLineRepository.findByRemainingQuantityGreaterThanZero();
+      const transitByProductId = new Map<number, typeof transitLines>();
+      for (const tl of transitLines) {
+        const pid = tl.product_id;
+        if (!pid || pid <= 0) continue;
+        const arr = transitByProductId.get(pid) ?? [];
+        arr.push(tl);
+        transitByProductId.set(pid, arr);
+      }
+
+      const current = await this.requireSession(sessionId);
+      const pending = (current.units ?? []).filter(
+        (u) =>
+          u.status === 'pending' &&
+          typeof u.product_id === 'number' &&
+          u.product_id > 0,
+      );
+
+      for (const unit of pending) {
+        const candidates = transitByProductId.get(unit.product_id!) ?? [];
+        if (!candidates.length) continue;
+        for (const candidate of candidates) {
+          try {
+            await this.verifyUnit(
+              sessionId,
+              unit.sent_unit_key,
+              candidate._id.toString(),
+              0,
+            );
+            byProductId++;
+            // Consume one slot from local map for subsequent units
+            const rem = (candidate.remaining_quantity ?? 1) - 1;
+            candidate.remaining_quantity = rem;
+            if (rem <= 0) {
+              const idx = candidates.indexOf(candidate);
+              if (idx >= 0) candidates.splice(idx, 1);
+            }
+            break;
+          } catch {
+            /* try next candidate */
+          }
+        }
+      }
+    }
+
+    // Pass 2: blueprint_id for remaining pending
+    {
+      const transitLines =
+        await this.transitLineRepository.findByRemainingQuantityGreaterThanZero();
+      const transitByBlueprintId = new Map<number, typeof transitLines>();
+      for (const tl of transitLines) {
+        const bpId = tl.blueprint_id;
+        if (!bpId || bpId <= 0) continue;
+        const arr = transitByBlueprintId.get(bpId) ?? [];
+        arr.push(tl);
+        transitByBlueprintId.set(bpId, arr);
+      }
+
+      const current = await this.requireSession(sessionId);
+      const pending = (current.units ?? []).filter(
+        (u) => u.status === 'pending' && u.blueprint_id && u.blueprint_id > 0,
+      );
+
+      for (const unit of pending) {
+        const candidates = transitByBlueprintId.get(unit.blueprint_id) ?? [];
+        if (!candidates.length) continue;
+        for (const candidate of candidates) {
+          try {
+            await this.verifyUnit(
+              sessionId,
+              unit.sent_unit_key,
+              candidate._id.toString(),
+              0,
+            );
+            byBlueprintId++;
+            break;
+          } catch {
+            /* try next */
+          }
+        }
+      }
+    }
+
+    const finalSession = await this.requireSession(sessionId);
+    const enriched = await this.enrichSessionUnits(finalSession);
+    const panelItems = await this.loadPanelItems({ units: enriched });
+    return {
+      session: this.serializeSession({
+        ...(typeof finalSession.toObject === 'function'
+          ? finalSession.toObject()
+          : finalSession),
+        units: enriched,
+      }),
+      panel_items: panelItems,
+      batches_summary: await this.loadBatchesSummary(),
+      auto_verified: byProductId + byBlueprintId,
+      by_product_id: byProductId,
+      by_blueprint_id: byBlueprintId,
+      product_ids_backfilled: productIdsBackfilled,
+    };
+  }
+
+  /** Completa product_id en líneas de tránsito antiguas vía CT0 API (ct0_item_id). */
+  private async enrichTransitProductIdsFromCt0(): Promise<number> {
+    const missing =
+      await this.transitLineRepository.findMissingProductIdWithCt0ItemId();
+    if (!missing.length) return 0;
+
+    let raw: unknown;
+    try {
+      raw = await this.cardTraderService.getCt0BoxItems();
+    } catch {
+      return 0;
+    }
+
+    const items = Array.isArray(raw)
+      ? raw
+      : raw && typeof raw === 'object' && Array.isArray((raw as { data?: unknown }).data)
+        ? ((raw as { data: unknown[] }).data)
+        : [];
+
+    const productByCt0Id = new Map<number, number>();
+    for (const item of items) {
+      if (!item || typeof item !== 'object') continue;
+      const row = item as { id?: unknown; product_id?: unknown };
+      const ct0Id = Number(row.id);
+      const productId = Number(row.product_id);
+      if (
+        Number.isInteger(ct0Id) &&
+        ct0Id > 0 &&
+        Number.isInteger(productId) &&
+        productId > 0
+      ) {
+        productByCt0Id.set(ct0Id, productId);
+      }
+    }
+
+    let updated = 0;
+    for (const line of missing) {
+      const ct0Id = line.ct0_item_id;
+      if (!ct0Id) continue;
+      const productId = productByCt0Id.get(ct0Id);
+      if (!productId) continue;
+      const saved = await this.transitLineRepository.setProductId(
+        line._id.toString(),
+        productId,
+      );
+      if (saved) updated++;
+    }
+    return updated;
   }
 
   async verifyUnit(
@@ -1251,6 +1431,14 @@ export class IncomingHomologService {
         image_url: line.image_url ?? '',
         language: line.language,
         rareza: line.rareza ?? null,
+        blueprint_id:
+          typeof line.blueprint_id === 'number' && line.blueprint_id > 0
+            ? line.blueprint_id
+            : null,
+        product_id:
+          typeof line.product_id === 'number' && line.product_id > 0
+            ? line.product_id
+            : null,
         remaining_quantity: line.remaining_quantity,
         quantity_ordered: line.quantity_ordered,
         fx_unit_price: line.fx_unit_price,
@@ -1334,6 +1522,10 @@ export class IncomingHomologService {
         name: u.name,
         expansion: u.expansion,
         language: u.language,
+        product_id:
+          typeof u.product_id === 'number' && u.product_id > 0
+            ? u.product_id
+            : null,
         blueprint_id: u.blueprint_id,
         unit_price_eur: u.unit_price_eur,
         unit_price_fx: unitPriceFx,

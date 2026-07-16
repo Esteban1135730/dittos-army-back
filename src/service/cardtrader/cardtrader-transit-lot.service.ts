@@ -180,6 +180,7 @@ export class CardtraderTransitLotService {
       unit_cost_cop: line.unit_cost_cop,
       rareza: line.rareza ?? null,
       ct0_item_id: line.ct0_item_id ?? null,
+      product_id: line.product_id ?? null,
       blueprint_id: line.blueprint_id ?? null,
       expansion: line.expansion ?? null,
       collector_number: line.collector_number ?? null,
@@ -397,6 +398,10 @@ export class CardtraderTransitLotService {
         image_url: resolveIncomingBatchItemImageUrl(item, tcgDex),
         rareza: rarezaNorm,
         ct0_item_id: item.ct0_item_id,
+        product_id:
+          typeof item.product_id === 'number' && item.product_id > 0
+            ? item.product_id
+            : undefined,
         blueprint_id: item.blueprint_id,
         expansion: item.expansion?.trim() || undefined,
         collector_number: item.collector_number?.trim() || undefined,
