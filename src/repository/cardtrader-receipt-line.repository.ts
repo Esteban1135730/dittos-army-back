@@ -25,9 +25,7 @@ export class CardtraderReceiptLineRepository {
     return this.lineModel.find({ session_id: sessionId }).exec();
   }
 
-  async findById(
-    id: string,
-  ): Promise<CardtraderReceiptLineDocument | null> {
+  async findById(id: string): Promise<CardtraderReceiptLineDocument | null> {
     return this.lineModel.findById(id).exec();
   }
 

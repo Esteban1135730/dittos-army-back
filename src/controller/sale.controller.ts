@@ -13,6 +13,7 @@ import { SaleRepository } from 'src/repository/sale.repository';
 import { ClientRepository } from 'src/repository/client.repository';
 import { StockRepository } from 'src/repository/stock.repository';
 import { PvpRepository } from 'src/repository/pvp.repository';
+import { ReservaRepository } from 'src/repository/reserva.repository';
 import {
   effectiveOperationalRarezaFromStock,
   resolvePvpForLine,
@@ -40,6 +41,7 @@ export class SaleController {
     private readonly clientRepository: ClientRepository,
     private readonly stockRepository: StockRepository,
     private readonly pvpRepository: PvpRepository,
+    private readonly reservaRepository: ReservaRepository,
     private readonly tcgDexService: TCGDexService,
   ) {}
 
@@ -169,14 +171,6 @@ export class SaleController {
         });
         continue;
       }
-      if (cardState === 'reserva') {
-        results.push({
-          stock_id: stockId,
-          success: false,
-          message: 'La carta está reservada',
-        });
-        continue;
-      }
       if (cardState === 'propiedad') {
         results.push({
           stock_id: stockId,
@@ -185,7 +179,11 @@ export class SaleController {
         });
         continue;
       }
-      if (cardState !== 'disponible' && cardState !== 'en_stock_colombia') {
+      if (
+        cardState !== 'disponible' &&
+        cardState !== 'en_stock_colombia' &&
+        cardState !== 'reserva'
+      ) {
         results.push({
           stock_id: stockId,
           success: false,
@@ -203,6 +201,10 @@ export class SaleController {
           notes: item.notes ?? 'Venta asistida QR',
         });
         await this.stockRepository.updateCardState(stockId, 'vendida');
+        if (cardState === 'reserva') {
+          // Venta de mostrador sobre línea reservada: cancela la reserva.
+          await this.reservaRepository.deleteByStockId(stockId);
+        }
         results.push({ stock_id: stockId, success: true });
       } catch {
         results.push({

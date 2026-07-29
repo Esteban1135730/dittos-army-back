@@ -10,6 +10,7 @@ import {
   NotFoundException,
   Param,
   Post,
+  Query,
 } from '@nestjs/common';
 import { isValidObjectId } from 'mongoose';
 import { Stock } from 'src/schema/stock.schema';
@@ -35,6 +36,7 @@ import {
   normalizeOperationalRareza,
 } from 'src/constants/item-rareza';
 import { normalizeStockTagsInput } from 'src/constants/stock-tags';
+import { SELLABLE_STOCK_STATES } from 'src/utils/stock-sellable';
 
 const ALLOWED_STOCK_LANGUAGES = new Set([
   'es',
@@ -206,8 +208,15 @@ export class StockController {
   }
 
   @Get(':id/scan')
-  async scanStockLine(@Param('id') id: string) {
-    return this.stockScanService.getScanView(id);
+  async scanStockLine(
+    @Param('id') id: string,
+    @Query('exclude') exclude?: string,
+  ) {
+    const excludeIds = (exclude ?? '')
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean);
+    return this.stockScanService.getScanView(id, excludeIds);
   }
 
   @Get()
@@ -304,11 +313,17 @@ export class StockController {
   @Get('group/:card_id')
   async listStockByCardId(@Param() params: any): Promise<any | null> {
     const stocks = await this.stockRepository.findByCardId(params.card_id);
+    // Solo unidades vendibles: el costo/PVP de referencia no debe diluirse
+    // con reserva, vendida, propiedad u otros estados no disponibles.
+    const available =
+      stocks?.filter((s) =>
+        SELLABLE_STOCK_STATES.has(String(s.card_state ?? '')),
+      ) ?? [];
     let card_value_EUR = 0;
     let quantity_EUR = 0;
     let card_value_COP = 0;
     let quantity_COP = 0;
-    stocks?.forEach((stockCard) => {
+    available.forEach((stockCard) => {
       if (stockCard.currency == 'EUR') {
         card_value_EUR +=
           stockCard.unity_cost +

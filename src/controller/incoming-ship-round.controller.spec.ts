@@ -24,10 +24,11 @@ describe('IncomingShipRoundController.syncMissingShipRoundItems', () => {
     const ctrl = new IncomingShipRoundController(
       shipRoundRepository as any,
       shipRoundItemRepository as any,
+      {} as any, // shipRoundCardUnitRepository
       incomingBatchItemRepository as any,
-      {} as any,
-      {} as any,
-      {} as any,
+      {} as any, // incomingBatchRepository
+      {} as any, // stockRepository
+      {} as any, // incomingReservationService
     );
 
     return { ctrl, shipRoundItemRepository, incomingBatchItemRepository };

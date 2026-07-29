@@ -21,6 +21,9 @@ import {
 } from 'src/utils/stock-scan-labels';
 import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
 
+/** Estados con etiqueta QR imprimible (incluye reserva; excluye vendida/propiedad/etc.). */
+const QR_LABEL_STOCK_STATES = new Set([...SELLABLE_STOCK_STATES, 'reserva']);
+
 export type StockQrExportRow = {
   stock_id: string;
   qr_value: string;
@@ -54,6 +57,12 @@ export type StockScanView = {
   card_state: string;
   sellable: boolean;
   reject_reason?: StockSellRejectReason;
+  /** La escaneada estaba en reserva y se devolvió una copia equivalente disponible. */
+  substituted?: boolean;
+  /** stock_id de la línea reservada que se escaneó (cuando substituted). */
+  scanned_stock_id?: string;
+  /** Reservada sin equivalente: vendible, pero al vender se cancela la reserva. */
+  reserved_fallback?: boolean;
 };
 
 type StockLineDoc = {
@@ -87,7 +96,7 @@ export class StockScanService {
     const eligible = stockItems.filter((stock) => {
       const doc = stock as unknown as StockLineDoc;
       const state = doc.card_state ?? '';
-      return SELLABLE_STOCK_STATES.has(state);
+      return QR_LABEL_STOCK_STATES.has(state);
     });
     if (eligible.length === 0) return [];
 
@@ -133,7 +142,10 @@ export class StockScanService {
     return rows.map((r) => ({ ...r, barcode_value: r.qr_value }));
   }
 
-  async getScanView(stockId: string): Promise<StockScanView> {
+  async getScanView(
+    stockId: string,
+    excludeIds: string[] = [],
+  ): Promise<StockScanView> {
     const trimmed = stockId?.trim() ?? '';
     if (!isValidObjectId(trimmed)) {
       throw new NotFoundException('Stock no encontrado');
@@ -153,11 +165,90 @@ export class StockScanService {
       ),
     ]);
     const grouped = groupPvpsByCardId(pvps);
-    return this.buildScanView(
-      stock,
-      grouped.get(stock.card_id) ?? [],
-      expansion,
+    const pvpList = grouped.get(stock.card_id) ?? [];
+    const view = this.buildScanView(stock, pvpList, expansion);
+
+    if ((stock.card_state ?? '') !== 'reserva') {
+      return view;
+    }
+    return this.buildReservedScanView(stock, pvpList, view, excludeIds);
+  }
+
+  /**
+   * Delta reserva: si hay copia equivalente disponible la devuelve (substituted);
+   * si no, la propia reservada como vendible (reserved_fallback) cuando tiene PVP.
+   */
+  private async buildReservedScanView(
+    scanned: StockLineDoc,
+    pvpList: Parameters<typeof resolvePvpForLine>[0],
+    scannedView: StockScanView,
+    excludeIds: string[],
+  ): Promise<StockScanView> {
+    const equivalent = await this.findEquivalentAvailable(
+      scanned,
+      pvpList,
+      excludeIds,
     );
+    if (equivalent) {
+      const expansion = await this.tcgDexService.resolveEnglishExpansionName(
+        equivalent.card_id,
+        equivalent.language ?? equivalent.languaje,
+      );
+      const equivalentView = this.buildScanView(equivalent, pvpList, expansion);
+      return {
+        ...equivalentView,
+        substituted: true,
+        scanned_stock_id: String(scanned._id),
+      };
+    }
+    if (scannedView.price_cop != null && scannedView.price_cop > 0) {
+      return {
+        ...scannedView,
+        sellable: true,
+        reject_reason: undefined,
+        reserved_fallback: true,
+      };
+    }
+    return { ...scannedView, sellable: false, reject_reason: 'sin_pvp' };
+  }
+
+  private async findEquivalentAvailable(
+    scanned: StockLineDoc,
+    pvpList: Parameters<typeof resolvePvpForLine>[0],
+    excludeIds: string[],
+  ): Promise<StockLineDoc | null> {
+    const candidates = (await this.stockRepository.findByCardIdsInStates(
+      [scanned.card_id],
+      [...SELLABLE_STOCK_STATES],
+    )) as unknown as StockLineDoc[];
+    if (!candidates || candidates.length === 0) return null;
+
+    const scannedId = String(scanned._id);
+    const excluded = new Set(excludeIds.map((id) => id.trim()).filter(Boolean));
+    const targetLanguage = this.normalizedLanguage(scanned);
+    const targetRareza = effectiveOperationalRarezaFromStock(scanned);
+
+    const eligible = candidates.filter((candidate) => {
+      const id = String(candidate._id);
+      if (id === scannedId || excluded.has(id)) return false;
+      if (this.normalizedLanguage(candidate) !== targetLanguage) return false;
+      if (effectiveOperationalRarezaFromStock(candidate) !== targetRareza) {
+        return false;
+      }
+      const price = this.resolvePriceCop(candidate, pvpList);
+      return price != null && price > 0;
+    });
+    if (eligible.length === 0) return null;
+
+    // Selección determinista: _id ascendente.
+    eligible.sort((a, b) => String(a._id).localeCompare(String(b._id)));
+    return eligible[0];
+  }
+
+  private normalizedLanguage(stock: StockLineDoc): string {
+    return String(stock.language ?? stock.languaje ?? '')
+      .trim()
+      .toLowerCase();
   }
 
   private async resolveExpansionByStockLines(
@@ -177,10 +268,11 @@ export class StockScanService {
     await Promise.all(
       [...uniqueKeys.entries()].map(async ([key, { cardId, language }]) => {
         try {
-          const expansion = await this.tcgDexService.resolveEnglishExpansionName(
-            cardId,
-            language,
-          );
+          const expansion =
+            await this.tcgDexService.resolveEnglishExpansionName(
+              cardId,
+              language,
+            );
           expansionByKey.set(key, expansion);
         } catch {
           expansionByKey.set(key, '');

@@ -84,9 +84,7 @@ export class TCGDexService {
     private readonly localCardImages: LocalCardImagesService,
   ) {
     if (this.apiBaseUrl !== TCGDEX_PRODUCTION_API_BASE) {
-      console.warn(
-        `[TCGDexService] API TCGdex local: ${this.apiBaseUrl}`,
-      );
+      console.warn(`[TCGDexService] API TCGdex local: ${this.apiBaseUrl}`);
     }
   }
 
@@ -298,6 +296,16 @@ export class TCGDexService {
         return undefined;
       }
       const dto = mapCardFromApi(raw);
+      if (!dto.setEnglishName && raw.set?.id) {
+        const homologEnglish = this.setNameHomologs.getEnglishLabel(
+          normalizedLocale,
+          raw.set.id,
+          raw.set.name,
+        );
+        if (homologEnglish) {
+          dto.setEnglishName = homologEnglish;
+        }
+      }
       const urls = this.localCardImages.applyRemoteFallback(
         {
           cardId: id,
@@ -354,7 +362,11 @@ export class TCGDexService {
       }
     }
 
-    if (!localizedMeta && !englishMeta && isUnreliableStoreCardName(sourceName)) {
+    if (
+      !localizedMeta &&
+      !englishMeta &&
+      isUnreliableStoreCardName(sourceName)
+    ) {
       return undefined;
     }
 

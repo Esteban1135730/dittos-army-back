@@ -8,6 +8,8 @@ export interface TCGdexSetBrief {
   id: string;
   logo?: string;
   name: string;
+  /** Nombre EN del set cuando el locale no es inglés (p. ej. cards-database). */
+  englishName?: string;
   symbol?: string;
 }
 

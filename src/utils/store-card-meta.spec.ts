@@ -52,6 +52,22 @@ describe('storeCardMetaFromDto', () => {
     expect(meta.card_number).toBe('130');
     expect(meta.name).toBe('Archaludon ex');
   });
+
+  it('prioriza setEnglishName sobre el nombre localizado del set', () => {
+    const meta = storeCardMetaFromDto({
+      id: 'SV5a-001',
+      localId: '001',
+      name: 'Test',
+      rarity: '',
+      category: '',
+      legal: { standard: true, expanded: true },
+      set: 'SV5a(クリムゾンヘイズ)',
+      setEnglishName: 'Crimson Haze',
+      image: '',
+      images: { small: '', large: '' },
+    });
+    expect(meta.expansion).toBe('Crimson Haze');
+  });
 });
 
 describe('isUnreliableStoreCardName', () => {

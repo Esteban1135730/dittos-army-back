@@ -51,7 +51,7 @@ export function resolveStoreExportCardMeta(args: {
   const preferredMeta =
     args.localized && !isUnreliableStoreCardName(args.localized.name)
       ? args.localized
-      : args.english ?? args.localized;
+      : (args.english ?? args.localized);
   const cardNumber =
     preferredMeta?.card_number ??
     args.english?.card_number ??
@@ -64,7 +64,7 @@ export function resolveStoreExportCardMeta(args: {
       args.english?.image ??
       args.localized?.image ??
       '',
-    ...(preferredMeta?.expansion ?? args.english?.expansion
+    ...((preferredMeta?.expansion ?? args.english?.expansion)
       ? { expansion: preferredMeta?.expansion ?? args.english?.expansion }
       : {}),
     ...(cardNumber ? { card_number: cardNumber } : {}),
@@ -116,10 +116,12 @@ export function storeCardMetaFromDto(card: CardDto): StoreCardExportMeta {
   const cardNumber =
     (card.localId && String(card.localId).trim()) ||
     parseCardNumberFromCardId(card.id);
+  const expansion =
+    card.setEnglishName?.trim() || parseExpansionFromSetField(card.set);
   return {
     name: card.name,
     image: card.image || card.images?.small || card.images?.large || '',
-    expansion: parseExpansionFromSetField(card.set),
+    expansion,
     ...(cardNumber ? { card_number: cardNumber } : {}),
   };
 }

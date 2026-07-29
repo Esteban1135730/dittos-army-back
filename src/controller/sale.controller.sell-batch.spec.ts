@@ -4,6 +4,7 @@ import { SaleRepository } from 'src/repository/sale.repository';
 import { ClientRepository } from 'src/repository/client.repository';
 import { StockRepository } from 'src/repository/stock.repository';
 import { PvpRepository } from 'src/repository/pvp.repository';
+import { ReservaRepository } from 'src/repository/reserva.repository';
 import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
 
 const stockId = '507f1f77bcf86cd799439011';
@@ -15,6 +16,7 @@ describe('SaleController sell-batch', () => {
     findById: jest.Mock;
     updateCardState: jest.Mock;
   };
+  let reservaRepository: { deleteByStockId: jest.Mock };
 
   beforeEach(async () => {
     saleRepository = { create: jest.fn().mockResolvedValue({}) };
@@ -25,6 +27,9 @@ describe('SaleController sell-batch', () => {
       }),
       updateCardState: jest.fn().mockResolvedValue(undefined),
     };
+    reservaRepository = {
+      deleteByStockId: jest.fn().mockResolvedValue(true),
+    };
 
     const moduleRef = await Test.createTestingModule({
       controllers: [SaleController],
@@ -33,6 +38,7 @@ describe('SaleController sell-batch', () => {
         { provide: ClientRepository, useValue: {} },
         { provide: StockRepository, useValue: stockRepository },
         { provide: PvpRepository, useValue: {} },
+        { provide: ReservaRepository, useValue: reservaRepository },
         { provide: TCGDexService, useValue: {} },
       ],
     }).compile();
@@ -59,6 +65,13 @@ describe('SaleController sell-batch', () => {
     );
   });
 
+  it('no cancela reservas al vender líneas no reservadas', async () => {
+    await controller.sellBatch({
+      items: [{ stock_id: stockId, amount_cop: 50000 }],
+    });
+    expect(reservaRepository.deleteByStockId).not.toHaveBeenCalled();
+  });
+
   it('reporta fallo si ya está vendida', async () => {
     stockRepository.findById.mockResolvedValue({
       card_id: 'swsh3-136',
@@ -70,5 +83,43 @@ describe('SaleController sell-batch', () => {
     expect(res.sold_count).toBe(0);
     expect(res.results[0].message).toContain('vendida');
     expect(saleRepository.create).not.toHaveBeenCalled();
+  });
+
+  it('vende línea en reserva, la marca vendida y elimina la reserva', async () => {
+    stockRepository.findById.mockResolvedValue({
+      card_id: 'swsh3-136',
+      card_state: 'reserva',
+    });
+    const res = await controller.sellBatch({
+      items: [{ stock_id: stockId, amount_cop: 50000 }],
+    });
+    expect(res.sold_count).toBe(1);
+    expect(res.results[0].success).toBe(true);
+    expect(saleRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stock_id: stockId,
+        type: 'venta',
+        amount_cop: 50000,
+      }),
+    );
+    expect(stockRepository.updateCardState).toHaveBeenCalledWith(
+      stockId,
+      'vendida',
+    );
+    expect(reservaRepository.deleteByStockId).toHaveBeenCalledWith(stockId);
+  });
+
+  it('sigue rechazando estados no vendibles (propiedad)', async () => {
+    stockRepository.findById.mockResolvedValue({
+      card_id: 'swsh3-136',
+      card_state: 'propiedad',
+    });
+    const res = await controller.sellBatch({
+      items: [{ stock_id: stockId, amount_cop: 50000 }],
+    });
+    expect(res.sold_count).toBe(0);
+    expect(res.results[0].message).toContain('propiedad');
+    expect(saleRepository.create).not.toHaveBeenCalled();
+    expect(reservaRepository.deleteByStockId).not.toHaveBeenCalled();
   });
 });

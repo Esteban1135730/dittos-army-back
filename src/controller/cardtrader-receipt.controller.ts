@@ -60,20 +60,14 @@ export class CardtraderReceiptController {
 
   /** Revertir línea a pending. */
   @Patch('sessions/:id/lines/:lineId/undo')
-  undoLine(
-    @Param('id') id: string,
-    @Param('lineId') lineId: string,
-  ) {
+  undoLine(@Param('id') id: string, @Param('lineId') lineId: string) {
     return this.receiptService.undoLine(id, lineId);
   }
 
   /** Finalizar sesión (crea Stock y decrementa remaining_quantity). */
   @Post('sessions/:id/finalize')
   @HttpCode(200)
-  finalize(
-    @Param('id') id: string,
-    @Body() dto: FinalizeReceiptDto,
-  ) {
+  finalize(@Param('id') id: string, @Body() dto: FinalizeReceiptDto) {
     return this.receiptService.finalize(id, dto);
   }
 

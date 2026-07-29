@@ -159,7 +159,10 @@ describe('receiveLine', () => {
   });
 
   it('lanza 400 si sesión no está open', async () => {
-    sessionRepo.findById.mockResolvedValue({ ...openSession, status: 'finalized' });
+    sessionRepo.findById.mockResolvedValue({
+      ...openSession,
+      status: 'finalized',
+    });
 
     await expect(
       service.receiveLine('sess-1', 'line-1', { received_qty: 1 }),
@@ -382,8 +385,8 @@ describe('revertFinalization', () => {
     ]);
     stockRepo.findById.mockResolvedValue({ card_state: 'vendido' });
 
-    await expect(
-      service.revertFinalization('sess-1'),
-    ).rejects.toBeInstanceOf(ConflictException);
+    await expect(service.revertFinalization('sess-1')).rejects.toBeInstanceOf(
+      ConflictException,
+    );
   });
 });

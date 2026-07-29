@@ -48,6 +48,11 @@ export type CardDto = {
   regulationMark?: string;
   legal: { standard: boolean; expanded: boolean };
   set: string;
+  /**
+   * Nombre en inglés del set cuando el `set` localizado es ja/ko/zh, etc.
+   * Viene de cards-database (`englishName`) o de homologos locales.
+   */
+  setEnglishName?: string;
   image: string;
   images: { small: string; large: string };
   /** Precios TCGplayer (USD) mapeados desde TCGdex - formato frontend */
@@ -158,6 +163,8 @@ export function mapCard(src: Card, image_url: string): CardDto {
     regulationMark: src.regulationMark,
     legal: src.legal,
     set: src?.set.id + '(' + src.set.name + ')',
+    setEnglishName:
+      (src.set as { englishName?: string })?.englishName?.trim() || undefined,
     image: image_url,
     images: { small: image_url, large: image_url },
   };
@@ -248,6 +255,7 @@ export function mapCardFromApi(
     regulationMark: raw.regulationMark,
     legal: raw.legal ?? { standard: false, expanded: false },
     set: raw.set ? raw.set.id + '(' + raw.set.name + ')' : '',
+    setEnglishName: raw.set?.englishName?.trim() || undefined,
     image: imageUrl,
     images: { small: imageSmall, large: imageLarge },
     tcgplayer: pricing?.tcgplayer

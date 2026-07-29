@@ -26,9 +26,7 @@ export class CardtraderReceiptSessionRepository {
     return created.save();
   }
 
-  async findById(
-    id: string,
-  ): Promise<CardtraderReceiptSessionDocument | null> {
+  async findById(id: string): Promise<CardtraderReceiptSessionDocument | null> {
     return this.sessionModel.findById(id).exec();
   }
 

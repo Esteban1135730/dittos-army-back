@@ -7,7 +7,8 @@ type HomologSetEntry = {
   locale?: string;
   names?: {
     en_cardtrader?: string | null;
-    database?: Record<string, string>;
+    englishName?: string | null;
+    database?: Record<string, string | null | undefined>;
   };
 };
 
@@ -169,9 +170,18 @@ export class SetNameHomologsService implements OnModuleInit {
 
   private entryEnglishName(key: string): string | undefined {
     const entry = this.setsIndex[key];
-    const label = entry?.names?.en_cardtrader;
-    if (typeof label === 'string' && label.trim() !== '') {
-      return label.trim();
+    const names = entry?.names;
+    if (!names) {
+      return undefined;
+    }
+    for (const candidate of [
+      names.englishName,
+      names.en_cardtrader,
+      names.database?.en,
+    ]) {
+      if (typeof candidate === 'string' && candidate.trim() !== '') {
+        return candidate.trim();
+      }
     }
     return undefined;
   }

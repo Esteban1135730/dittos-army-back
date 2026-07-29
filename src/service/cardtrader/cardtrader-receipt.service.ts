@@ -34,7 +34,8 @@ export class CardtraderReceiptService {
 
   async getSession(sessionId: string) {
     const session = await this.sessionRepo.findById(sessionId);
-    if (!session) throw new NotFoundException(`Sesión ${sessionId} no encontrada`);
+    if (!session)
+      throw new NotFoundException(`Sesión ${sessionId} no encontrada`);
     const lines = await this.lineRepo.findBySessionId(sessionId);
     return { session, lines };
   }
@@ -98,7 +99,8 @@ export class CardtraderReceiptService {
 
   async receiveLine(sessionId: string, lineId: string, dto: ReceiveLineDto) {
     const session = await this.sessionRepo.findById(sessionId);
-    if (!session) throw new NotFoundException(`Sesión ${sessionId} no encontrada`);
+    if (!session)
+      throw new NotFoundException(`Sesión ${sessionId} no encontrada`);
     if (session.status !== 'open') {
       throw new BadRequestException(
         `La sesión ${sessionId} no está abierta (estado actual: ${session.status}).`,
@@ -144,7 +146,8 @@ export class CardtraderReceiptService {
     dto: InconsistencyLineDto,
   ) {
     const session = await this.sessionRepo.findById(sessionId);
-    if (!session) throw new NotFoundException(`Sesión ${sessionId} no encontrada`);
+    if (!session)
+      throw new NotFoundException(`Sesión ${sessionId} no encontrada`);
     if (session.status !== 'open') {
       throw new BadRequestException(
         `La sesión ${sessionId} no está abierta (estado actual: ${session.status}).`,
@@ -185,7 +188,8 @@ export class CardtraderReceiptService {
 
   async undoLine(sessionId: string, lineId: string) {
     const session = await this.sessionRepo.findById(sessionId);
-    if (!session) throw new NotFoundException(`Sesión ${sessionId} no encontrada`);
+    if (!session)
+      throw new NotFoundException(`Sesión ${sessionId} no encontrada`);
     if (session.status !== 'open') {
       throw new BadRequestException(
         `La sesión ${sessionId} no está abierta (estado actual: ${session.status}).`,
@@ -216,7 +220,8 @@ export class CardtraderReceiptService {
 
   async finalize(sessionId: string, dto: FinalizeReceiptDto) {
     const session = await this.sessionRepo.findById(sessionId);
-    if (!session) throw new NotFoundException(`Sesión ${sessionId} no encontrada`);
+    if (!session)
+      throw new NotFoundException(`Sesión ${sessionId} no encontrada`);
     if (session.status !== 'open') {
       throw new BadRequestException(
         `La sesión ${sessionId} no está abierta (estado actual: ${session.status}).`,
@@ -241,7 +246,9 @@ export class CardtraderReceiptService {
     }
 
     const receivedLines = lines.filter((l) => l.status === 'received');
-    const inconsistencyLines = lines.filter((l) => l.status === 'inconsistency');
+    const inconsistencyLines = lines.filter(
+      (l) => l.status === 'inconsistency',
+    );
 
     const totalReceivedQty = receivedLines.reduce(
       (sum, l) => sum + (l.received_qty ?? 0),
@@ -305,7 +312,8 @@ export class CardtraderReceiptService {
 
   async revertFinalization(sessionId: string) {
     const session = await this.sessionRepo.findById(sessionId);
-    if (!session) throw new NotFoundException(`Sesión ${sessionId} no encontrada`);
+    if (!session)
+      throw new NotFoundException(`Sesión ${sessionId} no encontrada`);
     if (session.status !== 'finalized') {
       throw new BadRequestException(
         `La sesión ${sessionId} no está en estado finalized (estado actual: ${session.status}).`,
@@ -359,14 +367,17 @@ export class CardtraderReceiptService {
 
   async cancelSession(sessionId: string) {
     const session = await this.sessionRepo.findById(sessionId);
-    if (!session) throw new NotFoundException(`Sesión ${sessionId} no encontrada`);
+    if (!session)
+      throw new NotFoundException(`Sesión ${sessionId} no encontrada`);
     if (session.status === 'finalized') {
       throw new BadRequestException(
         'Una sesión finalizada no puede cancelarse. Usa el endpoint de revertir primero.',
       );
     }
     if (session.status === 'cancelled') {
-      throw new BadRequestException(`La sesión ${sessionId} ya está cancelada.`);
+      throw new BadRequestException(
+        `La sesión ${sessionId} ya está cancelada.`,
+      );
     }
 
     await this.sessionRepo.updateStatus(sessionId, 'cancelled');

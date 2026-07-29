@@ -69,8 +69,9 @@ export class CardtraderReceiptLine {
   updated_at: Date;
 }
 
-export const CardtraderReceiptLineSchema =
-  SchemaFactory.createForClass(CardtraderReceiptLine);
+export const CardtraderReceiptLineSchema = SchemaFactory.createForClass(
+  CardtraderReceiptLine,
+);
 
 CardtraderReceiptLineSchema.index({ session_id: 1 });
 CardtraderReceiptLineSchema.index({ transit_line_id: 1 });

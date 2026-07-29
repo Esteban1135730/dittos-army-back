@@ -22,7 +22,8 @@ export class CardtraderReceiptSession {
   finalized_at: Date | null;
 }
 
-export const CardtraderReceiptSessionSchema =
-  SchemaFactory.createForClass(CardtraderReceiptSession);
+export const CardtraderReceiptSessionSchema = SchemaFactory.createForClass(
+  CardtraderReceiptSession,
+);
 
 CardtraderReceiptSessionSchema.index({ status: 1 });
