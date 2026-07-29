@@ -67,6 +67,17 @@ export class StockRepository {
     return this.stockModel.findById(id);
   }
 
+  /** Una sola query por muchos `_id` (evita N× findById). */
+  async findByIds(ids: string[]): Promise<Stock[]> {
+    const unique = [
+      ...new Set(
+        ids.map((id) => String(id ?? '').trim()).filter((id) => id.length > 0),
+      ),
+    ];
+    if (unique.length === 0) return [];
+    return this.stockModel.find({ _id: { $in: unique } }).exec();
+  }
+
   async updateById(
     id: string,
     patch: Partial<Pick<Stock, 'card_id' | 'card_name' | 'image_url'>>,
@@ -94,6 +105,11 @@ export class StockRepository {
     return this.stockModel
       .find({ card_id: { $in: ids }, card_state: { $in: states } })
       .exec();
+  }
+
+  async findByCardStates(states: string[]): Promise<Stock[]> {
+    if (states.length === 0) return [];
+    return this.stockModel.find({ card_state: { $in: states } }).exec();
   }
 
   async updateCardState(

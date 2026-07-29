@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import {
   CreateCardtraderTransitLotDto,
+  MarkNotArrivedDto,
   UpdateCardtraderTransitLotDto,
 } from 'src/Dto/cardtrader-transit-lot.dto';
 import { CardtraderTransitLotService } from 'src/service/cardtrader/cardtrader-transit-lot.service';
@@ -30,6 +31,11 @@ export class CardtraderTransitLotController {
   @Get('registered-package-keys')
   listRegisteredPackageKeys() {
     return this.transitLotService.listRegisteredPackageKeys();
+  }
+
+  @Post('mark-not-arrived')
+  markNotArrived(@Body() body: MarkNotArrivedDto) {
+    return this.transitLotService.markNotArrived(body);
   }
 
   @Post()

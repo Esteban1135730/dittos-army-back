@@ -15,7 +15,7 @@ export class CardtraderTransitLotRepository {
 
   async create(data: {
     status: 'open' | 'completed';
-    source: 'ct0' | 'manual';
+    source: 'ct0' | 'manual' | 'complementos';
     ct0_package_key?: string;
     purchase_date: Date;
     total_fx_cards_cost: number;

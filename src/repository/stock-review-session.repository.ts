@@ -2,10 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
+  StockReviewScope,
   StockReviewSession,
   StockReviewSessionDocument,
   StockReviewSessionStatus,
 } from '../schema/stock-review-session.schema';
+import type { StockTag } from '../constants/stock-tags';
 
 const ACTIVE_STATUSES: StockReviewSessionStatus[] = [
   'en_verificacion',
@@ -29,16 +31,25 @@ export class StockReviewSessionRepository {
     return this.model.findById(id).exec();
   }
 
-  async create(
-    data: Pick<StockReviewSession, 'tag' | 'status' | 'items'>,
-  ): Promise<StockReviewSessionDocument> {
+  /**
+   * Inserta la sesión completa (items embebidos) en **una** escritura.
+   * Los ítems no son documentos aparte: van en el mismo `insertMany`/`insertOne`.
+   */
+  async create(data: {
+    scope: StockReviewScope;
+    tag: StockTag | null;
+    status: StockReviewSession['status'];
+    items: StockReviewSession['items'];
+  }): Promise<StockReviewSessionDocument> {
     const now = new Date();
-    const doc = new this.model({
-      ...data,
-      created_at: now,
-      updated_at: now,
-    });
-    return doc.save();
+    const [doc] = await this.model.insertMany([
+      {
+        ...data,
+        created_at: now,
+        updated_at: now,
+      },
+    ]);
+    return doc;
   }
 
   async save(
@@ -48,11 +59,33 @@ export class StockReviewSessionRepository {
     return doc.save();
   }
 
+  /** Cambia solo status/timestamps; no reescribe el array `items`. */
+  async updateStatusFields(
+    id: string,
+    patch: {
+      status: StockReviewSessionStatus;
+      completed_at?: Date;
+    },
+  ): Promise<StockReviewSessionDocument | null> {
+    const $set: Record<string, unknown> = {
+      status: patch.status,
+      updated_at: new Date(),
+    };
+    if (patch.completed_at != null) {
+      $set.completed_at = patch.completed_at;
+    }
+    return this.model
+      .findByIdAndUpdate(id, { $set }, { new: true })
+      .exec();
+  }
+
   async markCancelled(id: string): Promise<void> {
     await this.model
       .findByIdAndUpdate(id, {
-        status: 'cancelada',
-        updated_at: new Date(),
+        $set: {
+          status: 'cancelada',
+          updated_at: new Date(),
+        },
       })
       .exec();
   }

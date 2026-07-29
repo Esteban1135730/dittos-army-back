@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-05-31T22:30:45.729Z",
+  "generated_at": "2026-07-29T00:36:15.509Z",
   "description": "Expansiones Pokemon en CardTrader (game_id=5) sin correspondencia en TCGdex local (en, ja, zh-tw)",
   "sources": [
     "GET https://api.cardtrader.com/api/v2/expansions (game_id=5)",
     "GET http://localhost:3000/v2/{en,ja,zh-tw}/sets"
   ],
-  "count": 382,
+  "count": 381,
   "sets": [
     {
       "id": 1468,
@@ -1886,11 +1886,6 @@
       "id": 4638,
       "code": "csv9",
       "name": "CSV9: Stellar Crystal"
-    },
-    {
-      "id": 4639,
-      "code": "pbl",
-      "name": "Pitch Black"
     },
     {
       "id": 4643,

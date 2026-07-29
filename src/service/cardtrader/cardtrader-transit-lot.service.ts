@@ -10,6 +10,8 @@ import {
 } from 'src/constants/item-rareza';
 import {
   CreateCardtraderTransitLotDto,
+  MarkNotArrivedDto,
+  MarkNotArrivedResult,
   UpdateCardtraderTransitLotDto,
 } from 'src/Dto/cardtrader-transit-lot.dto';
 import { CardtraderTransitLineRepository } from 'src/repository/cardtrader-transit-line.repository';
@@ -184,12 +186,74 @@ export class CardtraderTransitLotService {
       blueprint_id: line.blueprint_id ?? null,
       expansion: line.expansion ?? null,
       collector_number: line.collector_number ?? null,
+      not_arrived_at: line.not_arrived_at ?? null,
       created_at: line.created_at,
     }));
   }
 
   async listRegisteredPackageKeys(): Promise<string[]> {
     return this.lotRepository.findOpenPackageKeys();
+  }
+
+  async markNotArrived(body: MarkNotArrivedDto): Promise<MarkNotArrivedResult> {
+    const rawIds = body?.ct0_item_ids;
+    if (!Array.isArray(rawIds) || rawIds.length === 0) {
+      throw new BadRequestException('ct0_item_ids es requerido y debe ser un array');
+    }
+    const ct0ItemIds = [
+      ...new Set(
+        rawIds
+          .map((id) => Number(id))
+          .filter((id) => Number.isInteger(id) && id > 0),
+      ),
+    ];
+    if (ct0ItemIds.length === 0) {
+      throw new BadRequestException('ct0_item_ids debe contener enteros > 0');
+    }
+
+    const openLots = await this.lotRepository.findOpenLots();
+    const openLotIds = new Set(openLots.map((l) => l._id.toString()));
+
+    const lines = await this.lineRepository.findByCt0ItemIds(ct0ItemIds);
+    const lineByCt0 = new Map<number, (typeof lines)[number]>();
+    for (const line of lines) {
+      const ct0Id = line.ct0_item_id;
+      if (ct0Id == null || !openLotIds.has(String(line.lot_id))) continue;
+      if (!lineByCt0.has(ct0Id)) {
+        lineByCt0.set(ct0Id, line);
+      }
+    }
+
+    const marked: MarkNotArrivedResult['marked'] = [];
+    const already_marked: MarkNotArrivedResult['already_marked'] = [];
+    const not_found: number[] = [];
+    const now = new Date();
+
+    for (const ct0Id of ct0ItemIds) {
+      const line = lineByCt0.get(ct0Id);
+      if (!line) {
+        not_found.push(ct0Id);
+        continue;
+      }
+      const lineId = line._id.toString();
+      if (line.not_arrived_at) {
+        already_marked.push({ ct0_item_id: ct0Id, transit_line_id: lineId });
+        continue;
+      }
+      const updated = await this.lineRepository.setNotArrivedAtIfUnset(lineId, now);
+      if (updated?.not_arrived_at) {
+        marked.push({ ct0_item_id: ct0Id, transit_line_id: lineId });
+        continue;
+      }
+      const refreshed = await this.lineRepository.findById(lineId);
+      if (refreshed?.not_arrived_at) {
+        already_marked.push({ ct0_item_id: ct0Id, transit_line_id: lineId });
+      } else {
+        not_found.push(ct0Id);
+      }
+    }
+
+    return { marked, already_marked, not_found };
   }
 
   /** Líneas abiertas aplanadas para catálogo (reservas, upcoming.json). */
@@ -216,7 +280,10 @@ export class CardtraderTransitLotService {
         const lotId = lot._id.toString();
         const lines = await this.lineRepository.findByLotId(lotId);
         return lines
-          .filter((line) => (line.remaining_quantity ?? 0) > 0)
+          .filter(
+            (line) =>
+              (line.remaining_quantity ?? 0) > 0 && line.not_arrived_at == null,
+          )
           .map((line) => ({
             transit_line_id: line._id.toString(),
             transit_lot_id: lotId,
@@ -245,11 +312,21 @@ export class CardtraderTransitLotService {
     if (!Array.isArray(items) || items.length === 0) {
       throw new BadRequestException('items es requerido y debe ser un array');
     }
-    if (body.total_cop_cards_cost == null || body.total_cop_cards_cost <= 0) {
+
+    const isComplementos = body.source === 'complementos';
+
+    if (isComplementos) {
+      if (body.total_cop_cards_cost == null || body.total_cop_cards_cost !== 0) {
+        throw new BadRequestException(
+          'lote complementos requiere total_cop_cards_cost = 0',
+        );
+      }
+    } else if (body.total_cop_cards_cost == null || body.total_cop_cards_cost <= 0) {
       throw new BadRequestException(
         'total_cop_cards_cost es requerido y debe ser mayor a 0',
       );
     }
+
     if (!body.purchase_date) {
       throw new BadRequestException('purchase_date es requerido');
     }
@@ -259,7 +336,9 @@ export class CardtraderTransitLotService {
       const existing = await this.lotRepository.findByCt0PackageKey(packageKey);
       if (existing) {
         throw new ConflictException(
-          'Ya existe un lote registrado para este checkout CT Zero',
+          isComplementos
+            ? 'Ya existe un lote de complementos con esta clave'
+            : 'Ya existe un lote registrado para este checkout CT Zero',
         );
       }
     }
@@ -279,7 +358,13 @@ export class CardtraderTransitLotService {
       if (item.quantity == null || item.quantity <= 0) {
         throw new BadRequestException('quantity debe ser > 0');
       }
-      if (item.fx_total_lot == null || item.fx_total_lot <= 0) {
+      if (isComplementos) {
+        if (item.fx_total_lot == null || item.fx_total_lot !== 0) {
+          throw new BadRequestException(
+            'lote complementos requiere fx_total_lot = 0 en cada línea',
+          );
+        }
+      } else if (item.fx_total_lot == null || item.fx_total_lot <= 0) {
         throw new BadRequestException('fx_total_lot debe ser > 0');
       }
       const rareza = normalizeOperationalRareza(item.rareza);
@@ -292,33 +377,45 @@ export class CardtraderTransitLotService {
       (sum, item) => sum + item.fx_total_lot,
       0,
     );
-    if (registered_items_fx_subtotal <= 0) {
+    if (!isComplementos && registered_items_fx_subtotal <= 0) {
       throw new BadRequestException('registered_items_fx_subtotal calculado inválido');
     }
 
-    const legacyPricing = await this.resolveLegacyLotPricing(body);
     let total_fx_cards_cost: number;
     let total_cop_cards_cost: number;
     let real_fx_rate_cop: number;
     let cards_cost_currency: string;
 
-    if (legacyPricing) {
-      total_fx_cards_cost = legacyPricing.total_fx_cards_cost;
-      total_cop_cards_cost = legacyPricing.total_cop_cards_cost;
-      real_fx_rate_cop = legacyPricing.real_fx_rate_cop;
-      cards_cost_currency = legacyPricing.cards_cost_currency;
-    } else {
-      total_fx_cards_cost = registered_items_fx_subtotal;
-      total_cop_cards_cost = body.total_cop_cards_cost;
-      real_fx_rate_cop = total_cop_cards_cost / total_fx_cards_cost;
+    if (isComplementos) {
+      total_fx_cards_cost = 0;
+      total_cop_cards_cost = 0;
+      real_fx_rate_cop = 0;
       cards_cost_currency = normalizeCardsCostCurrency(body.cards_cost_currency);
+    } else {
+      const legacyPricing = await this.resolveLegacyLotPricing(body);
+
+      if (legacyPricing) {
+        total_fx_cards_cost = legacyPricing.total_fx_cards_cost;
+        total_cop_cards_cost = legacyPricing.total_cop_cards_cost;
+        real_fx_rate_cop = legacyPricing.real_fx_rate_cop;
+        cards_cost_currency = legacyPricing.cards_cost_currency;
+      } else {
+        total_fx_cards_cost = registered_items_fx_subtotal;
+        total_cop_cards_cost = body.total_cop_cards_cost;
+        real_fx_rate_cop = total_cop_cards_cost / total_fx_cards_cost;
+        cards_cost_currency = normalizeCardsCostCurrency(body.cards_cost_currency);
+      }
+
+      if (!Number.isFinite(real_fx_rate_cop) || real_fx_rate_cop <= 0) {
+        throw new BadRequestException('real_fx_rate_cop calculado inválido');
+      }
     }
 
-    if (!Number.isFinite(real_fx_rate_cop) || real_fx_rate_cop <= 0) {
-      throw new BadRequestException('real_fx_rate_cop calculado inválido');
-    }
-
-    const source = body.source === 'manual' ? 'manual' : 'ct0';
+    const source: 'ct0' | 'manual' | 'complementos' = isComplementos
+      ? 'complementos'
+      : body.source === 'manual'
+        ? 'manual'
+        : 'ct0';
 
     const lot = await this.lotRepository.create({
       status: 'open',
@@ -372,16 +469,19 @@ export class CardtraderTransitLotService {
       : [];
 
     const linesToInsert = items.map((item) => {
-      const fx_unit_price = item.fx_total_lot / item.quantity;
-      const legacyItem = findLegacyItemByCardName(
-        item.card_name?.trim() ?? '',
-        legacyItems,
-      );
-      const unit_cost_cop = unitCostCopFromLegacyItemRuleOfThree(
-        fx_unit_price,
-        legacyItem ?? {},
-        real_fx_rate_cop,
-      );
+      const fx_unit_price = isComplementos
+        ? 0
+        : item.fx_total_lot / item.quantity;
+      const legacyItem = isComplementos
+        ? null
+        : findLegacyItemByCardName(item.card_name?.trim() ?? '', legacyItems);
+      const unit_cost_cop = isComplementos
+        ? 0
+        : unitCostCopFromLegacyItemRuleOfThree(
+            fx_unit_price,
+            legacyItem ?? {},
+            real_fx_rate_cop,
+          );
       const tcgDex = cardMap.get(item.card_id);
       const rarezaNorm = normalizeOperationalRareza(item.rareza) ?? undefined;
 

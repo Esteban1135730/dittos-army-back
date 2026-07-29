@@ -6,7 +6,7 @@ export type CardtraderTransitLotDocument =
 
 export type CardtraderTransitLotStatus = 'open' | 'completed';
 
-export type CardtraderTransitLotSource = 'ct0' | 'manual';
+export type CardtraderTransitLotSource = 'ct0' | 'manual' | 'complementos';
 
 @Schema({ collection: 'cardtrader_transit_lots' })
 export class CardtraderTransitLot {

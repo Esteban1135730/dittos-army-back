@@ -329,7 +329,10 @@ export class StoreInventoryService {
         ),
       );
       const openTransitLines = transitLines
-        .filter((line) => openLotIds.has(String(line.lot_id)))
+        .filter(
+          (line) =>
+            openLotIds.has(String(line.lot_id)) && line.not_arrived_at == null,
+        )
         .map((line) => ({
           card_id: line.card_id,
           card_name: line.card_name,

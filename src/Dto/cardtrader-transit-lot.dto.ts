@@ -18,7 +18,7 @@ export type CreateCardtraderTransitLotDto = {
   total_cop_cards_cost: number;
   purchase_date: string;
   cards_cost_currency?: string;
-  source?: 'ct0' | 'manual';
+  source?: 'ct0' | 'manual' | 'complementos';
   ct0_package_key?: string;
   legacy_incoming_batch_id?: string;
   legacy_incoming_cop_hint?: number;
@@ -33,4 +33,14 @@ export type UpdateCardtraderTransitLotDto = {
   purchase_date?: string;
   total_cop_cards_cost?: number;
   cards_cost_currency?: string;
+};
+
+export type MarkNotArrivedDto = {
+  ct0_item_ids: number[];
+};
+
+export type MarkNotArrivedResult = {
+  marked: Array<{ ct0_item_id: number; transit_line_id: string }>;
+  already_marked: Array<{ ct0_item_id: number; transit_line_id: string }>;
+  not_found: number[];
 };

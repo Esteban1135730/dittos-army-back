@@ -15057,14 +15057,6 @@
         "database": {}
       }
     },
-    "ja:Pbl": {
-      "tcgdex_set_id": "Pbl",
-      "locale": "ja",
-      "names": {
-        "en_cardtrader": "Pitch Black",
-        "database": {}
-      }
-    },
     "ja:Csv9-p": {
       "tcgdex_set_id": "Csv9-p",
       "locale": "ja",
@@ -15103,6 +15095,21 @@
       "names": {
         "en_cardtrader": "VMAX Starter Deck: Grimmsnarl VMAX",
         "database": {}
+      }
+    },
+    "en:me05": {
+      "tcgdex_set_id": "me05",
+      "locale": "en",
+      "names": {
+        "en_cardtrader": "Pitch Black",
+        "database": {
+          "en": "Pitch Black"
+        },
+        "englishName": null
+      },
+      "cardtrader": {
+        "id": 4639,
+        "code": "pbl"
       }
     }
   },
@@ -19885,8 +19892,7 @@
       "ko": "Csv9-m"
     },
     "pitch black": {
-      "ja": "Pbl",
-      "ko": "Pbl"
+      "en": "me05"
     },
     "csv9: poké ball reverse": {
       "ja": "Csv9-p",

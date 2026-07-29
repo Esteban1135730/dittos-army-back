@@ -8,9 +8,10 @@ describe('normalizeStockTagsInput', () => {
   });
 
   it('normaliza mayúsculas y ordena al catálogo', () => {
-    expect(normalizeStockTagsInput(['JUGABLE', 'vintage'])).toEqual([
+    expect(normalizeStockTagsInput(['JUGABLE', 'vintage', 'BRILLO'])).toEqual([
       'vintage',
       'jugable',
+      'brillo',
     ]);
   });
 
@@ -18,6 +19,10 @@ describe('normalizeStockTagsInput', () => {
     expect(normalizeStockTagsInput(['bulk', 'BULK', ' bulk '])).toEqual([
       'bulk',
     ]);
+  });
+
+  it('acepta brillo', () => {
+    expect(normalizeStockTagsInput(['brillo'])).toEqual(['brillo']);
   });
 
   it('rechaza tipo no array', () => {

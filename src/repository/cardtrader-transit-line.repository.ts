@@ -36,6 +36,38 @@ export class CardtraderTransitLineRepository {
     return this.lineModel.find({ remaining_quantity: { $gt: 0 } }).exec();
   }
 
+  async findByCt0ItemIds(
+    ct0ItemIds: number[],
+  ): Promise<CardtraderTransitLineDocument[]> {
+    const ids = [
+      ...new Set(
+        ct0ItemIds.filter((id) => Number.isInteger(id) && id > 0),
+      ),
+    ];
+    if (!ids.length) return [];
+    return this.lineModel.find({ ct0_item_id: { $in: ids } }).exec();
+  }
+
+  /** Marca not_arrived_at solo si aún no estaba; no toca remaining_quantity. */
+  async setNotArrivedAtIfUnset(
+    lineId: string,
+    at: Date,
+  ): Promise<CardtraderTransitLineDocument | null> {
+    return this.lineModel
+      .findOneAndUpdate(
+        {
+          _id: lineId,
+          $or: [
+            { not_arrived_at: { $exists: false } },
+            { not_arrived_at: null },
+          ],
+        },
+        { $set: { not_arrived_at: at } },
+        { new: true },
+      )
+      .exec();
+  }
+
   /** Líneas con ct0_item_id pero sin product_id (candidatas a backfill desde CT0 API). */
   async findMissingProductIdWithCt0ItemId(): Promise<
     CardtraderTransitLineDocument[]

@@ -1,7 +1,12 @@
 import { BadRequestException } from '@nestjs/common';
 
 /** Catálogo cerrado de tags de línea de stock (orden canónico en respuestas). */
-export const STOCK_TAG_VALUES = ['vintage', 'bulk', 'jugable'] as const;
+export const STOCK_TAG_VALUES = [
+  'vintage',
+  'bulk',
+  'jugable',
+  'brillo',
+] as const;
 
 export type StockTag = (typeof STOCK_TAG_VALUES)[number];
 
@@ -11,7 +16,7 @@ const ALLOWED = new Set<string>(STOCK_TAG_VALUES);
  * Normaliza y valida `tags` desde body HTTP.
  * - Omite strings vacíos tras trim.
  * - Dedup tras normalizar a minúsculas.
- * - Orden estable: vintage, bulk, jugable.
+ * - Orden estable: vintage, bulk, jugable, brillo.
  */
 export function normalizeStockTagsInput(raw: unknown): string[] {
   if (raw === undefined || raw === null) {

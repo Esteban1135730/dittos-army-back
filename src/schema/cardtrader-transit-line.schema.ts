@@ -56,6 +56,10 @@ export class CardtraderTransitLine {
   @Prop()
   collector_number?: string;
 
+  /** Marcada manualmente como no llegada (CT0 missing); excluir de Próximamente. */
+  @Prop({ required: false })
+  not_arrived_at?: Date;
+
   @Prop({ default: Date.now })
   created_at: Date;
 }

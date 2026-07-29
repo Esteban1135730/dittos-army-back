@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "generated_at": "2026-05-31T22:30:45.729Z",
+  "generated_at": "2026-07-29T00:36:07.558Z",
   "description": "Homologacion CardTrader expansion -> TCGdex local set. Clave: locale:tcgdex_set_id",
   "sources": [
     "GET https://api.cardtrader.com/api/v2/expansions (game_id=5)",
@@ -8,11 +8,11 @@
   ],
   "stats": {
     "cardtrader_pokemon": 838,
-    "tcgdex_en": 209,
+    "tcgdex_en": 218,
     "tcgdex_ja": 172,
     "tcgdex_zh_tw": 98,
-    "matched": 456,
-    "cardtrader_only": 382,
+    "matched": 457,
+    "cardtrader_only": 381,
     "match_methods": {
       "en_name_exact": 147,
       "englishName": 134,
@@ -4956,6 +4956,21 @@
         "id": 4546,
         "code": "cri"
       }
+    },
+    "en:me05": {
+      "tcgdex_set_id": "me05",
+      "locale": "en",
+      "names": {
+        "en_cardtrader": "Pitch Black",
+        "database": {
+          "en": "Pitch Black"
+        },
+        "englishName": null
+      },
+      "cardtrader": {
+        "id": 4639,
+        "code": "pbl"
+      }
     }
   },
   "cardtrader_only": [
@@ -6828,11 +6843,6 @@
       "id": 4638,
       "code": "csv9",
       "name": "CSV9: Stellar Crystal"
-    },
-    {
-      "id": 4639,
-      "code": "pbl",
-      "name": "Pitch Black"
     },
     {
       "id": 4643,

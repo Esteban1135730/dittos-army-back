@@ -17,6 +17,8 @@ export type StockReviewSessionStatus =
   | 'completada'
   | 'cancelada';
 
+export type StockReviewScope = 'all' | 'tag';
+
 @Schema({ _id: false })
 export class StockReviewSessionItem {
   @Prop({ required: true })
@@ -43,6 +45,9 @@ export class StockReviewSessionItem {
   @Prop({ default: false })
   verified: boolean;
 
+  @Prop()
+  verified_at?: Date;
+
   @Prop({ type: String, required: false })
   outcome?: StockReviewOutcome;
 
@@ -59,8 +64,13 @@ export const StockReviewSessionItemSchema = SchemaFactory.createForClass(
 
 @Schema({ collection: 'stock_review_sessions' })
 export class StockReviewSession {
-  @Prop({ required: true, type: String })
-  tag: StockTag;
+  /** `all` = todo el stock elegible; `tag` = filtrado por tag. Legacy sin campo → `tag`. */
+  @Prop({ type: String, required: false, default: 'tag' })
+  scope?: StockReviewScope;
+
+  /** Tag si scope=tag; null si scope=all. Legacy: siempre string. */
+  @Prop({ type: String, required: false, default: null })
+  tag: StockTag | null;
 
   @Prop({ required: true, type: String })
   status: StockReviewSessionStatus;

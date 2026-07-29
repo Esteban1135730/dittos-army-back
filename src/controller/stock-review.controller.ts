@@ -23,8 +23,11 @@ export class StockReviewController {
   }
 
   @Post('sessions')
-  async createSession(@Body() body: { tag: string }) {
-    const session = await this.stockReviewService.createSession(body.tag);
+  async createSession(
+    @Body()
+    body: { scope: 'all' | 'tag'; tag?: string },
+  ) {
+    const session = await this.stockReviewService.createSession(body);
     return { session };
   }
 
@@ -44,6 +47,15 @@ export class StockReviewController {
       stockId,
     );
     return { session };
+  }
+
+  @Post('sessions/:sessionId/scan')
+  @HttpCode(HttpStatus.OK)
+  async scanItem(
+    @Param('sessionId') sessionId: string,
+    @Body() body: { stock_id: string },
+  ) {
+    return this.stockReviewService.scanItem(sessionId, body?.stock_id);
   }
 
   @Post('sessions/:sessionId/finalize-verification')
