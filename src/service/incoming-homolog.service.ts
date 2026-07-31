@@ -53,6 +53,9 @@ import {
   readBlueprintImageUrl,
   type CtBlueprintLike,
 } from '../utils/novedad-card-resolve';
+import { IncomingReservationService } from './incoming-reservation.service';
+import type { StockDto } from '../Dto/stock.dto';
+import { isPublicRemoteImageUrl } from '../utils/store-image-localize';
 
 @Injectable()
 export class IncomingHomologService {
@@ -73,6 +76,7 @@ export class IncomingHomologService {
     private readonly tcgdexService: TCGDexService,
     private readonly transitLineRepository: CardtraderTransitLineRepository,
     private readonly transitLotRepository: CardtraderTransitLotRepository,
+    private readonly incomingReservationService: IncomingReservationService,
   ) {}
 
   async getActiveSession() {
@@ -1112,15 +1116,80 @@ export class IncomingHomologService {
       }
     }
 
+    const nonNovedadCards = cards.filter((c) => !c.is_novedad);
+    const stockDtos: StockDto[] = [];
+    const transitLineIdsMeta: string[] = [];
+    const tcgMetaCache = new Map<
+      string,
+      { card_name: string; image_url: string }
+    >();
+
+    for (const card of nonNovedadCards) {
+      const lineId = resolveLineId(card);
+      const line = transitLineMap.get(lineId);
+      if (!line) {
+        throw new BadRequestException(`transit_line ${lineId} no está en tránsito`);
+      }
+      const cardId = line.card_id?.trim();
+      if (!cardId) {
+        throw new BadRequestException(
+          `transit_line ${lineId} sin card_id TCGdex; no se puede crear stock`,
+        );
+      }
+      const language =
+        normalizeStockLanguage(line.language) ?? line.language ?? 'en';
+      const cacheKey = `${cardId}::${language}`;
+      let meta = tcgMetaCache.get(cacheKey);
+      if (!meta) {
+        meta = await this.resolveStockTcgdexMeta(cardId, language, {
+          card_name: line.card_name,
+          image_url: line.image_url,
+          blueprint_id: line.blueprint_id,
+        });
+        tcgMetaCache.set(cacheKey, meta);
+      }
+      stockDtos.push({
+        card_id: cardId,
+        card_name: meta.card_name,
+        shipment: shipping,
+        unity_cost: card.unit_cost_cop,
+        cards_in_shipmet: nonNovedadCards.length,
+        image_url: meta.image_url,
+        card_state: 'disponible',
+        language,
+        currency: 'COP',
+        incoming_notes: '[recepción CT homolog]',
+        rareza: normalizeOperationalRareza(line.rareza) ?? undefined,
+      });
+      transitLineIdsMeta.push(lineId);
+    }
+
     for (const [lineId, count] of arrivedByTransitLine) {
       await this.transitLineRepository.decrementRemainingQuantity(lineId, count);
     }
 
-    await this.sessionRepository.markConverted(sessionId, null, shipping);
+    let stockIds: string[] = [];
+    if (stockDtos.length > 0) {
+      const createdStocks = await this.stockRepository.createMany(stockDtos);
+      stockIds = createdStocks.map((s) => String(s._id));
+      await this.incomingReservationService.materializeForNewStockLines(
+        createdStocks as any,
+        transitLineIdsMeta,
+      );
+    }
+
+    await this.sessionRepository.markConverted(
+      sessionId,
+      null,
+      shipping,
+      stockIds,
+    );
 
     return {
       round_id: null,
       transit_reception: true,
+      stock_created: stockIds.length,
+      stock_ids: stockIds,
       included_items: transitLinesInRoute.length,
       card_units: cards.length,
       decremented_lines: arrivedByTransitLine.size,
@@ -1223,6 +1292,7 @@ export class IncomingHomologService {
 
     const roundId = session.ship_round_id?.trim();
     if (!roundId) {
+      await this.deleteCreatedStocksForRevert(session.created_stock_ids ?? []);
       const restored = await this.restoreTransitQuantitiesFromSession(session);
       if (!restored) {
         throw new BadRequestException('La sesión no tiene tanda ni recepción transit asociada');
@@ -1284,6 +1354,131 @@ export class IncomingHomologService {
       batches_summary: await this.loadBatchesSummary(),
       deleted_round_id: roundId,
     };
+  }
+
+  /**
+   * Resuelve nombre + imagen pública TCGdex para stock.
+   * Evita URLs localhost/card-images (pueden 404 si el archivo local no existe).
+   */
+  private async resolveStockTcgdexMeta(
+    cardId: string,
+    language: string,
+    fallback: {
+      card_name?: string | null;
+      image_url?: string | null;
+      blueprint_id?: number | null;
+    },
+  ): Promise<{ card_name: string; image_url: string }> {
+    const fallbackName = String(fallback.card_name ?? '').trim() || cardId;
+    const locales = [language, 'en']
+      .map((l) => String(l ?? '').trim().toLowerCase())
+      .filter((l, i, arr) => l.length > 0 && arr.indexOf(l) === i);
+
+    let cardName = fallbackName;
+    for (const locale of locales) {
+      const card = await this.tcgdexService.getCard(cardId, locale);
+      if (card?.name?.trim()) {
+        cardName = card.name.trim();
+      }
+      const fromCard = this.pickPublicStockImageUrl(card);
+      if (fromCard) {
+        return { card_name: cardName, image_url: fromCard };
+      }
+      const fromCdn = await this.fetchTcgdexCdnImageUrl(cardId, locale);
+      if (fromCdn) {
+        return { card_name: cardName, image_url: fromCdn };
+      }
+    }
+
+    const fallbackImage = String(fallback.image_url ?? '').trim();
+    if (isPublicRemoteImageUrl(fallbackImage)) {
+      return { card_name: cardName, image_url: fallbackImage };
+    }
+
+    const blueprintId =
+      typeof fallback.blueprint_id === 'number' && fallback.blueprint_id > 0
+        ? fallback.blueprint_id
+        : 0;
+    if (blueprintId > 0) {
+      const blueprint = await this.fetchBlueprintMeta(blueprintId);
+      const ctImage = readBlueprintImageUrl(blueprint);
+      if (isPublicRemoteImageUrl(ctImage)) {
+        return { card_name: cardName, image_url: ctImage };
+      }
+    }
+
+    return { card_name: cardName, image_url: '' };
+  }
+
+  private pickPublicStockImageUrl(
+    card:
+      | {
+          image?: string;
+          images?: { small?: string; large?: string };
+        }
+      | null
+      | undefined,
+  ): string {
+    for (const candidate of [
+      card?.images?.small,
+      card?.image,
+      card?.images?.large,
+    ]) {
+      const url = String(candidate ?? '').trim();
+      if (url && isPublicRemoteImageUrl(url)) return url;
+    }
+    return '';
+  }
+
+  /** Imagen CDN TCGdex sin pasar por el índice local (localhost/card-images). */
+  private async fetchTcgdexCdnImageUrl(
+    cardId: string,
+    locale: string,
+  ): Promise<string> {
+    const loc = String(locale || 'en').trim().toLowerCase() || 'en';
+    const url = `https://api.tcgdex.net/v2/${encodeURIComponent(loc)}/cards/${encodeURIComponent(cardId)}`;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) return '';
+      const raw = (await res.json()) as { image?: string; name?: string };
+      const base = String(raw?.image ?? '').trim();
+      if (!base) return '';
+      if (/\.(png|jpg|jpeg|webp|gif)(\?|$)/i.test(base)) {
+        return isPublicRemoteImageUrl(base) ? base : '';
+      }
+      const low = `${base.replace(/\/+$/, '')}/low.png`;
+      return isPublicRemoteImageUrl(low) ? low : '';
+    } catch {
+      return '';
+    }
+  }
+
+  /**
+   * Elimina stock creado en createTanda CT antes de restaurar cantidades en tránsito.
+   * Permite `disponible` y `reserva` (borra la reserva); otros estados bloquean el revert.
+   */
+  private async deleteCreatedStocksForRevert(stockIds: string[]): Promise<void> {
+    for (const rawId of stockIds) {
+      const stockId = rawId?.trim();
+      if (!stockId) continue;
+
+      const stock = await this.stockRepository.findById(stockId);
+      if (!stock) continue;
+
+      const state = String(stock.card_state ?? '').toLowerCase();
+      if (state === 'reserva') {
+        await this.reservaRepository.deleteByStockId(stockId);
+        await this.stockRepository.deleteById(stockId);
+        continue;
+      }
+      if (state === 'disponible') {
+        await this.stockRepository.deleteById(stockId);
+        continue;
+      }
+      throw new BadRequestException(
+        `El stock ${stockId} ya fue usado (estado "${stock.card_state}"); no se puede deshacer la conversión automáticamente`,
+      );
+    }
   }
 
   private async restoreTransitQuantitiesFromSession(session: {

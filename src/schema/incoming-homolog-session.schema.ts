@@ -124,6 +124,10 @@ export class IncomingHomologSession {
   @Prop({ type: String, default: null })
   ship_round_id: string | null;
 
+  /** Stock creado en createTanda CT (sin ship round); usado para revert. */
+  @Prop({ type: [String], default: [] })
+  created_stock_ids: string[];
+
   @Prop({ type: [IncomingHomologUnitSchema], default: [] })
   units: IncomingHomologUnit[];
 

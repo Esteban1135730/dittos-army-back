@@ -115,6 +115,7 @@ export class IncomingHomologSessionRepository {
     id: string,
     shipRoundId: string | null,
     shippingTotalCop: number,
+    createdStockIds: string[] = [],
   ): Promise<IncomingHomologSessionDocument | null> {
     const now = new Date();
     const $set: Record<string, unknown> = {
@@ -122,6 +123,7 @@ export class IncomingHomologSessionRepository {
       shipping_total_cop: shippingTotalCop,
       converted_at: now,
       updated_at: now,
+      created_stock_ids: createdStockIds,
     };
     if (shipRoundId?.trim()) {
       $set.ship_round_id = shipRoundId.trim();
@@ -149,6 +151,7 @@ export class IncomingHomologSessionRepository {
             status: 'in_progress',
             ship_round_id: null,
             shipping_total_cop: null,
+            created_stock_ids: [],
             updated_at: new Date(),
           },
           $unset: { converted_at: '' },
