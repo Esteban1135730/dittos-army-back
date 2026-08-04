@@ -1,5 +1,5 @@
-import { InjectModel } from '@nestjs/mongoose';
 import { Injectable } from '@nestjs/common';
+import { OwnerModelsService } from '../owner/owner-models.service';
 import { Model } from 'mongoose';
 import {
   CardtraderTransitLine,
@@ -8,10 +8,11 @@ import {
 
 @Injectable()
 export class CardtraderTransitLineRepository {
-  constructor(
-    @InjectModel(CardtraderTransitLine.name)
-    private lineModel: Model<CardtraderTransitLineDocument>,
-  ) {}
+  constructor(private readonly ownerModels: OwnerModelsService) {}
+
+  private get lineModel(): Model<CardtraderTransitLineDocument> {
+    return this.ownerModels.getModel<CardtraderTransitLineDocument>(CardtraderTransitLine.name);
+  }
 
   async createMany(lines: Partial<CardtraderTransitLine>[]): Promise<any[]> {
     return this.lineModel.insertMany(lines as any);

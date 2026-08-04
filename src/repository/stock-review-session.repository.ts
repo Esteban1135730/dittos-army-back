@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { OwnerModelsService } from '../owner/owner-models.service';
 import { Model } from 'mongoose';
 import {
   StockReviewScope,
@@ -16,10 +16,11 @@ const ACTIVE_STATUSES: StockReviewSessionStatus[] = [
 
 @Injectable()
 export class StockReviewSessionRepository {
-  constructor(
-    @InjectModel(StockReviewSession.name)
-    private readonly model: Model<StockReviewSessionDocument>,
-  ) {}
+  constructor(private readonly ownerModels: OwnerModelsService) {}
+
+  private get model(): Model<StockReviewSessionDocument> {
+    return this.ownerModels.getModel<StockReviewSessionDocument>(StockReviewSession.name);
+  }
 
   async findActive(): Promise<StockReviewSessionDocument | null> {
     return this.model

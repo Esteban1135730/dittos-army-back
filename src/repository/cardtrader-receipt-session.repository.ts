@@ -1,5 +1,5 @@
-import { InjectModel } from '@nestjs/mongoose';
 import { Injectable } from '@nestjs/common';
+import { OwnerModelsService } from '../owner/owner-models.service';
 import { Model } from 'mongoose';
 import {
   CardtraderReceiptSession,
@@ -8,10 +8,11 @@ import {
 
 @Injectable()
 export class CardtraderReceiptSessionRepository {
-  constructor(
-    @InjectModel(CardtraderReceiptSession.name)
-    private sessionModel: Model<CardtraderReceiptSessionDocument>,
-  ) {}
+  constructor(private readonly ownerModels: OwnerModelsService) {}
+
+  private get sessionModel(): Model<CardtraderReceiptSessionDocument> {
+    return this.ownerModels.getModel<CardtraderReceiptSessionDocument>(CardtraderReceiptSession.name);
+  }
 
   async create(data: {
     status: 'open' | 'finalized' | 'cancelled';

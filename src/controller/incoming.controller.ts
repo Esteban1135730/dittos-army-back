@@ -34,6 +34,7 @@ import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
 import { StockRepository } from 'src/repository/stock.repository';
 import { StockDto } from 'src/Dto/stock.dto';
 import { IncomingReservationService } from 'src/service/incoming-reservation.service';
+import { RequireFeature } from 'src/owner/feature-acl.guard';
 
 type BatchItemDecision = {
   batchItemId: string;
@@ -43,6 +44,7 @@ type BatchItemDecision = {
 };
 
 @Controller('incoming')
+@RequireFeature('incoming')
 export class IncomingController {
   constructor(
     private readonly incomingBatchRepository: IncomingBatchRepository,
@@ -72,7 +74,7 @@ export class IncomingController {
     }
     const purchaseDate = new Date(body.purchase_date);
     if (Number.isNaN(purchaseDate.getTime())) {
-      throw new Error('purchase_date inv?lido');
+      throw new Error('purchase_date inválido');
     }
 
     for (const it of items) {
@@ -94,7 +96,7 @@ export class IncomingController {
       0,
     );
     if (total_eur_cards_cost <= 0) {
-      throw new Error('total_eur_cards_cost calculado inv?lido');
+      throw new Error('total_eur_cards_cost calculado inválido');
     }
 
     const real_euro_rate_cop_per_eur =
@@ -103,7 +105,7 @@ export class IncomingController {
       !Number.isFinite(real_euro_rate_cop_per_eur) ||
       real_euro_rate_cop_per_eur <= 0
     ) {
-      throw new Error('real_euro_rate_cop_per_eur calculado inv?lido');
+      throw new Error('real_euro_rate_cop_per_eur calculado inválido');
     }
 
     const cards_cost_currency = normalizeCardsCostCurrency(
@@ -218,7 +220,7 @@ export class IncomingController {
       await this.incomingBatchItemRepository.findByBatchId(batchId);
     const batchItemIds = new Set(batchItems.map((it) => it._id.toString()));
 
-    // Bloquear eliminaci?n si existe una tanda global abierta que use items de este batch.
+    // Bloquear eliminación si existe una tanda global abierta que use items de este batch.
     const openShipRounds =
       await this.incomingShipRoundRepository.listOpenRounds();
     for (const round of openShipRounds) {
@@ -233,7 +235,7 @@ export class IncomingController {
         return {
           success: false,
           message:
-            'No se puede eliminar: el batch est? incluido en una tanda global abierta',
+            'No se puede eliminar: el batch está incluido en una tanda global abierta',
         };
       }
     }
@@ -285,7 +287,7 @@ export class IncomingController {
     if (body.purchase_date != null) {
       const parsed = new Date(body.purchase_date);
       if (Number.isNaN(parsed.getTime())) {
-        return { success: false, message: 'purchase_date inv?lido' };
+        return { success: false, message: 'purchase_date inválido' };
       }
       updateData.purchase_date = parsed;
     }
@@ -419,7 +421,7 @@ export class IncomingController {
   ): Promise<{ round_id: string }> {
     const batch = await this.incomingBatchRepository.findById(batchId);
     if (!batch) throw new Error('Batch no encontrado');
-    if (batch.status !== 'open') throw new Error('El batch no est? abierto');
+    if (batch.status !== 'open') throw new Error('El batch no está abierto');
 
     const shipping_total_cop = body?.shipping_total_cop;
     if (shipping_total_cop == null || shipping_total_cop <= 0) {
@@ -450,7 +452,7 @@ export class IncomingController {
     if (round.batch_id !== batchId)
       throw new Error('Round no pertenece al batch');
     if (round.status !== 'reviewing')
-      throw new Error('Round ya est? finalizada');
+      throw new Error('Round ya está finalizada');
 
     const batchItems =
       await this.incomingBatchItemRepository.findByBatchId(batchId);
@@ -480,10 +482,10 @@ export class IncomingController {
       const novedad_notes = (d.novedad_notes ?? '').toString();
 
       if (!Number.isFinite(arrived_quantity) || arrived_quantity < 0) {
-        throw new Error('arrived_quantity inv?lido');
+        throw new Error('arrived_quantity inválido');
       }
       if (!Number.isFinite(novedad_quantity) || novedad_quantity < 0) {
-        throw new Error('novedad_quantity inv?lido');
+        throw new Error('novedad_quantity inválido');
       }
       if (arrived_quantity > it.remaining_quantity) {
         throw new Error('arrived_quantity no puede superar remaining_quantity');
@@ -533,7 +535,7 @@ export class IncomingController {
     if (round.batch_id !== batchId)
       throw new Error('Round no pertenece al batch');
     if (round.status !== 'reviewing')
-      throw new Error('Round no est? en estado reviewing');
+      throw new Error('Round no está en estado reviewing');
 
     const roundItems =
       await this.incomingRoundItemRepository.findByRoundId(roundId);

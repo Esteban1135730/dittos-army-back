@@ -1,5 +1,5 @@
-import { InjectModel } from '@nestjs/mongoose';
 import { Injectable } from '@nestjs/common';
+import { OwnerModelsService } from '../owner/owner-models.service';
 import { Model } from 'mongoose';
 import {
   ReservaIncoming,
@@ -8,10 +8,11 @@ import {
 
 @Injectable()
 export class ReservaIncomingRepository {
-  constructor(
-    @InjectModel(ReservaIncoming.name)
-    private model: Model<ReservaIncomingDocument>,
-  ) {}
+  constructor(private readonly ownerModels: OwnerModelsService) {}
+
+  private get model(): Model<ReservaIncomingDocument> {
+    return this.ownerModels.getModel<ReservaIncomingDocument>(ReservaIncoming.name);
+  }
 
   async sumQuantityForBatchItem(batchItemId: string): Promise<number> {
     const agg = await this.model

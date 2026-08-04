@@ -1,5 +1,13 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
+import {
+  ESTEBAN_CONNECTION_NAME,
+  OWNERS_CONFIG,
+} from './config/owners.config';
+import { OwnerMiddleware } from './owner/owner.middleware';
+import { OwnerModelsService } from './owner/owner-models.service';
+import { FeatureAclGuard } from './owner/feature-acl.guard';
 import { StockRepository } from './repository/stock.repository';
 import { CardStockTagRepository } from './repository/card-stock-tag.repository';
 import { Stock, StockSchema } from './schema/stock.schema';
@@ -133,6 +141,44 @@ import {
   CardtraderReceiptLineSchema,
 } from './schema/cardtrader-receipt-line.schema';
 
+const MONGOOSE_FEATURE_MODELS = [
+  { name: Stock.name, schema: StockSchema },
+  { name: CardStockTag.name, schema: CardStockTagSchema },
+  { name: Pvp.name, schema: PvpSchema },
+  { name: Sale.name, schema: SaleSchema },
+  { name: Client.name, schema: ClientSchema },
+  { name: Reserva.name, schema: ReservaSchema },
+  { name: ReservaIncoming.name, schema: ReservaIncomingSchema },
+  { name: IncomingBatch.name, schema: IncomingBatchSchema },
+  { name: IncomingBatchItem.name, schema: IncomingBatchItemSchema },
+  { name: IncomingRound.name, schema: IncomingRoundSchema },
+  { name: IncomingRoundItem.name, schema: IncomingRoundItemSchema },
+  { name: IncomingShipRound.name, schema: IncomingShipRoundSchema },
+  { name: IncomingShipRoundItem.name, schema: IncomingShipRoundItemSchema },
+  { name: StockReviewSession.name, schema: StockReviewSessionSchema },
+  { name: CardtraderSentUnit.name, schema: CardtraderSentUnitSchema },
+  { name: IncomingHomologSession.name, schema: IncomingHomologSessionSchema },
+  { name: IncomingBatchNovedad.name, schema: IncomingBatchNovedadSchema },
+  {
+    name: IncomingShipRoundCardUnit.name,
+    schema: IncomingShipRoundCardUnitSchema,
+  },
+  {
+    name: IncomingHomologNovedadStock.name,
+    schema: IncomingHomologNovedadStockSchema,
+  },
+  { name: CardtraderTransitLot.name, schema: CardtraderTransitLotSchema },
+  { name: CardtraderTransitLine.name, schema: CardtraderTransitLineSchema },
+  {
+    name: CardtraderReceiptSession.name,
+    schema: CardtraderReceiptSessionSchema,
+  },
+  {
+    name: CardtraderReceiptLine.name,
+    schema: CardtraderReceiptLineSchema,
+  },
+];
+
 @Module({
   controllers: [
     StockController,
@@ -152,6 +198,8 @@ import {
     CardtraderReceiptController,
   ],
   providers: [
+    OwnerModelsService,
+    { provide: APP_GUARD, useClass: FeatureAclGuard },
     SetNameHomologsService,
     LocalCardImagesService,
     TCGDexService,
@@ -194,46 +242,44 @@ import {
     CardtraderReceiptLineRepository,
   ],
   imports: [
-    MongooseModule.forRoot(
-      'mongodb+srv://pabloangola97:aaySea7SeIvobAlb@local-database.r04uoca.mongodb.net',
+    MongooseModule.forRootAsync({
+      useFactory: () => {
+        const uri = process.env.MONGO_URI?.trim();
+        if (!uri) {
+          throw new Error(
+            'MONGO_URI is required (set in .env). No embedded Mongo URI fallback.',
+          );
+        }
+        return {
+          uri,
+          dbName: OWNERS_CONFIG.owners.pablo.dbName,
+        };
+      },
+    }),
+    MongooseModule.forRootAsync({
+      connectionName: ESTEBAN_CONNECTION_NAME,
+      useFactory: () => {
+        const uri = process.env.MONGO_URI?.trim();
+        if (!uri) {
+          throw new Error(
+            'MONGO_URI is required (set in .env). No embedded Mongo URI fallback.',
+          );
+        }
+        return {
+          uri,
+          dbName: OWNERS_CONFIG.owners.esteban.dbName,
+        };
+      },
+    }),
+    MongooseModule.forFeature(MONGOOSE_FEATURE_MODELS),
+    MongooseModule.forFeature(
+      MONGOOSE_FEATURE_MODELS,
+      ESTEBAN_CONNECTION_NAME,
     ),
-    MongooseModule.forFeature([
-      { name: Stock.name, schema: StockSchema },
-      { name: CardStockTag.name, schema: CardStockTagSchema },
-      { name: Pvp.name, schema: PvpSchema },
-      { name: Sale.name, schema: SaleSchema },
-      { name: Client.name, schema: ClientSchema },
-      { name: Reserva.name, schema: ReservaSchema },
-      { name: ReservaIncoming.name, schema: ReservaIncomingSchema },
-      { name: IncomingBatch.name, schema: IncomingBatchSchema },
-      { name: IncomingBatchItem.name, schema: IncomingBatchItemSchema },
-      { name: IncomingRound.name, schema: IncomingRoundSchema },
-      { name: IncomingRoundItem.name, schema: IncomingRoundItemSchema },
-      { name: IncomingShipRound.name, schema: IncomingShipRoundSchema },
-      { name: IncomingShipRoundItem.name, schema: IncomingShipRoundItemSchema },
-      { name: StockReviewSession.name, schema: StockReviewSessionSchema },
-      { name: CardtraderSentUnit.name, schema: CardtraderSentUnitSchema },
-      { name: IncomingHomologSession.name, schema: IncomingHomologSessionSchema },
-      { name: IncomingBatchNovedad.name, schema: IncomingBatchNovedadSchema },
-      {
-        name: IncomingShipRoundCardUnit.name,
-        schema: IncomingShipRoundCardUnitSchema,
-      },
-      {
-        name: IncomingHomologNovedadStock.name,
-        schema: IncomingHomologNovedadStockSchema,
-      },
-      { name: CardtraderTransitLot.name, schema: CardtraderTransitLotSchema },
-      { name: CardtraderTransitLine.name, schema: CardtraderTransitLineSchema },
-      {
-        name: CardtraderReceiptSession.name,
-        schema: CardtraderReceiptSessionSchema,
-      },
-      {
-        name: CardtraderReceiptLine.name,
-        schema: CardtraderReceiptLineSchema,
-      },
-    ]),
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(OwnerMiddleware).forRoutes('*');
+  }
+}

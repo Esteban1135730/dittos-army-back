@@ -36,6 +36,10 @@ export class CardtraderReceiptLine {
   @Prop({ type: String, default: null })
   expansion: string | null;
 
+  /** Snapshot CT blueprint (agrupar UI recepción por carta, no por lote). */
+  @Prop({ type: Number, required: false, default: null })
+  blueprint_id?: number | null;
+
   /** Snapshot de remaining_quantity al abrir sesión. */
   @Prop({ required: true })
   quantity_expected: number;

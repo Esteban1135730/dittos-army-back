@@ -93,6 +93,10 @@ export class CardtraderReceiptService {
       rareza: tl.rareza ?? null,
       collector_number: tl.collector_number ?? null,
       expansion: tl.expansion ?? null,
+      blueprint_id:
+        typeof tl.blueprint_id === 'number' && tl.blueprint_id > 0
+          ? tl.blueprint_id
+          : null,
       quantity_expected: tl.remaining_quantity,
       fx_unit_price: tl.fx_unit_price,
       unit_cost_cop: tl.unit_cost_cop,

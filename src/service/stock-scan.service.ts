@@ -25,6 +25,14 @@ import {
   isBulkCardId,
   isQuantityKind,
 } from 'src/constants/bulk-product';
+import {
+  type OwnerKey,
+  isOwnerKey,
+} from 'src/config/owners.config';
+import {
+  getCurrentOwner,
+  runWithOwnerAsync,
+} from 'src/owner/owner-context';
 
 /** Estados con etiqueta QR imprimible (incluye reserva; excluye vendida/propiedad/etc.). */
 const QR_LABEL_STOCK_STATES = new Set([...SELLABLE_STOCK_STATES, 'reserva']);
@@ -72,6 +80,13 @@ export type StockScanView = {
   reserved_fallback?: boolean;
   /** Vendida con sustitución por copia equivalente (mismo idioma preferido, si no otro). */
   sold_language_fallback?: boolean;
+  /** Owner DB donde se resolvió el stock (034 multi-owner). */
+  owner?: OwnerKey;
+  /**
+   * Venta QR + ObjectId pelado: existía en ambas DBs; se eligió el owner activo.
+   * UI puede mostrar aviso no bloqueante.
+   */
+  owner_ambiguous_resolved?: boolean;
 };
 
 type StockLineDoc = {
@@ -138,7 +153,7 @@ export class StockScanService {
       const opRareza = effectiveOperationalRarezaFromStock(doc);
       rows.push({
         stock_id: stockId,
-        qr_value: encodeStockQrPayload(stockId),
+        qr_value: encodeStockQrPayload(stockId, getCurrentOwner()),
         card_name: doc.card_name ?? '',
         expansion: expansionByStockId.get(stockId) ?? '',
         rareza: operationalRarezaLabel(opRareza),
@@ -159,6 +174,90 @@ export class StockScanService {
   }
 
   async getScanView(
+    stockId: string,
+    excludeIds: string[] = [],
+  ): Promise<StockScanView> {
+    const view = await this.getScanViewInCurrentOwner(stockId, excludeIds);
+    return { ...view, owner: getCurrentOwner() };
+  }
+
+  /**
+   * Venta asistida QR (034): lookup cross-DB.
+   * - `forcedOwner` (prefijo QR): solo esa DB.
+   * - ObjectId pelado: owner activo primero; si no existe/no vendible, el otro.
+   *   Si ambos tienen match → preferir activo + `owner_ambiguous_resolved`.
+   */
+  async getScanViewMulti(
+    stockId: string,
+    excludeIds: string[] = [],
+    forcedOwner?: OwnerKey | null,
+  ): Promise<StockScanView> {
+    const trimmed = stockId?.trim() ?? '';
+    if (!isValidObjectId(trimmed)) {
+      throw new NotFoundException('Stock no encontrado');
+    }
+
+    if (forcedOwner && isOwnerKey(forcedOwner)) {
+      return runWithOwnerAsync(forcedOwner, async () => {
+        const view = await this.getScanViewInCurrentOwner(trimmed, excludeIds);
+        return { ...view, owner: forcedOwner };
+      });
+    }
+
+    const active = getCurrentOwner();
+    const other: OwnerKey = active === 'pablo' ? 'esteban' : 'pablo';
+
+    const activeView = await runWithOwnerAsync(active, async () => {
+      try {
+        return await this.getScanViewInCurrentOwner(trimmed, excludeIds);
+      } catch (e) {
+        if (e instanceof NotFoundException) return null;
+        throw e;
+      }
+    });
+
+    const otherView = await runWithOwnerAsync(other, async () => {
+      try {
+        return await this.getScanViewInCurrentOwner(trimmed, excludeIds);
+      } catch (e) {
+        if (e instanceof NotFoundException) return null;
+        throw e;
+      }
+    });
+
+    const activeOk = activeView != null;
+    const otherOk = otherView != null;
+    const activeSellable = activeOk && activeView.sellable;
+    const otherSellable = otherOk && otherView.sellable;
+
+    if (activeOk && otherOk) {
+      // Ambiguous ObjectId: prefer active (even if not sellable if other also not, or prefer sellable active)
+      const pick =
+        activeSellable || !otherSellable ? activeView : otherView;
+      const pickOwner = pick === activeView ? active : other;
+      return {
+        ...pick,
+        owner: pickOwner,
+        owner_ambiguous_resolved: true,
+      };
+    }
+
+    if (activeOk) {
+      // Prefer active even if not sellable when other missing; if not sellable try other already null
+      if (!activeSellable && otherOk && otherSellable) {
+        return { ...otherView!, owner: other };
+      }
+      return { ...activeView!, owner: active };
+    }
+
+    if (otherOk) {
+      return { ...otherView!, owner: other };
+    }
+
+    throw new NotFoundException('Stock no encontrado');
+  }
+
+  private async getScanViewInCurrentOwner(
     stockId: string,
     excludeIds: string[] = [],
   ): Promise<StockScanView> {

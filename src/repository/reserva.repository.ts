@@ -1,14 +1,16 @@
-import { InjectModel } from '@nestjs/mongoose';
 import { Reserva, ReservaDocument } from '../schema/reserva.schema';
 import { Injectable } from '@nestjs/common';
+import { OwnerModelsService } from '../owner/owner-models.service';
 import { Model } from 'mongoose';
 import { ReservaDto } from 'src/Dto/reserva.dto';
 
 @Injectable()
 export class ReservaRepository {
-  constructor(
-    @InjectModel(Reserva.name) private reservaModel: Model<ReservaDocument>,
-  ) {}
+  constructor(private readonly ownerModels: OwnerModelsService) {}
+
+  private get reservaModel(): Model<ReservaDocument> {
+    return this.ownerModels.getModel<ReservaDocument>(Reserva.name);
+  }
 
   async create(dto: ReservaDto): Promise<Reserva> {
     const created = new this.reservaModel({

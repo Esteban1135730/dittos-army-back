@@ -1,5 +1,5 @@
-import { InjectModel } from '@nestjs/mongoose';
 import { Injectable } from '@nestjs/common';
+import { OwnerModelsService } from '../owner/owner-models.service';
 import { Model } from 'mongoose';
 import {
   IncomingHomologNovedadStock,
@@ -9,10 +9,11 @@ import {
 
 @Injectable()
 export class IncomingHomologNovedadStockRepository {
-  constructor(
-    @InjectModel(IncomingHomologNovedadStock.name)
-    private model: Model<IncomingHomologNovedadStockDocument>,
-  ) {}
+  constructor(private readonly ownerModels: OwnerModelsService) {}
+
+  private get model(): Model<IncomingHomologNovedadStockDocument> {
+    return this.ownerModels.getModel<IncomingHomologNovedadStockDocument>(IncomingHomologNovedadStock.name);
+  }
 
   async upsertBySentUnitKey(
     sentUnitKey: string,

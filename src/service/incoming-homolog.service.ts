@@ -1684,6 +1684,7 @@ export class IncomingHomologService {
     status: string;
     shipping_total_cop?: number | null;
     ship_round_id?: string | null;
+    created_stock_ids?: string[];
     units?: IncomingHomologUnit[];
     cardtrader_synced_at?: Date;
     created_at?: Date;
@@ -1702,6 +1703,11 @@ export class IncomingHomologService {
       status: session.status,
       shipping_total_cop: session.shipping_total_cop ?? null,
       ship_round_id: session.ship_round_id ?? null,
+      created_stock_ids: Array.isArray(session.created_stock_ids)
+        ? session.created_stock_ids.filter(
+            (id): id is string => typeof id === 'string' && id.length > 0,
+          )
+        : [],
       units: units.map((u) => {
         const unitPriceFx =
           u.unit_price_fx ??

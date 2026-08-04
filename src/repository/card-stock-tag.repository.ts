@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { OwnerModelsService } from '../owner/owner-models.service';
 import { Model } from 'mongoose';
 import {
   CardStockTag,
@@ -8,10 +8,11 @@ import {
 
 @Injectable()
 export class CardStockTagRepository {
-  constructor(
-    @InjectModel(CardStockTag.name)
-    private readonly model: Model<CardStockTagDocument>,
-  ) {}
+  constructor(private readonly ownerModels: OwnerModelsService) {}
+
+  private get model(): Model<CardStockTagDocument> {
+    return this.ownerModels.getModel<CardStockTagDocument>(CardStockTag.name);
+  }
 
   async setTagsForCardId(cardId: string, tags: string[]): Promise<void> {
     const cid = String(cardId ?? '').trim();

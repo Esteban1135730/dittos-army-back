@@ -11,6 +11,7 @@ import {
   Param,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { isValidObjectId } from 'mongoose';
 import { Stock } from 'src/schema/stock.schema';
@@ -41,6 +42,10 @@ import {
 } from 'src/constants/item-rareza';
 import { normalizeStockTagsInput } from 'src/constants/stock-tags';
 import { SELLABLE_STOCK_STATES } from 'src/utils/stock-sellable';
+import {
+  FeatureAclGuard,
+  RequireFeature,
+} from 'src/owner/feature-acl.guard';
 
 const ALLOWED_STOCK_LANGUAGES = new Set([
   'es',
@@ -165,6 +170,8 @@ export class StockController {
   }
 
   @Post('export-store-inventory')
+  @UseGuards(FeatureAclGuard)
+  @RequireFeature('export-tienda')
   async exportStoreInventory(): Promise<{
     success: boolean;
     path?: string;
@@ -175,6 +182,8 @@ export class StockController {
   }
 
   @Post('export-store-upcoming')
+  @UseGuards(FeatureAclGuard)
+  @RequireFeature('export-tienda')
   async exportStoreUpcoming(): Promise<{
     success: boolean;
     path?: string;
@@ -185,6 +194,8 @@ export class StockController {
   }
 
   @Post('publish-store-catalog')
+  @UseGuards(FeatureAclGuard)
+  @RequireFeature('export-tienda')
   async publishStoreCatalog() {
     return this.storeInventoryService.publishStoreCatalog();
   }
@@ -222,11 +233,24 @@ export class StockController {
   async scanStockLine(
     @Param('id') id: string,
     @Query('exclude') exclude?: string,
+    /**
+     * Venta asistida QR: lookup cross-DB (activo → otro; o `scan_owner` desde prefijo).
+     * Spec 034 — single-owner (default) solo DB del X-Owner.
+     */
+    @Query('multi') multi?: string,
+    @Query('scan_owner') scanOwner?: string,
   ) {
     const excludeIds = (exclude ?? '')
       .split(',')
       .map((v) => v.trim())
       .filter(Boolean);
+    const multiMode =
+      multi === '1' || multi === 'true' || Boolean(scanOwner?.trim());
+    if (multiMode) {
+      const forced =
+        scanOwner === 'pablo' || scanOwner === 'esteban' ? scanOwner : null;
+      return this.stockScanService.getScanViewMulti(id, excludeIds, forced);
+    }
     return this.stockScanService.getScanView(id, excludeIds);
   }
 

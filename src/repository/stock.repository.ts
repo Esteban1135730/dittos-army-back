@@ -1,14 +1,16 @@
-import { InjectModel } from '@nestjs/mongoose';
-import { Stock, StockDocument, StockSchema } from '../schema/stock.schema';
+import { Stock, StockDocument } from '../schema/stock.schema';
 import { Injectable } from '@nestjs/common';
+import { OwnerModelsService } from '../owner/owner-models.service';
 import { Model } from 'mongoose';
 import { StockDto } from 'src/Dto/stock.dto';
 
 @Injectable()
 export class StockRepository {
-  constructor(
-    @InjectModel(Stock.name) private stockModel: Model<StockDocument>,
-  ) {}
+  constructor(private readonly ownerModels: OwnerModelsService) {}
+
+  private get stockModel(): Model<StockDocument> {
+    return this.ownerModels.getModel<StockDocument>(Stock.name);
+  }
 
   async create(stockDto: StockDto): Promise<Stock> {
     const {

@@ -1,5 +1,5 @@
-import { InjectModel } from '@nestjs/mongoose';
 import { Injectable } from '@nestjs/common';
+import { OwnerModelsService } from '../owner/owner-models.service';
 import { Model } from 'mongoose';
 import {
   IncomingShipRoundItem,
@@ -8,10 +8,11 @@ import {
 
 @Injectable()
 export class IncomingShipRoundItemRepository {
-  constructor(
-    @InjectModel(IncomingShipRoundItem.name)
-    private itemModel: Model<IncomingShipRoundItemDocument>,
-  ) {}
+  constructor(private readonly ownerModels: OwnerModelsService) {}
+
+  private get itemModel(): Model<IncomingShipRoundItemDocument> {
+    return this.ownerModels.getModel<IncomingShipRoundItemDocument>(IncomingShipRoundItem.name);
+  }
 
   async createMany(items: Partial<IncomingShipRoundItem>[]): Promise<any[]> {
     if (!Array.isArray(items) || items.length === 0) return [];

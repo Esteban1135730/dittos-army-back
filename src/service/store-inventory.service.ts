@@ -23,6 +23,7 @@ import {
   type StoreGitPublishResult,
 } from '../utils/store-git-publish';
 import { localizeStoreItemImages } from '../utils/store-image-localize';
+import { assertFeatureAllowed } from '../owner/feature-acl.guard';
 
 export type StoreExportResult = {
   success: boolean;
@@ -125,6 +126,7 @@ export class StoreInventoryService {
   }
 
   async exportStoreInventory(): Promise<StoreExportResult> {
+    assertFeatureAllowed('export-tienda');
     const outputPath =
       process.env.STORE_INVENTORY_PATH ||
       path.join(
@@ -310,6 +312,7 @@ export class StoreInventoryService {
   }
 
   async exportStoreUpcoming(): Promise<StoreExportResult> {
+    assertFeatureAllowed('export-tienda');
     const outputPath =
       process.env.STORE_UPCOMING_PATH ||
       path.join(
@@ -458,6 +461,7 @@ export class StoreInventoryService {
   }
 
   async publishStoreCatalog(): Promise<PublishStoreCatalogResult> {
+    assertFeatureAllowed('export-tienda');
     const inventory = await this.exportStoreInventory();
     const upcoming = await this.exportStoreUpcoming();
 

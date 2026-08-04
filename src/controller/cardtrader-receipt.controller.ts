@@ -14,8 +14,10 @@ import {
   InconsistencyLineDto,
   ReceiveLineDto,
 } from '../Dto/cardtrader-receipt.dto';
+import { RequireFeature } from 'src/owner/feature-acl.guard';
 
 @Controller('cardtrader/receipt')
+@RequireFeature('cardtrader')
 export class CardtraderReceiptController {
   constructor(private readonly receiptService: CardtraderReceiptService) {}
 

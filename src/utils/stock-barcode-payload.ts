@@ -1,14 +1,33 @@
 import { isValidObjectId } from 'mongoose';
+import {
+  OWNERS_CONFIG,
+  type OwnerKey,
+  isOwnerKey,
+} from '../config/owners.config';
 
-/** Prefijo en QR de stock (pistola QR y cámara). */
-export const STOCK_QR_PREFIX = 'DA-STOCK:';
+/** Prefijo legacy Pablo (QR stock). */
+export const STOCK_QR_PREFIX = OWNERS_CONFIG.owners.pablo.stockQrPrefix;
 
-/** Pistola en modo teclado (US→ES): `:`→Ñ, `-`→' */
-const LOOSE_STOCK_QR_RE = /DA[-_' ]?STOCK[:\u00D1;]?([a-f0-9]{24})/i;
+export type ParsedStockQr = {
+  stockId: string;
+  /** null si ObjectId pelado (sin prefijo). */
+  owner: OwnerKey | null;
+  prefixUsed?: string;
+};
 
-export function encodeStockQrPayload(stockId: string): string {
-  return `${STOCK_QR_PREFIX}${stockId.trim()}`;
+/** Pistola teclado US→ES: `:`→Ñ, `-`→' */
+function loosePrefixRe(prefix: string): RegExp {
+  // DA-STOCK: → DA[-_' ]?STOCK[:Ñ;]?
+  const body = prefix.replace(/:$/, '');
+  const escaped = body.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/-/g, '[-_\' ]?');
+  return new RegExp(`${escaped}[:\\u00D1;]?([a-f0-9]{24})`, 'i');
 }
+
+const PREFIX_ENTRIES = Object.values(OWNERS_CONFIG.owners).map((o) => ({
+  owner: o.key,
+  prefix: o.stockQrPrefix,
+  loose: loosePrefixRe(o.stockQrPrefix),
+}));
 
 function normalizeQrWedgeInput(raw: string): string {
   return raw
@@ -17,23 +36,55 @@ function normalizeQrWedgeInput(raw: string): string {
     .replace(/[''´`]/g, '-');
 }
 
-export function parseStockQrPayload(raw: string): string | null {
+/**
+ * Parse multi-owner: reconoce DA-STOCK: y ESTEBAN-STOCK: (+ teclado ES).
+ * ObjectId pelado → owner null.
+ */
+export function parseStockQrPayloadMulti(raw: string): ParsedStockQr | null {
   const trimmed = raw.trim();
   if (!trimmed) return null;
 
   const normalized = normalizeQrWedgeInput(trimmed);
-  if (normalized.startsWith(STOCK_QR_PREFIX)) {
-    const id = normalized.slice(STOCK_QR_PREFIX.length).trim();
-    return isValidObjectId(id) ? id : null;
+
+  for (const entry of PREFIX_ENTRIES) {
+    if (normalized.toUpperCase().startsWith(entry.prefix.toUpperCase())) {
+      const id = normalized.slice(entry.prefix.length).trim();
+      if (!isValidObjectId(id)) return null;
+      return { stockId: id, owner: entry.owner, prefixUsed: entry.prefix };
+    }
   }
 
-  const loose =
-    LOOSE_STOCK_QR_RE.exec(trimmed) ?? LOOSE_STOCK_QR_RE.exec(normalized);
-  if (loose?.[1] && isValidObjectId(loose[1])) {
-    return loose[1];
+  for (const entry of PREFIX_ENTRIES) {
+    const loose =
+      entry.loose.exec(trimmed) ?? entry.loose.exec(normalized);
+    if (loose?.[1] && isValidObjectId(loose[1])) {
+      return {
+        stockId: loose[1],
+        owner: entry.owner,
+        prefixUsed: entry.prefix,
+      };
+    }
   }
 
-  return isValidObjectId(trimmed) ? trimmed : null;
+  if (isValidObjectId(trimmed)) {
+    return { stockId: trimmed, owner: null };
+  }
+
+  return null;
+}
+
+/** Legacy: solo stockId (o null). */
+export function parseStockQrPayload(raw: string): string | null {
+  return parseStockQrPayloadMulti(raw)?.stockId ?? null;
+}
+
+export function encodeStockQrPayload(
+  stockId: string,
+  owner: OwnerKey = 'pablo',
+): string {
+  const key = isOwnerKey(owner) ? owner : 'pablo';
+  const prefix = OWNERS_CONFIG.owners[key].stockQrPrefix;
+  return `${prefix}${stockId.trim()}`;
 }
 
 /** @deprecated Usar encodeStockQrPayload */

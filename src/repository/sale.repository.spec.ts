@@ -15,7 +15,10 @@ describe('SaleRepository.finalizeCycleForSale', () => {
       findById: jest.fn().mockReturnValue({ exec: findByIdExec }),
       updateOne: jest.fn().mockReturnValue({ exec: updateOneExec }),
     } as any;
-    const repo = new SaleRepository(mockModel);
+    const ownerModels = {
+      getModel: jest.fn().mockReturnValue(mockModel),
+    };
+    const repo = new SaleRepository(ownerModels as any);
     return { repo, mockModel, findByIdExec, updateOneExec };
   }
 

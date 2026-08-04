@@ -13,8 +13,10 @@ import {
   UpdateCardtraderTransitLotDto,
 } from 'src/Dto/cardtrader-transit-lot.dto';
 import { CardtraderTransitLotService } from 'src/service/cardtrader/cardtrader-transit-lot.service';
+import { RequireFeature } from 'src/owner/feature-acl.guard';
 
 @Controller('cardtrader/transit-lots')
+@RequireFeature('cardtrader')
 export class CardtraderTransitLotController {
   constructor(private readonly transitLotService: CardtraderTransitLotService) {}
 

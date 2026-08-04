@@ -1,6 +1,6 @@
-import { InjectModel } from '@nestjs/mongoose';
 import { Pvp, PvpDocument } from '../schema/pvp.schema';
 import { Injectable } from '@nestjs/common';
+import { OwnerModelsService } from '../owner/owner-models.service';
 import { Model } from 'mongoose';
 import { PvpDto } from 'src/Dto/pvp.dto';
 import { normalizeOperationalRareza } from '../constants/item-rareza';
@@ -14,7 +14,11 @@ function filterBasePvp(cardId: string) {
 
 @Injectable()
 export class PvpRepository {
-  constructor(@InjectModel(Pvp.name) private pvpModel: Model<PvpDocument>) {}
+  constructor(private readonly ownerModels: OwnerModelsService) {}
+
+  private get pvpModel(): Model<PvpDocument> {
+    return this.ownerModels.getModel<PvpDocument>(Pvp.name);
+  }
 
   private normalizeDtoRareza(dto: PvpDto): string | null {
     return normalizeOperationalRareza(dto.rareza);

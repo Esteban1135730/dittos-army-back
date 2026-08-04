@@ -1,14 +1,16 @@
-import { InjectModel } from '@nestjs/mongoose';
 import { Client, ClientDocument } from '../schema/client.schema';
 import { Injectable } from '@nestjs/common';
+import { OwnerModelsService } from '../owner/owner-models.service';
 import { Model } from 'mongoose';
 import { ClientDto } from 'src/Dto/client.dto';
 
 @Injectable()
 export class ClientRepository {
-  constructor(
-    @InjectModel(Client.name) private clientModel: Model<ClientDocument>,
-  ) {}
+  constructor(private readonly ownerModels: OwnerModelsService) {}
+
+  private get clientModel(): Model<ClientDocument> {
+    return this.ownerModels.getModel<ClientDocument>(Client.name);
+  }
 
   async create(dto: ClientDto): Promise<Client> {
     const notasTrim = dto.notas?.trim();

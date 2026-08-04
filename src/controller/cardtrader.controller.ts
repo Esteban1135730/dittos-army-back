@@ -15,6 +15,7 @@ import {
   CardTraderService,
 } from 'src/service/cardtrader/cardtrader.service';
 import { CardTraderTcgdexResolveService } from 'src/service/cardtrader/cardtrader-tcgdex-resolve.service';
+import { RequireFeature } from 'src/owner/feature-acl.guard';
 
 const ORDER_STATES = new Set([
   'paid',
@@ -33,6 +34,7 @@ const CT0_QUANTITY_STATES = new Set(['ok', 'pending', 'missing']);
 const MAX_QTY = 99;
 
 @Controller('cardtrader')
+@RequireFeature('cardtrader')
 export class CardTraderController {
   constructor(
     private readonly cardTrader: CardTraderService,

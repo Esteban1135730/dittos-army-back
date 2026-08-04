@@ -1,5 +1,5 @@
-import { InjectModel } from '@nestjs/mongoose';
 import { Injectable } from '@nestjs/common';
+import { OwnerModelsService } from '../owner/owner-models.service';
 import { Model } from 'mongoose';
 import {
   CardtraderTransitLot,
@@ -8,10 +8,11 @@ import {
 
 @Injectable()
 export class CardtraderTransitLotRepository {
-  constructor(
-    @InjectModel(CardtraderTransitLot.name)
-    private lotModel: Model<CardtraderTransitLotDocument>,
-  ) {}
+  constructor(private readonly ownerModels: OwnerModelsService) {}
+
+  private get lotModel(): Model<CardtraderTransitLotDocument> {
+    return this.ownerModels.getModel<CardtraderTransitLotDocument>(CardtraderTransitLot.name);
+  }
 
   async create(data: {
     status: 'open' | 'completed';

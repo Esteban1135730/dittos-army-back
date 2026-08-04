@@ -18,8 +18,10 @@ import { IncomingReservationService } from 'src/service/incoming-reservation.ser
 import { ReviewIncomingShipRoundDto } from 'src/Dto/incoming-ship-round.dto';
 import { CreateIncomingShipRoundDto } from 'src/Dto/incoming-ship-round.dto';
 import { normalizeOperationalRareza } from 'src/constants/item-rareza';
+import { RequireFeature } from 'src/owner/feature-acl.guard';
 
 @Controller('incoming/ship-round')
+@RequireFeature('incoming')
 export class IncomingShipRoundController {
   constructor(
     private readonly shipRoundRepository: IncomingShipRoundRepository,

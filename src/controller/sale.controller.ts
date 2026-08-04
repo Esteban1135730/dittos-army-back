@@ -21,6 +21,14 @@ import {
 import { SaleDocument } from 'src/schema/sale.schema';
 import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
 import { isQuantityKind } from 'src/constants/bulk-product';
+import {
+  type OwnerKey,
+  isOwnerKey,
+} from 'src/config/owners.config';
+import {
+  getCurrentOwner,
+  runWithOwnerAsync,
+} from 'src/owner/owner-context';
 
 function pvpToCop(pvp: number, currency: string): number {
   if (currency === 'COP') return Math.round(pvp);
@@ -75,6 +83,49 @@ export class SaleController {
   @Get('keep')
   async listKeepedCards() {
     return await this.saleRepository.findByType('propiedad');
+  }
+
+  /**
+   * Eliminar definitivo: Sale type propiedad + hard delete del Stock.
+   * Ruta estática `keep/:id` para no chocar con `DELETE /sales/:id`.
+   */
+  @Delete('keep/:id')
+  async purgeKeep(@Param('id') id: string) {
+    if (!id) {
+      return { success: false, message: 'ID de venta es requerido' };
+    }
+
+    const sale = await this.saleRepository.findById(id);
+    if (!sale) {
+      return { success: false, message: 'Venta no encontrada' };
+    }
+
+    if (sale.type !== 'propiedad') {
+      return {
+        success: false,
+        message: 'Solo se pueden eliminar registros de propiedad',
+      };
+    }
+
+    const reserva = await this.reservaRepository.findByStockId(sale.stock_id);
+    if (reserva) {
+      return {
+        success: false,
+        message: 'No se puede eliminar: la carta tiene una reserva asociada',
+      };
+    }
+
+    await this.saleRepository.delete(id);
+
+    try {
+      await this.stockRepository.deleteById(sale.stock_id);
+      return { success: true };
+    } catch {
+      return {
+        success: false,
+        message: 'Sale eliminado, pero no se pudo borrar el stock',
+      };
+    }
   }
 
   @Post('sell')
@@ -196,6 +247,8 @@ export class SaleController {
         stock_id: string;
         amount_cop: number;
         notes?: string;
+        /** Owner de la línea (venta QR multi-DB). Si falta → X-Owner activo. */
+        owner?: OwnerKey;
       }>;
     },
   ) {
@@ -204,6 +257,7 @@ export class SaleController {
       stock_id: string;
       success: boolean;
       message?: string;
+      owner?: OwnerKey;
     }> = [];
     if (items.length === 0) {
       return {
@@ -214,154 +268,38 @@ export class SaleController {
       };
     }
 
-    const results: Array<{
+    type BatchResult = {
       stock_id: string;
       success: boolean;
       message?: string;
-    }> = [];
+      owner: OwnerKey;
+    };
+    const results: BatchResult[] = [];
+    const defaultOwner = getCurrentOwner();
 
-    // Conteo restante por stock_id para productos quantity (rechazar excedentes en orden).
-    const remainingQtyByStockId = new Map<string, number>();
+    // Preserve input order; process sequentially, switching owner context per item.
+    const remainingQtyByStockOwner = new Map<string, number>();
 
     for (const item of items) {
       const stockId = item.stock_id?.trim() ?? '';
-      if (!stockId || !isValidObjectId(stockId)) {
-        results.push({
-          stock_id: stockId || '(vacío)',
-          success: false,
-          message: 'stock_id inválido',
-        });
-        continue;
-      }
-      if (item.amount_cop == null || item.amount_cop <= 0) {
-        results.push({
-          stock_id: stockId,
-          success: false,
-          message: 'amount_cop debe ser mayor a 0',
-        });
-        continue;
-      }
-
-      const stock = await this.stockRepository.findById(stockId);
-      if (!stock) {
-        results.push({
-          stock_id: stockId,
-          success: false,
-          message: 'Stock no encontrado',
-        });
-        continue;
-      }
-
-      const cardState = (stock as { card_state?: string }).card_state ?? '';
-      const productKind = (stock as { product_kind?: string }).product_kind;
-      const isQty = isQuantityKind(productKind);
-
-      if (!isQty && cardState === 'vendida') {
-        results.push({
-          stock_id: stockId,
-          success: false,
-          message: 'La carta ya está vendida',
-        });
-        continue;
-      }
-      if (cardState === 'propiedad') {
-        results.push({
-          stock_id: stockId,
-          success: false,
-          message: 'La carta está en propiedad',
-        });
-        continue;
-      }
-      if (
-        cardState !== 'disponible' &&
-        cardState !== 'en_stock_colombia' &&
-        cardState !== 'reserva'
-      ) {
-        results.push({
-          stock_id: stockId,
-          success: false,
-          message: 'Estado de stock no vendible',
-        });
-        continue;
-      }
-
-      if (isQty) {
-        if (!remainingQtyByStockId.has(stockId)) {
-          const q =
-            typeof (stock as { quantity?: number }).quantity === 'number'
-              ? (stock as { quantity: number }).quantity
-              : 0;
-          remainingQtyByStockId.set(stockId, q);
-        }
-        const remaining = remainingQtyByStockId.get(stockId) ?? 0;
-        if (remaining < 1) {
+      let itemOwner: OwnerKey = defaultOwner;
+      if (item.owner != null) {
+        if (!isOwnerKey(item.owner)) {
           results.push({
-            stock_id: stockId,
+            stock_id: stockId || '(vacío)',
             success: false,
-            message: 'Stock insuficiente',
+            message: 'owner inválido',
+            owner: defaultOwner,
           });
           continue;
         }
-
-        try {
-          const updated = await this.stockRepository.decrementQuantityAtomic(
-            stockId,
-            1,
-          );
-          if (!updated) {
-            remainingQtyByStockId.set(stockId, 0);
-            results.push({
-              stock_id: stockId,
-              success: false,
-              message: 'Stock insuficiente',
-            });
-            continue;
-          }
-          remainingQtyByStockId.set(
-            stockId,
-            typeof (updated as { quantity?: number }).quantity === 'number'
-              ? (updated as { quantity: number }).quantity
-              : remaining - 1,
-          );
-          await this.saleRepository.create({
-            stock_id: stockId,
-            card_id: stock.card_id,
-            type: 'venta',
-            amount_cop: Math.round(item.amount_cop),
-            notes: item.notes ?? 'Venta asistida QR',
-          });
-          // No updateCardState vendida mientras qty > 0.
-          results.push({ stock_id: stockId, success: true });
-        } catch {
-          results.push({
-            stock_id: stockId,
-            success: false,
-            message: 'Error al registrar la venta',
-          });
-        }
-        continue;
+        itemOwner = item.owner;
       }
 
-      try {
-        await this.saleRepository.create({
-          stock_id: stockId,
-          card_id: stock.card_id,
-          type: 'venta',
-          amount_cop: Math.round(item.amount_cop),
-          notes: item.notes ?? 'Venta asistida QR',
-        });
-        await this.stockRepository.updateCardState(stockId, 'vendida');
-        if (cardState === 'reserva') {
-          await this.reservaRepository.deleteByStockId(stockId);
-        }
-        results.push({ stock_id: stockId, success: true });
-      } catch {
-        results.push({
-          stock_id: stockId,
-          success: false,
-          message: 'Error al registrar la venta',
-        });
-      }
+      const result = await runWithOwnerAsync(itemOwner, async () =>
+        this.sellBatchOneItem(item, itemOwner, remainingQtyByStockOwner),
+      );
+      results.push(result);
     }
 
     const sold_count = results.filter((r) => r.success).length;
@@ -370,6 +308,161 @@ export class SaleController {
       sold_count,
       results,
     };
+  }
+
+  private async sellBatchOneItem(
+    item: {
+      stock_id: string;
+      amount_cop: number;
+      notes?: string;
+    },
+    owner: OwnerKey,
+    remainingQtyByStockOwner: Map<string, number>,
+  ): Promise<{
+    stock_id: string;
+    success: boolean;
+    message?: string;
+    owner: OwnerKey;
+  }> {
+    const stockId = item.stock_id?.trim() ?? '';
+    if (!stockId || !isValidObjectId(stockId)) {
+      return {
+        stock_id: stockId || '(vacío)',
+        success: false,
+        message: 'stock_id inválido',
+        owner,
+      };
+    }
+    if (item.amount_cop == null || item.amount_cop <= 0) {
+      return {
+        stock_id: stockId,
+        success: false,
+        message: 'amount_cop debe ser mayor a 0',
+        owner,
+      };
+    }
+
+    const stock = await this.stockRepository.findById(stockId);
+    if (!stock) {
+      return {
+        stock_id: stockId,
+        success: false,
+        message: 'Stock no encontrado',
+        owner,
+      };
+    }
+
+    const cardState = (stock as { card_state?: string }).card_state ?? '';
+    const productKind = (stock as { product_kind?: string }).product_kind;
+    const isQty = isQuantityKind(productKind);
+    const qtyKey = `${owner}:${stockId}`;
+
+    if (!isQty && cardState === 'vendida') {
+      return {
+        stock_id: stockId,
+        success: false,
+        message: 'La carta ya está vendida',
+        owner,
+      };
+    }
+    if (cardState === 'propiedad') {
+      return {
+        stock_id: stockId,
+        success: false,
+        message: 'La carta está en propiedad',
+        owner,
+      };
+    }
+    if (
+      cardState !== 'disponible' &&
+      cardState !== 'en_stock_colombia' &&
+      cardState !== 'reserva'
+    ) {
+      return {
+        stock_id: stockId,
+        success: false,
+        message: 'Estado de stock no vendible',
+        owner,
+      };
+    }
+
+    if (isQty) {
+      if (!remainingQtyByStockOwner.has(qtyKey)) {
+        const q =
+          typeof (stock as { quantity?: number }).quantity === 'number'
+            ? (stock as { quantity: number }).quantity
+            : 0;
+        remainingQtyByStockOwner.set(qtyKey, q);
+      }
+      const remaining = remainingQtyByStockOwner.get(qtyKey) ?? 0;
+      if (remaining < 1) {
+        return {
+          stock_id: stockId,
+          success: false,
+          message: 'Stock insuficiente',
+          owner,
+        };
+      }
+
+      try {
+        const updated = await this.stockRepository.decrementQuantityAtomic(
+          stockId,
+          1,
+        );
+        if (!updated) {
+          remainingQtyByStockOwner.set(qtyKey, 0);
+          return {
+            stock_id: stockId,
+            success: false,
+            message: 'Stock insuficiente',
+            owner,
+          };
+        }
+        remainingQtyByStockOwner.set(
+          qtyKey,
+          typeof (updated as { quantity?: number }).quantity === 'number'
+            ? (updated as { quantity: number }).quantity
+            : remaining - 1,
+        );
+        await this.saleRepository.create({
+          stock_id: stockId,
+          card_id: stock.card_id,
+          type: 'venta',
+          amount_cop: Math.round(item.amount_cop),
+          notes: item.notes ?? 'Venta asistida QR',
+        });
+        return { stock_id: stockId, success: true, owner };
+      } catch {
+        return {
+          stock_id: stockId,
+          success: false,
+          message: 'Error al registrar la venta',
+          owner,
+        };
+      }
+    }
+
+    try {
+      await this.saleRepository.create({
+        stock_id: stockId,
+        card_id: stock.card_id,
+        type: 'venta',
+        amount_cop: Math.round(item.amount_cop),
+        notes: item.notes ?? 'Venta asistida QR',
+      });
+      await this.stockRepository.updateCardState(stockId, 'vendida');
+      if (cardState === 'reserva') {
+        await this.reservaRepository.deleteByStockId(stockId);
+      }
+      return { stock_id: stockId, success: true, owner };
+    } catch {
+      return {
+        stock_id: stockId,
+        success: false,
+        message: 'Error al registrar la venta',
+        owner,
+      };
+    }
   }
 
   @Get('dashboard')

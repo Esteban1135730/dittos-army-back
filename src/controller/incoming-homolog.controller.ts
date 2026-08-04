@@ -18,8 +18,10 @@ import type {
   NovedadHomologUnitDto,
   VerifyHomologUnitDto,
 } from '../Dto/incoming-homolog.dto';
+import { RequireFeature } from 'src/owner/feature-acl.guard';
 
 @Controller('incoming/homolog')
+@RequireFeature('incoming')
 export class IncomingHomologController {
   constructor(private readonly homologService: IncomingHomologService) {}
 
