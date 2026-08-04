@@ -444,11 +444,21 @@ export class CardtraderTransitLotService {
         image_url: item.image_url,
       })),
     );
+    const languageByCardId = new Map<string, string>();
+    for (const item of items) {
+      const id = item.card_id?.trim();
+      if (id && item.language?.trim() && !languageByCardId.has(id)) {
+        languageByCardId.set(id, item.language.trim());
+      }
+    }
     const cardMap = new Map<string, TcgDexBatchEnrichment>();
     await Promise.all(
       cardIds.map(async (cardId) => {
         try {
-          const card = await this.tcgDexService.getCard(cardId);
+          const card = await this.tcgDexService.getCard(
+            cardId,
+            languageByCardId.get(cardId),
+          );
           if (card) {
             cardMap.set(cardId, {
               name: card.name || '',

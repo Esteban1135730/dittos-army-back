@@ -14081,8 +14081,8 @@
         "database": {}
       }
     },
-    "ja:Csm25": {
-      "tcgdex_set_id": "Csm25",
+    "ja:CSM2.5_alias_fix": {
+      "tcgdex_set_id": "CSM2.5",
       "locale": "ja",
       "names": {
         "en_cardtrader": "CSM2.5: Striking Competition",
@@ -14090,7 +14090,7 @@
       }
     },
     "ja:Csm2a": {
-      "tcgdex_set_id": "Csm2a",
+      "tcgdex_set_id": "CSM2a",
       "locale": "ja",
       "names": {
         "en_cardtrader": "CSM2a: Shining Synergy - Shower",
@@ -14098,7 +14098,7 @@
       }
     },
     "ja:Csm2b": {
-      "tcgdex_set_id": "Csm2b",
+      "tcgdex_set_id": "CSM2b",
       "locale": "ja",
       "names": {
         "en_cardtrader": "CSM2b: Shining Synergy - Supreme",
@@ -14106,7 +14106,7 @@
       }
     },
     "zh-cn:CSM2C": {
-      "tcgdex_set_id": "CSM2C",
+      "tcgdex_set_id": "CSM2c",
       "locale": "zh-cn",
       "names": {
         "en_cardtrader": "CSM2c: Shining Synergy - Summon",
@@ -14114,7 +14114,7 @@
       }
     },
     "ja:Csm1a": {
-      "tcgdex_set_id": "Csm1a",
+      "tcgdex_set_id": "CSM1a",
       "locale": "ja",
       "names": {
         "en_cardtrader": "CSM1a: Storming Emergence - Radiant",
@@ -14122,7 +14122,7 @@
       }
     },
     "ja:Csm1b": {
-      "tcgdex_set_id": "Csm1b",
+      "tcgdex_set_id": "CSM1b",
       "locale": "ja",
       "names": {
         "en_cardtrader": "CSM1b: Storming Emergence - Verdant",
@@ -14130,7 +14130,7 @@
       }
     },
     "zh-cn:CSM1C": {
-      "tcgdex_set_id": "CSM1C",
+      "tcgdex_set_id": "CSM1c",
       "locale": "zh-cn",
       "names": {
         "en_cardtrader": "CSM1c: Storming Emergence - Abundant",
@@ -14210,7 +14210,7 @@
       }
     },
     "ja:Csm15": {
-      "tcgdex_set_id": "Csm15",
+      "tcgdex_set_id": "CSM1.5",
       "locale": "ja",
       "names": {
         "en_cardtrader": "CSM1.5: Battle Elite",
@@ -14610,7 +14610,7 @@
       }
     },
     "ja:Csm2d": {
-      "tcgdex_set_id": "Csm2d",
+      "tcgdex_set_id": "CSM2d",
       "locale": "ja",
       "names": {
         "en_cardtrader": "CSM2d: Shining Synergy GX Starter Deck",
@@ -14938,7 +14938,7 @@
       }
     },
     "ja:Csm1d": {
-      "tcgdex_set_id": "Csm1d",
+      "tcgdex_set_id": "CSM1d",
       "locale": "ja",
       "names": {
         "en_cardtrader": "CSM1d: Storming Emergence GX Starter Deck",
@@ -19044,82 +19044,82 @@
       "ko": "151c"
     },
     "csm2.5: striking competition": {
-      "ja": "Csm25",
-      "ko": "Csm25"
+      "ja": "CSM2.5",
+      "ko": "CSM2.5"
     },
     "csm2.5": {
-      "ja": "Csm25",
-      "ko": "Csm25"
+      "ja": "CSM2.5",
+      "ko": "CSM2.5"
     },
     "csm2.5:": {
-      "ja": "Csm25",
-      "ko": "Csm25"
+      "ja": "CSM2.5",
+      "ko": "CSM2.5"
     },
     "csm2a: shining synergy - shower": {
-      "ja": "Csm2a",
-      "ko": "Csm2a"
+      "ja": "CSM2a",
+      "ko": "CSM2a"
     },
     "csm2a": {
-      "ja": "Csm2a",
-      "ko": "Csm2a"
+      "ja": "CSM2a",
+      "ko": "CSM2a"
     },
     "csm2a:": {
-      "ja": "Csm2a",
-      "ko": "Csm2a"
+      "ja": "CSM2a",
+      "ko": "CSM2a"
     },
     "csm2b: shining synergy - supreme": {
-      "ja": "Csm2b",
-      "ko": "Csm2b"
+      "ja": "CSM2b",
+      "ko": "CSM2b"
     },
     "csm2b": {
-      "ja": "Csm2b",
-      "ko": "Csm2b"
+      "ja": "CSM2b",
+      "ko": "CSM2b"
     },
     "csm2b:": {
-      "ja": "Csm2b",
-      "ko": "Csm2b"
+      "ja": "CSM2b",
+      "ko": "CSM2b"
     },
     "csm2c: shining synergy - summon": {
-      "zh-cn": "CSM2C"
+      "zh-cn": "CSM2c"
     },
     "csm2c": {
-      "zh-cn": "CSM2C"
+      "zh-cn": "CSM2c"
     },
     "csm2c:": {
-      "zh-cn": "CSM2C"
+      "zh-cn": "CSM2c"
     },
     "csm1a: storming emergence - radiant": {
-      "ja": "Csm1a",
-      "ko": "Csm1a"
+      "ja": "CSM1a",
+      "ko": "CSM1a"
     },
     "csm1a": {
-      "ja": "Csm1a",
-      "ko": "Csm1a"
+      "ja": "CSM1a",
+      "ko": "CSM1a"
     },
     "csm1a:": {
-      "ja": "Csm1a",
-      "ko": "Csm1a"
+      "ja": "CSM1a",
+      "ko": "CSM1a"
     },
     "csm1b: storming emergence - verdant": {
-      "ja": "Csm1b",
-      "ko": "Csm1b"
+      "ja": "CSM1b",
+      "ko": "CSM1b"
     },
     "csm1b": {
-      "ja": "Csm1b",
-      "ko": "Csm1b"
+      "ja": "CSM1b",
+      "ko": "CSM1b"
     },
     "csm1b:": {
-      "ja": "Csm1b",
-      "ko": "Csm1b"
+      "ja": "CSM1b",
+      "ko": "CSM1b"
     },
     "csm1c: storming emergence - abundant": {
-      "zh-cn": "CSM1C"
+      "zh-cn": "CSM1c"
     },
     "csm1c": {
-      "zh-cn": "CSM1C"
+      "zh-cn": "CSM1c"
     },
     "csm1c:": {
-      "zh-cn": "CSM1C"
+      "zh-cn": "CSM1c"
     },
     "csm: brave stars promo pack": {
       "ja": "Csm",
@@ -19214,16 +19214,16 @@
       "ko": "Cs3b"
     },
     "csm1.5: battle elite": {
-      "ja": "Csm15",
-      "ko": "Csm15"
+      "ja": "CSM1.5",
+      "ko": "CSM1.5"
     },
     "csm1.5": {
-      "ja": "Csm15",
-      "ko": "Csm15"
+      "ja": "CSM1.5",
+      "ko": "CSM1.5"
     },
     "csm1.5:": {
-      "ja": "Csm15",
-      "ko": "Csm15"
+      "ja": "CSM1.5",
+      "ko": "CSM1.5"
     },
     "starter set ex steven's beldum & metagross ex": {
       "ja": "Svod",
@@ -19479,16 +19479,16 @@
       "zh-cn": "CBB4C"
     },
     "csm2d: shining synergy gx starter deck": {
-      "ja": "Csm2d",
-      "ko": "Csm2d"
+      "ja": "CSM2d",
+      "ko": "CSM2d"
     },
     "csm2d": {
-      "ja": "Csm2d",
-      "ko": "Csm2d"
+      "ja": "CSM2d",
+      "ko": "CSM2d"
     },
     "csm2d:": {
-      "ja": "Csm2d",
-      "ko": "Csm2d"
+      "ja": "CSM2d",
+      "ko": "CSM2d"
     },
     "csmpac: battle party combo": {
       "zh-cn": "CSMPAC"
@@ -19751,16 +19751,16 @@
       "ko": "Wcd2025"
     },
     "csm1d: storming emergence gx starter deck": {
-      "ja": "Csm1d",
-      "ko": "Csm1d"
+      "ja": "CSM1d",
+      "ko": "CSM1d"
     },
     "csm1d": {
-      "ja": "Csm1d",
-      "ko": "Csm1d"
+      "ja": "CSM1d",
+      "ko": "CSM1d"
     },
     "csm1d:": {
-      "ja": "Csm1d",
-      "ko": "Csm1d"
+      "ja": "CSM1d",
+      "ko": "CSM1d"
     },
     "beginning set plus": {
       "ja": "Hs+",

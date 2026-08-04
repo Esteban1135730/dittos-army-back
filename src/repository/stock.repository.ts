@@ -80,7 +80,17 @@ export class StockRepository {
 
   async updateById(
     id: string,
-    patch: Partial<Pick<Stock, 'card_id' | 'card_name' | 'image_url'>>,
+    patch: Partial<
+      Pick<
+        Stock,
+        | 'card_id'
+        | 'card_name'
+        | 'image_url'
+        | 'product_kind'
+        | 'quantity'
+        | 'card_state'
+      >
+    >,
   ): Promise<Stock | null> {
     if (!id?.trim()) return null;
     return this.stockModel
@@ -90,6 +100,33 @@ export class StockRepository {
 
   async findByCardId(cardId: string): Promise<Stock[] | null> {
     return this.stockModel.find({ card_id: cardId }).exec();
+  }
+
+  /** Primera línea con ese `card_id` (p. ej. SKU seed único `da-bulk`). */
+  async findOneByCardId(cardId: string): Promise<Stock | null> {
+    return this.stockModel.findOne({ card_id: cardId }).exec();
+  }
+
+  /**
+   * Decrementa cantidad de forma atómica si hay stock suficiente.
+   * @returns documento actualizado o null si no había qty >= n.
+   */
+  async decrementQuantityAtomic(
+    stockId: string,
+    n: number,
+  ): Promise<Stock | null> {
+    if (!stockId?.trim() || !Number.isFinite(n) || n < 1) return null;
+    return this.stockModel
+      .findOneAndUpdate(
+        {
+          _id: stockId,
+          product_kind: 'quantity',
+          quantity: { $gte: n },
+        },
+        { $inc: { quantity: -n } },
+        { new: true },
+      )
+      .exec();
   }
 
   async findByCardState(cardState: string): Promise<Stock[]> {

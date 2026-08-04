@@ -73,6 +73,7 @@ import { CardTraderService } from './service/cardtrader/cardtrader.service';
 import { CardTraderTcgdexResolveService } from './service/cardtrader/cardtrader-tcgdex-resolve.service';
 import { CardtraderTransitLotService } from './service/cardtrader/cardtrader-transit-lot.service';
 import { StockScanService } from './service/stock-scan.service';
+import { BulkProductService } from './service/bulk-product.service';
 import { DashboardController } from './controller/dashboard.controller';
 import { DashboardOverviewService } from './service/dashboard-overview.service';
 import { StockReviewController } from './controller/stock-review.controller';
@@ -176,6 +177,7 @@ import {
     CardTraderTcgdexResolveService,
     CardtraderTransitLotService,
     StockScanService,
+    BulkProductService,
     DashboardOverviewService,
     StockReviewService,
     StockReviewSessionRepository,

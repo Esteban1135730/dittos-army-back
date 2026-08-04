@@ -266,10 +266,13 @@ export class TCGDexService {
     }
 
     const preferredLocale = this.normalizeLocale(locale);
-    for (const tryLocale of buildCardLocaleFallbackChain(preferredLocale)) {
-      const card = await this.fetchCardForLocale(id, tryLocale);
-      if (card) {
-        return card;
+    const candidates = buildTcgdexCardIdLookupCandidates(id, locale);
+    for (const candidate of candidates) {
+      for (const tryLocale of buildCardLocaleFallbackChain(preferredLocale)) {
+        const card = await this.fetchCardForLocale(candidate, tryLocale);
+        if (card) {
+          return card;
+        }
       }
     }
     return undefined;

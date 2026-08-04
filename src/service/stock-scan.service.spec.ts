@@ -333,6 +333,260 @@ describe('StockScanService', () => {
     });
   });
 
+  describe('escaneo de línea vendida (fallback idioma)', () => {
+    const soldId = '507f1f77bcf86cd799439031';
+    const sameLangId = '507f1f77bcf86cd799439032';
+    const otherLangId = '507f1f77bcf86cd799439033';
+
+    const soldLine = {
+      _id: soldId,
+      card_id: 'swsh3-136',
+      card_name: 'Charizard vendido',
+      card_state: 'vendida',
+      language: 'en',
+      shipment: 0,
+      cards_in_shipmet: 1,
+      unity_cost: 10000,
+      currency: 'COP',
+      rareza: 'holofoil',
+    };
+    const sameLangAvailable = {
+      _id: sameLangId,
+      card_id: 'swsh3-136',
+      card_name: 'Charizard EN',
+      card_state: 'disponible',
+      language: 'en',
+      shipment: 0,
+      cards_in_shipmet: 1,
+      unity_cost: 12000,
+      currency: 'COP',
+      rareza: 'holofoil',
+    };
+    const otherLangAvailable = {
+      _id: otherLangId,
+      card_id: 'swsh3-136',
+      card_name: 'Charizard JA',
+      card_state: 'disponible',
+      language: 'ja',
+      shipment: 0,
+      cards_in_shipmet: 1,
+      unity_cost: 11000,
+      currency: 'COP',
+      rareza: 'holofoil',
+    };
+    const pvpHolofoil = [
+      { card_id: 'swsh3-136', rareza: 'holofoil', pvp: 50000, currency: 'COP' },
+    ];
+
+    async function setupService(overrides: {
+      candidates?: unknown[];
+      pvps?: unknown[];
+      sold?: unknown;
+    }) {
+      const stockRepository = {
+        findById: jest
+          .fn()
+          .mockResolvedValue(overrides.sold ?? soldLine),
+        findByCardIdsInStates: jest
+          .fn()
+          .mockResolvedValue(overrides.candidates ?? []),
+      };
+      const pvpRepository = {
+        findByCardIds: jest
+          .fn()
+          .mockResolvedValue(overrides.pvps ?? pvpHolofoil),
+      };
+      const moduleRef = await Test.createTestingModule({
+        providers: [
+          StockScanService,
+          { provide: StockRepository, useValue: stockRepository },
+          { provide: PvpRepository, useValue: pvpRepository },
+          { provide: CardStockTagRepository, useValue: {} },
+          { provide: TCGDexService, useValue: tcgDexMock },
+        ],
+      }).compile();
+      return {
+        service: moduleRef.get(StockScanService),
+        stockRepository,
+      };
+    }
+
+    it('sustituye por copia mismo idioma cuando hay varias', async () => {
+      const { service } = await setupService({
+        candidates: [otherLangAvailable, sameLangAvailable],
+      });
+      const view = await service.getScanView(soldId);
+      expect(view.stock_id).toBe(sameLangId);
+      expect(view.language).toBe('EN');
+      expect(view.sellable).toBe(true);
+      expect(view.substituted).toBe(true);
+      expect(view.sold_language_fallback).toBe(true);
+      expect(view.scanned_stock_id).toBe(soldId);
+      expect(view.reject_reason).toBeUndefined();
+    });
+
+    it('sustituye por otro idioma si no hay mismo idioma', async () => {
+      const { service } = await setupService({
+        candidates: [otherLangAvailable],
+      });
+      const view = await service.getScanView(soldId);
+      expect(view.stock_id).toBe(otherLangId);
+      expect(view.language).toBe('JA');
+      expect(view.sellable).toBe(true);
+      expect(view.substituted).toBe(true);
+      expect(view.sold_language_fallback).toBe(true);
+      expect(view.scanned_stock_id).toBe(soldId);
+    });
+
+    it('otra rareza operativa no sustituye → ya_vendida', async () => {
+      const { service } = await setupService({
+        candidates: [
+          { ...sameLangAvailable, rareza: null },
+          { ...otherLangAvailable, rareza: null },
+        ],
+      });
+      const view = await service.getScanView(soldId);
+      expect(view.stock_id).toBe(soldId);
+      expect(view.sellable).toBe(false);
+      expect(view.reject_reason).toBe('ya_vendida');
+      expect(view.substituted).toBeUndefined();
+      expect(view.sold_language_fallback).toBeUndefined();
+    });
+
+    it('sin candidatos → ya_vendida', async () => {
+      const { service } = await setupService({ candidates: [] });
+      const view = await service.getScanView(soldId);
+      expect(view.stock_id).toBe(soldId);
+      expect(view.sellable).toBe(false);
+      expect(view.reject_reason).toBe('ya_vendida');
+      expect(view.substituted).toBeUndefined();
+      expect(view.sold_language_fallback).toBeUndefined();
+    });
+
+    it('reserva sigue sin elegir otro idioma', async () => {
+      const reservedId = '507f1f77bcf86cd799439021';
+      const { service } = await setupService({
+        sold: {
+          _id: reservedId,
+          card_id: 'swsh3-136',
+          card_name: 'Charizard reservado',
+          card_state: 'reserva',
+          language: 'en',
+          shipment: 0,
+          cards_in_shipmet: 1,
+          unity_cost: 10000,
+          currency: 'COP',
+          rareza: 'holofoil',
+        },
+        candidates: [otherLangAvailable],
+      });
+      const view = await service.getScanView(reservedId);
+      expect(view.stock_id).toBe(reservedId);
+      expect(view.reserved_fallback).toBe(true);
+      expect(view.substituted).toBeUndefined();
+      expect(view.sold_language_fallback).toBeUndefined();
+    });
+  });
+
+  it('incluye bulk quantity con PVP en qr-export y lo excluye si qty=0', async () => {
+    const bulkId = '507f1f77bcf86cd799439099';
+    const stockRepository = {
+      findAll: jest.fn().mockResolvedValue([
+        {
+          _id: bulkId,
+          card_id: 'da-bulk',
+          card_name: 'bulk',
+          card_state: 'disponible',
+          product_kind: 'quantity',
+          quantity: 5,
+          language: 'es',
+        },
+      ]),
+    };
+    const pvpRepository = {
+      findByCardIds: jest.fn().mockResolvedValue([
+        {
+          card_id: 'da-bulk',
+          rareza: null,
+          pvp: 2000,
+          currency: 'COP',
+        },
+      ]),
+    };
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        StockScanService,
+        { provide: StockRepository, useValue: stockRepository },
+        { provide: PvpRepository, useValue: pvpRepository },
+        { provide: CardStockTagRepository, useValue: {} },
+        { provide: TCGDexService, useValue: tcgDexMock },
+      ],
+    }).compile();
+    const service = moduleRef.get(StockScanService);
+    const rows = await service.listQrExportRows();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].stock_id).toBe(bulkId);
+    expect(rows[0].price_cop).toBe(2000);
+
+    stockRepository.findAll.mockResolvedValue([
+      {
+        _id: bulkId,
+        card_id: 'da-bulk',
+        card_name: 'bulk',
+        card_state: 'disponible',
+        product_kind: 'quantity',
+        quantity: 0,
+        language: 'es',
+      },
+    ]);
+    const empty = await service.listQrExportRows();
+    expect(empty).toHaveLength(0);
+  });
+
+  it('scan de bulk incluye product_kind/quantity y sellable', async () => {
+    const bulkId = '507f1f77bcf86cd799439099';
+    const stockRepository = {
+      findById: jest.fn().mockResolvedValue({
+        _id: bulkId,
+        card_id: 'da-bulk',
+        card_name: 'bulk',
+        card_state: 'disponible',
+        product_kind: 'quantity',
+        quantity: 12,
+        shipment: 0,
+        cards_in_shipmet: 1,
+        unity_cost: 0,
+        currency: 'COP',
+        image_url: '/bulk-dummy.svg',
+      }),
+    };
+    const pvpRepository = {
+      findByCardIds: jest.fn().mockResolvedValue([
+        {
+          card_id: 'da-bulk',
+          rareza: null,
+          pvp: 2000,
+          currency: 'COP',
+        },
+      ]),
+    };
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        StockScanService,
+        { provide: StockRepository, useValue: stockRepository },
+        { provide: PvpRepository, useValue: pvpRepository },
+        { provide: CardStockTagRepository, useValue: {} },
+        { provide: TCGDexService, useValue: tcgDexMock },
+      ],
+    }).compile();
+    const service = moduleRef.get(StockScanService);
+    const view = await service.getScanView(bulkId);
+    expect(view.product_kind).toBe('quantity');
+    expect(view.quantity).toBe(12);
+    expect(view.sellable).toBe(true);
+    expect(view.expansion).toBe('');
+  });
+
   it('lanza NotFound si el id no existe', async () => {
     const stockRepository = {
       findById: jest.fn().mockResolvedValue(null),

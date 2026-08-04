@@ -47,9 +47,29 @@ export function tcgDexCatalogLocaleForExpansion(
   return 'en';
 }
 
+/**
+ * Códigos CardTrader que no coinciden 1:1 con el id TCGdex
+ * (p. ej. CT omite el punto: csm25 → CSM2.5).
+ */
+const CT_CODE_TO_TCGDEX_SET: Record<string, string> = {
+  csm15: 'CSM1.5',
+  csm25: 'CSM2.5',
+  csm1a: 'CSM1a',
+  csm1b: 'CSM1b',
+  csm1c: 'CSM1c',
+  csm1d: 'CSM1d',
+  csm2a: 'CSM2a',
+  csm2b: 'CSM2b',
+  csm2c: 'CSM2c',
+  csm2d: 'CSM2d',
+};
+
 export function ctCodeToSetId(code: string | null | undefined): string {
   const c = String(code ?? '').trim();
   if (!c) return c;
+  const override = CT_CODE_TO_TCGDEX_SET[c.toLowerCase()];
+  if (override) return override;
+  // Sufijo C chino (csv5c, cbb1c), no letras de set CSM2c (cubiertas arriba).
   if (/^cs/i.test(c) && c.endsWith('c')) return c.toUpperCase();
   if (/^cbb/i.test(c)) return c.toUpperCase();
   if (/^m\d/i.test(c)) return c[0].toUpperCase() + c.slice(1);
@@ -175,6 +195,23 @@ export function formatLocalIdForLocale(
   return formatPromoLocalIdForSet(setId, localId);
 }
 
+/** Corrige set ids mangled por códigos CT sin punto (Csm25 → CSM2.5). */
+export function normalizeMangledAsiaSetId(setId: string): string {
+  const trimmed = setId.trim();
+  if (!trimmed) return trimmed;
+  const fromCode = CT_CODE_TO_TCGDEX_SET[trimmed.toLowerCase()];
+  if (fromCode) return fromCode;
+  // Csm25 / CSM25 → CSM2.5 ; Csm15 → CSM1.5
+  const undotted = /^csm(\d)(\d)$/i.exec(trimmed);
+  if (undotted) return `CSM${undotted[1]}.${undotted[2]}`;
+  // Csm2a → CSM2a ; CSM2C → CSM2c (letra de set, no sufijo chino)
+  const csmLetter = /^csm(\d+)([a-d])$/i.exec(trimmed);
+  if (csmLetter) {
+    return `CSM${csmLetter[1]}${csmLetter[2].toLowerCase()}`;
+  }
+  return trimmed;
+}
+
 /** Variantes de id TCGdex para lookup (p. ej. neo3-032 → neo3-32 en EN). */
 export function buildTcgdexCardIdLookupCandidates(
   cardId: string,
@@ -186,8 +223,9 @@ export function buildTcgdexCardIdLookupCandidates(
   const dash = trimmed.lastIndexOf('-');
   if (dash <= 0) return [trimmed];
 
-  const setId = trimmed.slice(0, dash);
+  const rawSetId = trimmed.slice(0, dash);
   const localId = trimmed.slice(dash + 1);
+  const setId = normalizeMangledAsiaSetId(rawSetId);
   const ordered: string[] = [];
   const push = (id: string) => {
     const v = id.trim();
@@ -200,12 +238,17 @@ export function buildTcgdexCardIdLookupCandidates(
     'ja',
   ].filter((loc, index, arr) => arr.indexOf(loc) === index);
 
-  for (const locale of locales) {
-    const formatted = formatLocalIdForLocale(localId, locale, setId);
-    if (formatted) push(`${setId}-${formatted}`);
+  for (const setCandidate of [setId, rawSetId]) {
+    for (const locale of locales) {
+      const formatted = formatLocalIdForLocale(localId, locale, setCandidate);
+      if (formatted) push(`${setCandidate}-${formatted}`);
+    }
   }
 
   push(trimmed);
+  if (setId !== rawSetId) {
+    push(`${setId}-${localId}`);
+  }
   return ordered;
 }
 

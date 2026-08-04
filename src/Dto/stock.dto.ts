@@ -20,4 +20,8 @@ export type StockDto = {
   rareza?: string | null;
   /** Tags de clasificación (catálogo cerrado); se persisten por `card_id`, no por línea de stock. */
   tags?: string[];
+  /** `'unit'` | `'quantity'` — ausente = unit legacy. */
+  product_kind?: string;
+  /** Existencias; solo para `product_kind === 'quantity'`. */
+  quantity?: number;
 };

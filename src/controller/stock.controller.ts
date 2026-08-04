@@ -25,6 +25,10 @@ import { StoreInventoryService } from 'src/service/store-inventory.service';
 import { OpenedSealedStockService } from 'src/service/opened-sealed-stock.service';
 import { StockScanService } from 'src/service/stock-scan.service';
 import { StockReviewService } from 'src/service/stock-review.service';
+import { BulkProductService } from 'src/service/bulk-product.service';
+import {
+  effectiveProductKind,
+} from 'src/constants/bulk-product';
 import {
   effectiveOperationalRarezaFromStock,
   groupPvpsByCardId,
@@ -64,6 +68,7 @@ export class StockController {
     private readonly saleRepository: SaleRepository,
     private readonly stockScanService: StockScanService,
     private readonly stockReviewService: StockReviewService,
+    private readonly bulkProductService: BulkProductService,
   ) {}
 
   private validatedRareza(stockDto: StockDto): string | null {
@@ -190,6 +195,12 @@ export class StockController {
     return this.openedSealedStockService.createFromOpenedSealed(body);
   }
 
+  @Post('ensure-bulk')
+  @HttpCode(HttpStatus.OK)
+  async ensureBulk() {
+    return this.bulkProductService.ensureBulk();
+  }
+
   @Get('perdidas')
   async listPerdidas() {
     const items = await this.stockReviewService.listPerdidas();
@@ -250,6 +261,13 @@ export class StockController {
         list,
         effectiveOperationalRarezaFromStock(stock),
       );
+      const product_kind = effectiveProductKind(stock.product_kind);
+      const quantity =
+        product_kind === 'quantity'
+          ? typeof stock.quantity === 'number'
+            ? stock.quantity
+            : 0
+          : null;
       return {
         ...stock._doc,
         card_name: stock.card_name ?? '',
@@ -257,6 +275,8 @@ export class StockController {
         card_cost: stock.shipment / stock.cards_in_shipmet + stock.unity_cost,
         pvp: pvpData?.pvp,
         pvp_currency: pvpData?.pvp_currency,
+        product_kind,
+        quantity,
       };
     });
 

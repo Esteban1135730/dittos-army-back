@@ -290,6 +290,7 @@ describe('finalize', () => {
     });
 
     expect(result.stock_created).toBe(1);
+    expect(result.stock_ids).toEqual(['stock-1']);
     expect(stockRepo.create).toHaveBeenCalledWith(
       expect.objectContaining({
         card_state: 'disponible',
@@ -302,6 +303,87 @@ describe('finalize', () => {
       'tl-1',
       2,
     );
+  });
+
+  it('devuelve stock_ids de 2 received e ignora 1 inconsistency', async () => {
+    sessionRepo.findById.mockResolvedValue(openSession);
+    lineRepo.findBySessionId.mockResolvedValue([
+      {
+        _id: { toString: () => 'rl-1' },
+        status: 'received',
+        received_qty: 1,
+        card_id: 'sv1-1',
+        card_name: 'Pikachu',
+        image_url: '',
+        language: 'en',
+        rareza: null,
+        unit_cost_cop: 5000,
+        transit_line_id: 'tl-1',
+      },
+      {
+        _id: { toString: () => 'rl-2' },
+        status: 'received',
+        received_qty: 1,
+        card_id: 'sv1-2',
+        card_name: 'Raichu',
+        image_url: '',
+        language: 'en',
+        rareza: null,
+        unit_cost_cop: 8000,
+        transit_line_id: 'tl-2',
+      },
+      {
+        _id: { toString: () => 'rl-3' },
+        status: 'inconsistency',
+        received_qty: null,
+        card_id: 'sv1-3',
+        card_name: 'Missing',
+        inconsistency_type: 'not_arrived',
+        notes: 'No llegó el paquete',
+        transit_line_id: 'tl-3',
+      },
+    ]);
+    stockRepo.create
+      .mockResolvedValueOnce({ _id: { toString: () => 'stock-a' } })
+      .mockResolvedValueOnce({ _id: { toString: () => 'stock-b' } });
+    lineRepo.updateById.mockResolvedValue({});
+    transitLineRepo.decrementRemainingQuantity.mockResolvedValue({});
+    sessionRepo.updateStatus.mockResolvedValue({});
+
+    const result = await service.finalize('sess-1', {
+      shipping_total_cop: 10000,
+    });
+
+    expect(result.stock_created).toBe(2);
+    expect(result.stock_ids).toHaveLength(2);
+    expect(result.stock_ids).toEqual(['stock-a', 'stock-b']);
+    expect(result.inconsistencies).toHaveLength(1);
+    expect(stockRepo.create).toHaveBeenCalledTimes(2);
+  });
+
+  it('devuelve stock_ids vacío si solo hay inconsistencias', async () => {
+    sessionRepo.findById.mockResolvedValue(openSession);
+    lineRepo.findBySessionId.mockResolvedValue([
+      {
+        _id: { toString: () => 'rl-1' },
+        status: 'inconsistency',
+        received_qty: null,
+        card_id: 'sv1-1',
+        card_name: 'Missing',
+        inconsistency_type: 'not_arrived',
+        notes: 'No llegó nada',
+        transit_line_id: 'tl-1',
+      },
+    ]);
+    sessionRepo.updateStatus.mockResolvedValue({});
+
+    const result = await service.finalize('sess-1', {
+      shipping_total_cop: 5000,
+    });
+
+    expect(result.stock_created).toBe(0);
+    expect(result.stock_ids).toEqual([]);
+    expect(stockRepo.create).not.toHaveBeenCalled();
   });
 
   it('distribuye shipping correctamente (Math.round)', async () => {

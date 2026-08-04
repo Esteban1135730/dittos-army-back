@@ -20,6 +20,7 @@ import {
 } from 'src/utils/pvp-resolve';
 import { SaleDocument } from 'src/schema/sale.schema';
 import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
+import { isQuantityKind } from 'src/constants/bulk-product';
 
 function pvpToCop(pvp: number, currency: string): number {
   if (currency === 'COP') return Math.round(pvp);
@@ -84,12 +85,93 @@ export class SaleController {
       card_id: string;
       amount_cop: number;
       notes?: string;
+      quantity?: number;
     },
   ) {
     if (!body.stock_id || !body.card_id || body.amount_cop === undefined) {
       return {
         success: false,
         message: 'stock_id, card_id y amount_cop son requeridos',
+      };
+    }
+
+    const qtyRaw = body.quantity;
+    const sellQty =
+      qtyRaw === undefined || qtyRaw === null ? 1 : Number(qtyRaw);
+    if (!Number.isInteger(sellQty) || sellQty < 1) {
+      return {
+        success: false,
+        message: 'quantity debe ser un entero >= 1',
+      };
+    }
+
+    const stock = await this.stockRepository.findById(body.stock_id);
+    if (!stock) {
+      return { success: false, message: 'Stock no encontrado' };
+    }
+
+    const cardState = (stock as { card_state?: string }).card_state ?? '';
+    if (cardState === 'vendida') {
+      return { success: false, message: 'La carta ya está vendida' };
+    }
+    if (cardState === 'propiedad') {
+      return { success: false, message: 'La carta está en propiedad' };
+    }
+    if (
+      cardState !== 'disponible' &&
+      cardState !== 'en_stock_colombia' &&
+      cardState !== 'reserva'
+    ) {
+      return { success: false, message: 'Estado de stock no vendible' };
+    }
+
+    if (isQuantityKind((stock as { product_kind?: string }).product_kind)) {
+      if (body.amount_cop <= 0) {
+        return { success: false, message: 'amount_cop debe ser mayor a 0' };
+      }
+      const available =
+        typeof (stock as { quantity?: number }).quantity === 'number'
+          ? (stock as { quantity: number }).quantity
+          : 0;
+      if (sellQty > available) {
+        return {
+          success: false,
+          message: `Stock insuficiente (disponible: ${available})`,
+        };
+      }
+
+      const updated = await this.stockRepository.decrementQuantityAtomic(
+        body.stock_id,
+        sellQty,
+      );
+      if (!updated) {
+        return {
+          success: false,
+          message: 'Stock insuficiente',
+        };
+      }
+
+      const amount = Math.round(body.amount_cop);
+      const notes = body.notes ?? '';
+      for (let i = 0; i < sellQty; i++) {
+        await this.saleRepository.create({
+          stock_id: body.stock_id,
+          card_id: body.card_id,
+          type: 'venta',
+          amount_cop: amount,
+          notes,
+        });
+      }
+
+      // No marcar vendida mientras quede cantidad > 0.
+      return { success: true, sold_count: sellQty };
+    }
+
+    // unit (legacy): quantity debe ser 1
+    if (sellQty !== 1) {
+      return {
+        success: false,
+        message: 'quantity debe ser 1 para productos unitarios',
       };
     }
 
@@ -118,11 +200,16 @@ export class SaleController {
     },
   ) {
     const items = body.items ?? [];
+    const emptyResults: Array<{
+      stock_id: string;
+      success: boolean;
+      message?: string;
+    }> = [];
     if (items.length === 0) {
       return {
         success: false,
         sold_count: 0,
-        results: [],
+        results: emptyResults,
         message: 'items es requerido y no puede estar vacío',
       };
     }
@@ -132,6 +219,9 @@ export class SaleController {
       success: boolean;
       message?: string;
     }> = [];
+
+    // Conteo restante por stock_id para productos quantity (rechazar excedentes en orden).
+    const remainingQtyByStockId = new Map<string, number>();
 
     for (const item of items) {
       const stockId = item.stock_id?.trim() ?? '';
@@ -163,7 +253,10 @@ export class SaleController {
       }
 
       const cardState = (stock as { card_state?: string }).card_state ?? '';
-      if (cardState === 'vendida') {
+      const productKind = (stock as { product_kind?: string }).product_kind;
+      const isQty = isQuantityKind(productKind);
+
+      if (!isQty && cardState === 'vendida') {
         results.push({
           stock_id: stockId,
           success: false,
@@ -192,6 +285,63 @@ export class SaleController {
         continue;
       }
 
+      if (isQty) {
+        if (!remainingQtyByStockId.has(stockId)) {
+          const q =
+            typeof (stock as { quantity?: number }).quantity === 'number'
+              ? (stock as { quantity: number }).quantity
+              : 0;
+          remainingQtyByStockId.set(stockId, q);
+        }
+        const remaining = remainingQtyByStockId.get(stockId) ?? 0;
+        if (remaining < 1) {
+          results.push({
+            stock_id: stockId,
+            success: false,
+            message: 'Stock insuficiente',
+          });
+          continue;
+        }
+
+        try {
+          const updated = await this.stockRepository.decrementQuantityAtomic(
+            stockId,
+            1,
+          );
+          if (!updated) {
+            remainingQtyByStockId.set(stockId, 0);
+            results.push({
+              stock_id: stockId,
+              success: false,
+              message: 'Stock insuficiente',
+            });
+            continue;
+          }
+          remainingQtyByStockId.set(
+            stockId,
+            typeof (updated as { quantity?: number }).quantity === 'number'
+              ? (updated as { quantity: number }).quantity
+              : remaining - 1,
+          );
+          await this.saleRepository.create({
+            stock_id: stockId,
+            card_id: stock.card_id,
+            type: 'venta',
+            amount_cop: Math.round(item.amount_cop),
+            notes: item.notes ?? 'Venta asistida QR',
+          });
+          // No updateCardState vendida mientras qty > 0.
+          results.push({ stock_id: stockId, success: true });
+        } catch {
+          results.push({
+            stock_id: stockId,
+            success: false,
+            message: 'Error al registrar la venta',
+          });
+        }
+        continue;
+      }
+
       try {
         await this.saleRepository.create({
           stock_id: stockId,
@@ -202,7 +352,6 @@ export class SaleController {
         });
         await this.stockRepository.updateCardState(stockId, 'vendida');
         if (cardState === 'reserva') {
-          // Venta de mostrador sobre línea reservada: cancela la reserva.
           await this.reservaRepository.deleteByStockId(stockId);
         }
         results.push({ stock_id: stockId, success: true });
@@ -448,6 +597,7 @@ export class SaleController {
             image_url: imageUrl,
             card_cost: cardCost,
             currency: stock.currency,
+            language: String(stock.language ?? stock.languaje ?? '').trim(),
             shipment: stock.shipment,
             cards_in_shipmet: stock.cards_in_shipmet,
             unity_cost: stock.unity_cost,

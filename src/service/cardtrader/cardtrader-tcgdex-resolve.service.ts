@@ -5,6 +5,7 @@ import {
   normExpansionKey,
   catalogLocaleForLanguage,
   adjustSetIdForCatalog,
+  normalizeMangledAsiaSetId,
   resolveSetFromLocaleAliases,
   resolveSetFromLocaleMap,
 } from '../../utils/tcgdex-set-resolve';
@@ -50,9 +51,12 @@ export class CardTraderTcgdexResolveService {
   ): SetResolveMeta | null {
     if (!hit) return null;
     const catalog = catalogLocaleForLanguage(language) ?? 'en';
-    const adjusted = adjustSetIdForCatalog(hit.tcgdex_set_id, catalog);
+    const adjusted = adjustSetIdForCatalog(
+      normalizeMangledAsiaSetId(hit.tcgdex_set_id),
+      catalog,
+    );
     return {
-      tcgdex_set_id: adjusted.tcgdex_set_id,
+      tcgdex_set_id: normalizeMangledAsiaSetId(adjusted.tcgdex_set_id),
       locale: adjusted.locale,
     };
   }

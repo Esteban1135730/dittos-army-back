@@ -10,6 +10,7 @@ import { ReservaRepository } from 'src/repository/reserva.repository';
 import { SaleRepository } from 'src/repository/sale.repository';
 import { StockScanService } from 'src/service/stock-scan.service';
 import { StockReviewService } from 'src/service/stock-review.service';
+import { BulkProductService } from 'src/service/bulk-product.service';
 
 const stockScanMock = {
   listBarcodeExportRows: jest.fn(),
@@ -40,6 +41,7 @@ describe('StockController language validation', () => {
         { provide: SaleRepository, useValue: {} },
         { provide: StockScanService, useValue: stockScanMock },
         { provide: StockReviewService, useValue: { listPerdidas: jest.fn() } },
+        { provide: BulkProductService, useValue: { ensureBulk: jest.fn() } },
       ],
     }).compile();
 

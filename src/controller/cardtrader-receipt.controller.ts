@@ -64,7 +64,7 @@ export class CardtraderReceiptController {
     return this.receiptService.undoLine(id, lineId);
   }
 
-  /** Finalizar sesión (crea Stock y decrementa remaining_quantity). */
+  /** Finalizar sesión (crea Stock, decrementa remaining_quantity; responde stock_ids). */
   @Post('sessions/:id/finalize')
   @HttpCode(200)
   finalize(@Param('id') id: string, @Body() dto: FinalizeReceiptDto) {

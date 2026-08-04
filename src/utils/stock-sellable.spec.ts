@@ -30,4 +30,32 @@ describe('stock-sellable', () => {
       reject_reason: 'reservada',
     });
   });
+
+  it('rechaza propiedad', () => {
+    expect(evaluateStockSellable('propiedad', 1000)).toEqual({
+      sellable: false,
+      reject_reason: 'propiedad',
+    });
+  });
+
+  it('rechaza quantity product sin stock', () => {
+    expect(
+      evaluateStockSellable('disponible', 2000, {
+        product_kind: 'quantity',
+        quantity: 0,
+      }),
+    ).toEqual({
+      sellable: false,
+      reject_reason: 'sin_stock',
+    });
+  });
+
+  it('acepta quantity product con stock', () => {
+    expect(
+      evaluateStockSellable('disponible', 2000, {
+        product_kind: 'quantity',
+        quantity: 5,
+      }),
+    ).toEqual({ sellable: true });
+  });
 });

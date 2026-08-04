@@ -37,7 +37,23 @@ export class CardtraderReceiptService {
     if (!session)
       throw new NotFoundException(`Sesión ${sessionId} no encontrada`);
     const lines = await this.lineRepo.findBySessionId(sessionId);
-    return { session, lines };
+    const payload: {
+      session: typeof session;
+      lines: typeof lines;
+      post_finalize?: { stock_ids: string[]; stock_created: number };
+    } = { session, lines };
+
+    if (session.status === 'finalized') {
+      const stockIds = lines
+        .filter((l) => l.status === 'received' && l.stock_id)
+        .map((l) => String(l.stock_id));
+      payload.post_finalize = {
+        stock_ids: stockIds,
+        stock_created: stockIds.length,
+      };
+    }
+
+    return payload;
   }
 
   async createSession() {
@@ -256,6 +272,7 @@ export class CardtraderReceiptService {
     );
 
     let stockCreated = 0;
+    const stockIds: string[] = [];
 
     for (const line of receivedLines) {
       const shipmentPerUnit =
@@ -288,6 +305,9 @@ export class CardtraderReceiptService {
         line.received_qty!,
       );
 
+      if (stockId) {
+        stockIds.push(stockId);
+      }
       stockCreated++;
     }
 
@@ -299,6 +319,7 @@ export class CardtraderReceiptService {
     return {
       session_id: sessionId,
       stock_created: stockCreated,
+      stock_ids: stockIds,
       inconsistencies: inconsistencyLines.map((l) => ({
         line_id: (l._id as any).toString(),
         card_id: l.card_id,

@@ -8,11 +8,13 @@ export type StockSellRejectReason =
   | 'estado_no_vendible'
   | 'ya_vendida'
   | 'reservada'
-  | 'propiedad';
+  | 'propiedad'
+  | 'sin_stock';
 
 export function evaluateStockSellable(
   cardState: string,
   priceCop: number | null,
+  opts?: { product_kind?: string | null; quantity?: number | null },
 ): { sellable: boolean; reject_reason?: StockSellRejectReason } {
   if (cardState === 'vendida') {
     return { sellable: false, reject_reason: 'ya_vendida' };
@@ -28,6 +30,12 @@ export function evaluateStockSellable(
   }
   if (priceCop == null || priceCop <= 0) {
     return { sellable: false, reject_reason: 'sin_pvp' };
+  }
+  if (String(opts?.product_kind ?? '').trim() === 'quantity') {
+    const qty = opts?.quantity;
+    if (qty == null || !Number.isFinite(qty) || qty <= 0) {
+      return { sellable: false, reject_reason: 'sin_stock' };
+    }
   }
   return { sellable: true };
 }

@@ -52,6 +52,14 @@ export class Stock {
   /** @deprecated En runtime los tags viven en `card_stock_tags` por `card_id`. Puede existir en documentos legacy hasta migrar. */
   @Prop({ type: [String], default: [] })
   tags?: string[];
+
+  /** `'unit'` (legacy / default) | `'quantity'` (SKU con existencias, p. ej. bulk). */
+  @Prop({ type: String, required: false })
+  product_kind?: string;
+
+  /** Existencias restantes; significativo solo si `product_kind === 'quantity'`. */
+  @Prop({ type: Number, required: false })
+  quantity?: number;
 }
 
 export const StockSchema = SchemaFactory.createForClass(Stock);

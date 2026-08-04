@@ -7,6 +7,7 @@ import {
   normalizeCollectorNumberForTcgdex,
   expansionLookupKeys,
   normExpansionKey,
+  normalizeMangledAsiaSetId,
   resolveSetFromLocaleAliases,
   resolveSetFromLocaleMap,
   catalogLocaleForLanguage,
@@ -36,6 +37,11 @@ describe('tcgdex-set-resolve', () => {
   it('convierte códigos CardTrader a ids TCGdex', () => {
     expect(ctCodeToSetId('svpromo')).toBe('Svpromo');
     expect(ctCodeToSetId('m2')).toBe('M2');
+    expect(ctCodeToSetId('csm25')).toBe('CSM2.5');
+    expect(ctCodeToSetId('csm15')).toBe('CSM1.5');
+    expect(ctCodeToSetId('csm2a')).toBe('CSM2a');
+    expect(ctCodeToSetId('csm2c')).toBe('CSM2c');
+    expect(ctCodeToSetId('csm1c')).toBe('CSM1c');
   });
 
   it('rellena ids locales a 3 dígitos en sets asiáticos', () => {
@@ -192,5 +198,15 @@ describe('set_locale_map', () => {
       'base1-26',
       'base1-026',
     ]);
+  });
+
+  it('normaliza ids mangled Csm25 / Csm2a hacia CSM2.5 / CSM2a', () => {
+    expect(normalizeMangledAsiaSetId('Csm25')).toBe('CSM2.5');
+    expect(normalizeMangledAsiaSetId('csm25')).toBe('CSM2.5');
+    expect(normalizeMangledAsiaSetId('Csm2a')).toBe('CSM2a');
+    expect(normalizeMangledAsiaSetId('CSM2C')).toBe('CSM2c');
+    expect(buildTcgdexCardIdLookupCandidates('Csm25-044', 'zh')).toEqual(
+      expect.arrayContaining(['CSM2.5-044', 'Csm25-044']),
+    );
   });
 });

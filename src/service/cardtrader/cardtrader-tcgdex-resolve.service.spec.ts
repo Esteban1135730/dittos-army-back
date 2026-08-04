@@ -140,6 +140,35 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(result.tcgdex_card_id).toBe('SV8-108');
   });
 
+  it('resuelve CSM2.5 Striking Competition zh (código CT csm25)', () => {
+    const result = service.resolveTcgdexCardId({
+      expansionName: 'CSM2.5: Striking Competition',
+      collectorNumber: '044',
+      language: 'zh',
+    });
+    expect(result.tcgdex_set_id).toBe('CSM2.5');
+    expect(result.tcgdex_card_id).toBe('CSM2.5-044');
+    expect(result.error).toBeNull();
+  });
+
+  it('resuelve CSM2a / CSM2c zh con casing canónico', () => {
+    const a = service.resolveTcgdexCardId({
+      expansionName: 'CSM2a: Shining Synergy - Shower',
+      collectorNumber: '112',
+      language: 'zh',
+    });
+    expect(a.tcgdex_set_id).toBe('CSM2a');
+    expect(a.tcgdex_card_id).toBe('CSM2a-112');
+
+    const c = service.resolveTcgdexCardId({
+      expansionName: 'CSM2c: Shining Synergy - Summon',
+      collectorNumber: '046',
+      language: 'zh',
+    });
+    expect(c.tcgdex_set_id).toBe('CSM2c');
+    expect(c.tcgdex_card_id).toBe('CSM2c-046');
+  });
+
   it('resolveTcgdexCardIdBatch resuelve múltiples líneas', () => {
     const results = service.resolveTcgdexCardIdBatch([
       { expansionName: 'Base Set', collectorNumber: '004' },
