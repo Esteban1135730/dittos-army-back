@@ -15,12 +15,17 @@ export type ParsedStockQr = {
   prefixUsed?: string;
 };
 
-/** Pistola teclado US→ES: `:`→Ñ, `-`→' */
+/**
+ * Pistola teclado US con SO en ES:
+ * - Windows/Linux: `-`→`'`, `:`→`Ñ`
+ * - macOS ES/LATAM: `-`→`/`, `:`→`>`
+ */
 function loosePrefixRe(prefix: string): RegExp {
-  // DA-STOCK: → DA[-_' ]?STOCK[:Ñ;]?
   const body = prefix.replace(/:$/, '');
-  const escaped = body.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/-/g, '[-_\' ]?');
-  return new RegExp(`${escaped}[:\\u00D1;]?([a-f0-9]{24})`, 'i');
+  const withHyphenClass = body.replace(/-/g, '<<HYPHEN>>');
+  const escaped = withHyphenClass.replace(/[\\^$*+?.()|[\]{}]/g, '\\$&');
+  const pattern = escaped.replace(/<<HYPHEN>>/g, '[-_\'/ ]?');
+  return new RegExp(`${pattern}[:\\u00D1;>]?([a-f0-9]{24})`, 'i');
 }
 
 const PREFIX_ENTRIES = Object.values(OWNERS_CONFIG.owners).map((o) => ({
@@ -32,8 +37,10 @@ const PREFIX_ENTRIES = Object.values(OWNERS_CONFIG.owners).map((o) => ({
 function normalizeQrWedgeInput(raw: string): string {
   return raw
     .trim()
-    .replace(/Ñ/g, ':')
-    .replace(/[''´`]/g, '-');
+    .replace(/[Ññ]/g, ':')
+    .replace(/>/g, ':')
+    .replace(/[''´`]/g, '-')
+    .replace(/\//g, '-');
 }
 
 /**

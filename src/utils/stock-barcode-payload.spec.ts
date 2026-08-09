@@ -45,6 +45,15 @@ describe('stock-barcode-payload', () => {
     });
   });
 
+  it('tolera layout teclado ES/LATAM en macOS (pistola: / y >)', () => {
+    expect(parseStockQrPayloadMulti(`ESTEBAN/STOCK>${validId}`)).toEqual({
+      stockId: validId,
+      owner: 'esteban',
+      prefixUsed: 'ESTEBAN-STOCK:',
+    });
+    expect(parseStockBarcodePayload(`DA/STOCK>${validId}`)).toBe(validId);
+  });
+
   it('parsea DA-STOCK: → owner pablo', () => {
     expect(parseStockQrPayloadMulti(`DA-STOCK:${validId}`)).toEqual({
       stockId: validId,
