@@ -3,6 +3,33 @@ export const SELLABLE_STOCK_STATES = new Set([
   'en_stock_colombia',
 ]);
 
+/**
+ * Valores legacy de «condición física» que el formulario /add-stock
+ * guardaba por error en `card_state` (colisión semántica con inventario).
+ */
+export const LEGACY_CONDITION_CARD_STATES = new Set([
+  'mint',
+  'near_mint',
+  'played',
+  'good',
+  'poor',
+]);
+
+/**
+ * Si `card_state` es una condición física legacy, lo mapea a `disponible`.
+ * Otros valores (inventario / ciclo de vida) se dejan igual.
+ */
+export function normalizeInventoryCardState(
+  cardState: string | null | undefined,
+): string | undefined {
+  if (cardState == null) return undefined;
+  const trimmed = String(cardState).trim();
+  if (!trimmed) return undefined;
+  const key = trimmed.toLowerCase().replace(/\s+/g, '_');
+  if (LEGACY_CONDITION_CARD_STATES.has(key)) return 'disponible';
+  return trimmed;
+}
+
 export type StockSellRejectReason =
   | 'sin_pvp'
   | 'estado_no_vendible'

@@ -23,7 +23,9 @@
     "script:migrate-stock-rareza": "ts-node -r tsconfig-paths/register scripts/migrate-stock-rareza-from-flags.ts",
     "script:migrate-stock-rareza:dry": "ts-node -r tsconfig-paths/register scripts/migrate-stock-rareza-from-flags.ts --dry-run",
     "script:migrate-card-stock-tags": "ts-node -r tsconfig-paths/register scripts/migrate-card-stock-tags.ts",
-    "script:migrate-card-stock-tags:dry": "ts-node -r tsconfig-paths/register scripts/migrate-card-stock-tags.ts --dry-run"
+    "script:migrate-card-stock-tags:dry": "ts-node -r tsconfig-paths/register scripts/migrate-card-stock-tags.ts --dry-run",
+    "script:migrate-stock-card-state": "ts-node -r tsconfig-paths/register scripts/migrate-stock-card-state-from-condition.ts",
+    "script:migrate-stock-card-state:dry": "ts-node -r tsconfig-paths/register scripts/migrate-stock-card-state-from-condition.ts --dry-run"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

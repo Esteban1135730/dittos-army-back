@@ -41,7 +41,10 @@ import {
   normalizeOperationalRareza,
 } from 'src/constants/item-rareza';
 import { normalizeStockTagsInput } from 'src/constants/stock-tags';
-import { SELLABLE_STOCK_STATES } from 'src/utils/stock-sellable';
+import {
+  normalizeInventoryCardState,
+  SELLABLE_STOCK_STATES,
+} from 'src/utils/stock-sellable';
 import {
   FeatureAclGuard,
   RequireFeature,
@@ -135,6 +138,10 @@ export class StockController {
     if (rz != null) {
       payload.rareza = rz;
     }
+    const normalizedState = normalizeInventoryCardState(payload.card_state);
+    if (normalizedState !== undefined) {
+      payload.card_state = normalizedState;
+    }
     const created = await this.stockRepository.create(payload);
     if (created && normalizedTags !== undefined) {
       await this.cardStockTagRepository.setTagsForCardId(
@@ -154,11 +161,13 @@ export class StockController {
       normalizedTags = normalizeStockTagsInput(stockDto.tags);
     }
     const { tags: _tags, ...withoutTags } = stockDto;
+    const normalizedState = normalizeInventoryCardState(withoutTags.card_state);
     const updated = await this.stockRepository.update({
       ...withoutTags,
       card_name: stockDto.card_name ?? '',
       language,
       rareza: rz === null ? null : rz,
+      ...(normalizedState !== undefined ? { card_state: normalizedState } : {}),
     } as StockDto);
     if (updated && normalizedTags !== undefined && stockDto.card_id) {
       await this.cardStockTagRepository.setTagsForCardId(

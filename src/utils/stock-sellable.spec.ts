@@ -1,5 +1,6 @@
 import {
   evaluateStockSellable,
+  normalizeInventoryCardState,
   type StockSellRejectReason,
 } from './stock-sellable';
 
@@ -38,6 +39,13 @@ describe('stock-sellable', () => {
     });
   });
 
+  it('rechaza near_mint (condición legacy, no inventario)', () => {
+    expect(evaluateStockSellable('near_mint', 1000)).toEqual({
+      sellable: false,
+      reject_reason: 'estado_no_vendible' satisfies StockSellRejectReason,
+    });
+  });
+
   it('rechaza quantity product sin stock', () => {
     expect(
       evaluateStockSellable('disponible', 2000, {
@@ -57,5 +65,32 @@ describe('stock-sellable', () => {
         quantity: 5,
       }),
     ).toEqual({ sellable: true });
+  });
+});
+
+describe('normalizeInventoryCardState', () => {
+  it('mapea condiciones físicas a disponible', () => {
+    expect(normalizeInventoryCardState('near_mint')).toBe('disponible');
+    expect(normalizeInventoryCardState('Mint')).toBe('disponible');
+    expect(normalizeInventoryCardState('Near Mint')).toBe('disponible');
+    expect(normalizeInventoryCardState('played')).toBe('disponible');
+    expect(normalizeInventoryCardState('good')).toBe('disponible');
+    expect(normalizeInventoryCardState('poor')).toBe('disponible');
+  });
+
+  it('conserva estados de inventario', () => {
+    expect(normalizeInventoryCardState('disponible')).toBe('disponible');
+    expect(normalizeInventoryCardState('en_stock_colombia')).toBe(
+      'en_stock_colombia',
+    );
+    expect(normalizeInventoryCardState('reserva')).toBe('reserva');
+    expect(normalizeInventoryCardState('vendida')).toBe('vendida');
+    expect(normalizeInventoryCardState('propiedad')).toBe('propiedad');
+  });
+
+  it('tolera vacío / null', () => {
+    expect(normalizeInventoryCardState(null)).toBeUndefined();
+    expect(normalizeInventoryCardState('')).toBeUndefined();
+    expect(normalizeInventoryCardState('  ')).toBeUndefined();
   });
 });
