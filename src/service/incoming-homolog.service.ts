@@ -56,6 +56,13 @@ import {
 import { IncomingReservationService } from './incoming-reservation.service';
 import type { StockDto } from '../Dto/stock.dto';
 import { isPublicRemoteImageUrl } from '../utils/store-image-localize';
+import {
+  isOwnerKey,
+  OWNERS_CONFIG,
+  type OwnerKey,
+} from '../config/owners.config';
+import { runWithOwnerAsync } from '../owner/owner-context';
+import type { HomologCreatedStockRef } from '../schema/incoming-homolog-session.schema';
 
 @Injectable()
 export class IncomingHomologService {
@@ -1117,12 +1124,16 @@ export class IncomingHomologService {
     }
 
     const nonNovedadCards = cards.filter((c) => !c.is_novedad);
-    const stockDtos: StockDto[] = [];
-    const transitLineIdsMeta: string[] = [];
+    const stockItems: Array<{
+      dto: StockDto;
+      transitLineId: string;
+      owner: OwnerKey;
+    }> = [];
     const tcgMetaCache = new Map<
       string,
       { card_name: string; image_url: string }
     >();
+    const lotOwnerCache = new Map<string, OwnerKey>();
 
     for (const card of nonNovedadCards) {
       const lineId = resolveLineId(card);
@@ -1148,41 +1159,38 @@ export class IncomingHomologService {
         });
         tcgMetaCache.set(cacheKey, meta);
       }
-      stockDtos.push({
-        card_id: cardId,
-        card_name: meta.card_name,
-        shipment: shipping,
-        unity_cost: card.unit_cost_cop,
-        cards_in_shipmet: nonNovedadCards.length,
-        image_url: meta.image_url,
-        card_state: 'disponible',
-        language,
-        currency: 'COP',
-        incoming_notes: '[recepción CT homolog]',
-        rareza: normalizeOperationalRareza(line.rareza) ?? undefined,
+      stockItems.push({
+        dto: {
+          card_id: cardId,
+          card_name: meta.card_name,
+          shipment: shipping,
+          unity_cost: card.unit_cost_cop,
+          cards_in_shipmet: nonNovedadCards.length,
+          image_url: meta.image_url,
+          card_state: 'disponible',
+          language,
+          currency: 'COP',
+          incoming_notes: '[recepción CT homolog]',
+          rareza: normalizeOperationalRareza(line.rareza) ?? undefined,
+        },
+        transitLineId: lineId,
+        owner: await this.resolveTransitLotOwner(line.lot_id, lotOwnerCache),
       });
-      transitLineIdsMeta.push(lineId);
     }
 
     for (const [lineId, count] of arrivedByTransitLine) {
       await this.transitLineRepository.decrementRemainingQuantity(lineId, count);
     }
 
-    let stockIds: string[] = [];
-    if (stockDtos.length > 0) {
-      const createdStocks = await this.stockRepository.createMany(stockDtos);
-      stockIds = createdStocks.map((s) => String(s._id));
-      await this.incomingReservationService.materializeForNewStockLines(
-        createdStocks as any,
-        transitLineIdsMeta,
-      );
-    }
+    const createdStocks = await this.createTandaStocksByOwner(stockItems);
+    const stockIds = createdStocks.map((row) => row.stock_id);
 
     await this.sessionRepository.markConverted(
       sessionId,
       null,
       shipping,
       stockIds,
+      createdStocks,
     );
 
     return {
@@ -1190,6 +1198,7 @@ export class IncomingHomologService {
       transit_reception: true,
       stock_created: stockIds.length,
       stock_ids: stockIds,
+      created_stocks: createdStocks,
       included_items: transitLinesInRoute.length,
       card_units: cards.length,
       decremented_lines: arrivedByTransitLine.size,
@@ -1292,7 +1301,9 @@ export class IncomingHomologService {
 
     const roundId = session.ship_round_id?.trim();
     if (!roundId) {
-      await this.deleteCreatedStocksForRevert(session.created_stock_ids ?? []);
+      await this.deleteCreatedStocksForRevert(
+        this.resolveCreatedStocksForRevert(session),
+      );
       const restored = await this.restoreTransitQuantitiesFromSession(session);
       if (!restored) {
         throw new BadRequestException('La sesión no tiene tanda ni recepción transit asociada');
@@ -1457,27 +1468,136 @@ export class IncomingHomologService {
    * Elimina stock creado en createTanda CT antes de restaurar cantidades en tránsito.
    * Permite `disponible` y `reserva` (borra la reserva); otros estados bloquean el revert.
    */
-  private async deleteCreatedStocksForRevert(stockIds: string[]): Promise<void> {
-    for (const rawId of stockIds) {
-      const stockId = rawId?.trim();
-      if (!stockId) continue;
+  private async resolveTransitLotOwner(
+    lotId: string | undefined,
+    cache: Map<string, OwnerKey>,
+  ): Promise<OwnerKey> {
+    const id = lotId?.trim();
+    if (!id) return OWNERS_CONFIG.defaultOwner;
+    const cached = cache.get(id);
+    if (cached) return cached;
+    const lot = await this.transitLotRepository.findById(id);
+    const owner = isOwnerKey(lot?.owner)
+      ? lot.owner
+      : OWNERS_CONFIG.defaultOwner;
+    cache.set(id, owner);
+    return owner;
+  }
 
-      const stock = await this.stockRepository.findById(stockId);
-      if (!stock) continue;
+  /**
+   * Crea stock agrupado por owner del lote. Si un grupo falla, borra los ya
+   * escritos en esta petición. Reservas 007 solo para el grupo Pablo.
+   */
+  private async createTandaStocksByOwner(
+    items: Array<{ dto: StockDto; transitLineId: string; owner: OwnerKey }>,
+  ): Promise<HomologCreatedStockRef[]> {
+    if (items.length === 0) return [];
 
-      const state = String(stock.card_state ?? '').toLowerCase();
-      if (state === 'reserva') {
-        await this.reservaRepository.deleteByStockId(stockId);
-        await this.stockRepository.deleteById(stockId);
-        continue;
+    const groups = new Map<
+      OwnerKey,
+      Array<{ dto: StockDto; transitLineId: string }>
+    >();
+    for (const item of items) {
+      const list = groups.get(item.owner) ?? [];
+      list.push({ dto: item.dto, transitLineId: item.transitLineId });
+      groups.set(item.owner, list);
+    }
+
+    const createdByOwner = new Map<
+      OwnerKey,
+      Array<{ stock: { _id?: unknown }; transitLineId: string }>
+    >();
+    const completedOwners: OwnerKey[] = [];
+    const refs: HomologCreatedStockRef[] = [];
+
+    try {
+      for (const [owner, group] of groups) {
+        const created = await runWithOwnerAsync(owner, () =>
+          this.stockRepository.createMany(group.map((row) => row.dto)),
+        );
+        const paired = created.map((stock, i) => ({
+          stock,
+          transitLineId: group[i].transitLineId,
+        }));
+        createdByOwner.set(owner, paired);
+        completedOwners.push(owner);
+        for (const row of paired) {
+          refs.push({ stock_id: String(row.stock._id), owner });
+        }
       }
-      if (state === 'disponible') {
-        await this.stockRepository.deleteById(stockId);
-        continue;
+    } catch (err) {
+      for (const owner of completedOwners) {
+        const rows = createdByOwner.get(owner) ?? [];
+        try {
+          await runWithOwnerAsync(owner, async () => {
+            for (const row of rows) {
+              await this.stockRepository.deleteById(String(row.stock._id));
+            }
+          });
+        } catch {
+          /* best-effort: no ocultar el error original */
+        }
       }
-      throw new BadRequestException(
-        `El stock ${stockId} ya fue usado (estado "${stock.card_state}"); no se puede deshacer la conversión automáticamente`,
+      throw err;
+    }
+
+    const pabloRows = createdByOwner.get('pablo') ?? [];
+    if (pabloRows.length > 0) {
+      await this.incomingReservationService.materializeForNewStockLines(
+        pabloRows.map((row) => row.stock) as any,
+        pabloRows.map((row) => row.transitLineId),
       );
+    }
+
+    return refs;
+  }
+
+  private resolveCreatedStocksForRevert(session: {
+    created_stocks?: HomologCreatedStockRef[];
+    created_stock_ids?: string[];
+  }): HomologCreatedStockRef[] {
+    const refs = session.created_stocks;
+    if (Array.isArray(refs) && refs.length > 0) {
+      return refs
+        .filter(
+          (row): row is HomologCreatedStockRef =>
+            !!row &&
+            typeof row.stock_id === 'string' &&
+            row.stock_id.trim().length > 0 &&
+            isOwnerKey(row.owner),
+        )
+        .map((row) => ({ stock_id: row.stock_id.trim(), owner: row.owner }));
+    }
+    return (session.created_stock_ids ?? [])
+      .filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
+      .map((id) => ({
+        stock_id: id.trim(),
+        owner: OWNERS_CONFIG.defaultOwner,
+      }));
+  }
+
+  private async deleteCreatedStocksForRevert(
+    refs: HomologCreatedStockRef[],
+  ): Promise<void> {
+    for (const ref of refs) {
+      await runWithOwnerAsync(ref.owner, async () => {
+        const stock = await this.stockRepository.findById(ref.stock_id);
+        if (!stock) return;
+
+        const state = String(stock.card_state ?? '').toLowerCase();
+        if (state === 'reserva') {
+          await this.reservaRepository.deleteByStockId(ref.stock_id);
+          await this.stockRepository.deleteById(ref.stock_id);
+          return;
+        }
+        if (state === 'disponible') {
+          await this.stockRepository.deleteById(ref.stock_id);
+          return;
+        }
+        throw new BadRequestException(
+          `El stock ${ref.stock_id} ya fue usado (estado "${stock.card_state}"); no se puede deshacer la conversión automáticamente`,
+        );
+      });
     }
   }
 
@@ -1685,6 +1805,7 @@ export class IncomingHomologService {
     shipping_total_cop?: number | null;
     ship_round_id?: string | null;
     created_stock_ids?: string[];
+    created_stocks?: HomologCreatedStockRef[];
     units?: IncomingHomologUnit[];
     cardtrader_synced_at?: Date;
     created_at?: Date;
@@ -1707,6 +1828,17 @@ export class IncomingHomologService {
         ? session.created_stock_ids.filter(
             (id): id is string => typeof id === 'string' && id.length > 0,
           )
+        : [],
+      created_stocks: Array.isArray(session.created_stocks)
+        ? session.created_stocks
+            .filter(
+              (row): row is HomologCreatedStockRef =>
+                !!row &&
+                typeof row.stock_id === 'string' &&
+                row.stock_id.length > 0 &&
+                isOwnerKey(row.owner),
+            )
+            .map((row) => ({ stock_id: row.stock_id, owner: row.owner }))
         : [],
       units: units.map((u) => {
         const unitPriceFx =

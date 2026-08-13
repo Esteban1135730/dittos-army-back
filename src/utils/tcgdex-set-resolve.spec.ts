@@ -8,6 +8,8 @@ import {
   expansionLookupKeys,
   normExpansionKey,
   normalizeMangledAsiaSetId,
+  remapSetIdForTrainerGallery,
+  trainerGallerySetIdAliases,
   resolveSetFromLocaleAliases,
   resolveSetFromLocaleMap,
   catalogLocaleForLanguage,
@@ -72,6 +74,18 @@ describe('tcgdex-set-resolve', () => {
   it('formatea promos swshp con prefijo SWSH', () => {
     expect(formatLocalIdForLocale('222', 'en', 'swshp')).toBe('SWSH222');
     expect(formatLocalIdForLocale('255', 'en', 'swshp')).toBe('SWSH255');
+  });
+
+  it('remapea Trainer Gallery SWSH del set padre al subset TG', () => {
+    expect(remapSetIdForTrainerGallery('swsh11', 'TG23')).toBe('swsh11.5tg');
+    expect(remapSetIdForTrainerGallery('swsh9', 'TG01')).toBe('swsh9.5tg');
+    expect(remapSetIdForTrainerGallery('swsh11', '75')).toBe('swsh11');
+    expect(trainerGallerySetIdAliases('swsh11.5tg')).toEqual(
+      expect.arrayContaining(['swsh11.5tg', 'swsh11tg', 'swsh11']),
+    );
+    expect(buildTcgdexCardIdLookupCandidates('swsh11-TG23', 'it')).toEqual(
+      expect.arrayContaining(['swsh11.5tg-TG23', 'swsh11tg-TG23', 'swsh11-TG23']),
+    );
   });
 
   it('normaliza Gem Pack zh 03-06/09 → 03-06_09', () => {

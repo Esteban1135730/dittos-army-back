@@ -5,6 +5,7 @@ import {
   IncomingHomologSession,
   IncomingHomologSessionDocument,
   IncomingHomologUnit,
+  type HomologCreatedStockRef,
 } from '../schema/incoming-homolog-session.schema';
 
 @Injectable()
@@ -117,6 +118,7 @@ export class IncomingHomologSessionRepository {
     shipRoundId: string | null,
     shippingTotalCop: number,
     createdStockIds: string[] = [],
+    createdStocks: HomologCreatedStockRef[] = [],
   ): Promise<IncomingHomologSessionDocument | null> {
     const now = new Date();
     const $set: Record<string, unknown> = {
@@ -125,6 +127,7 @@ export class IncomingHomologSessionRepository {
       converted_at: now,
       updated_at: now,
       created_stock_ids: createdStockIds,
+      created_stocks: createdStocks,
     };
     if (shipRoundId?.trim()) {
       $set.ship_round_id = shipRoundId.trim();
@@ -153,6 +156,7 @@ export class IncomingHomologSessionRepository {
             ship_round_id: null,
             shipping_total_cop: null,
             created_stock_ids: [],
+            created_stocks: [],
             updated_at: new Date(),
           },
           $unset: { converted_at: '' },

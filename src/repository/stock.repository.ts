@@ -19,16 +19,20 @@ export class StockRepository {
       ...rest
     } = stockDto as StockDto & {
       tags?: string[];
+      stocked_at?: Date;
     };
     const createdStock = new this.stockModel({
       ...rest,
       card_name: stockDto.card_name ?? '',
+      stocked_at:
+        (rest as { stocked_at?: Date }).stocked_at ?? new Date(),
     });
     return createdStock.save();
   }
 
   async createMany(stockDtos: StockDto[]): Promise<any[]> {
     if (!Array.isArray(stockDtos) || stockDtos.length === 0) return [];
+    const now = new Date();
     const normalized = stockDtos.map((d) => {
       const {
         tags: _tags,
@@ -36,10 +40,12 @@ export class StockRepository {
         ...rest
       } = d as StockDto & {
         tags?: string[];
+        stocked_at?: Date;
       };
       return {
         ...rest,
         card_name: d.card_name ?? '',
+        stocked_at: (rest as { stocked_at?: Date }).stocked_at ?? now,
       };
     });
     return this.stockModel.insertMany(normalized as any);
@@ -160,6 +166,30 @@ export class StockRepository {
       { card_state: cardState },
       { new: true },
     );
+  }
+
+  /**
+   * Marca stock como pérdida con timestamp y costo COP (036).
+   * No sobrescribe `lost_at` / `lost_cost_cop` si ya existen.
+   */
+  async markAsLost(
+    stockId: string,
+    lostCostCop: number,
+  ): Promise<Stock | null> {
+    const existing = await this.stockModel.findById(stockId).exec();
+    if (!existing) return null;
+    const patch: Record<string, unknown> = { card_state: 'perdida' };
+    if (existing.lost_at == null) {
+      patch.lost_at = new Date();
+    }
+    if (existing.lost_cost_cop == null) {
+      patch.lost_cost_cop = Number.isFinite(lostCostCop)
+        ? Math.round(lostCostCop)
+        : 0;
+    }
+    return this.stockModel
+      .findByIdAndUpdate(stockId, { $set: patch }, { new: true })
+      .exec();
   }
 
   async deleteById(id: string): Promise<boolean> {

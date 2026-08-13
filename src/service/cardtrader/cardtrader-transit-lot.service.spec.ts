@@ -1,4 +1,4 @@
-import { ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { CardtraderTransitLotService } from './cardtrader-transit-lot.service';
 
 describe('CardtraderTransitLotService', () => {
@@ -6,6 +6,9 @@ describe('CardtraderTransitLotService', () => {
     findByCt0PackageKey: jest.fn(),
     create: jest.fn(),
     findOpenLots: jest.fn(),
+    findById: jest.fn(),
+    backfillMissingOwner: jest.fn(),
+    updateById: jest.fn(),
   };
   const lineRepository = {
     createMany: jest.fn(),
@@ -13,6 +16,7 @@ describe('CardtraderTransitLotService', () => {
     findByCt0ItemIds: jest.fn(),
     setNotArrivedAtIfUnset: jest.fn(),
     findById: jest.fn(),
+    updateUnitCostByLotId: jest.fn(),
   };
   const incomingBatchRepository = { findById: jest.fn() };
   const incomingBatchItemRepository = { findByBatchId: jest.fn() };
@@ -78,6 +82,7 @@ describe('CardtraderTransitLotService', () => {
         total_cop_cards_cost: 20000,
         real_fx_rate_cop: 5000,
         cards_cost_currency: 'USD',
+        owner: 'pablo',
       }),
     );
     expect(lineRepository.createMany).toHaveBeenCalledWith(
@@ -138,6 +143,212 @@ describe('CardtraderTransitLotService', () => {
         }),
       ]),
     );
+  });
+
+  it('sin owner en create persiste pablo', async () => {
+    lotRepository.findByCt0PackageKey.mockResolvedValue(null);
+    lotRepository.create.mockResolvedValue({ _id: { toString: () => 'lot-def' } });
+    lineRepository.createMany.mockResolvedValue([]);
+
+    await service.createLot({
+      items: [
+        {
+          card_id: 'sv1-1',
+          language: 'en',
+          quantity: 1,
+          fx_total_lot: 2,
+        },
+      ],
+      total_cop_cards_cost: 10000,
+      purchase_date: '2026-06-01',
+    });
+
+    expect(lotRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({ owner: 'pablo' }),
+    );
+  });
+
+  it('owner esteban se persiste en create', async () => {
+    lotRepository.findByCt0PackageKey.mockResolvedValue(null);
+    lotRepository.create.mockResolvedValue({ _id: { toString: () => 'lot-est' } });
+    lineRepository.createMany.mockResolvedValue([]);
+
+    await service.createLot({
+      items: [
+        {
+          card_id: 'sv1-1',
+          language: 'en',
+          quantity: 1,
+          fx_total_lot: 2,
+        },
+      ],
+      total_cop_cards_cost: 10000,
+      purchase_date: '2026-06-01',
+      owner: 'esteban',
+    });
+
+    expect(lotRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({ owner: 'esteban' }),
+    );
+  });
+
+  it('owner inválido en create lanza BadRequestException', async () => {
+    await expect(
+      service.createLot({
+        items: [
+          {
+            card_id: 'sv1-1',
+            language: 'en',
+            quantity: 1,
+            fx_total_lot: 2,
+          },
+        ],
+        total_cop_cards_cost: 10000,
+        purchase_date: '2026-06-01',
+        owner: 'otro' as any,
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(lotRepository.create).not.toHaveBeenCalled();
+  });
+
+  it('listOpenLots incluye owner y hace fallback a pablo', async () => {
+    lotRepository.backfillMissingOwner.mockResolvedValue(1);
+    lotRepository.findOpenLots.mockResolvedValue([
+      {
+        _id: { toString: () => 'lot-old' },
+        status: 'open',
+        source: 'ct0',
+        purchase_date: new Date('2026-06-01'),
+        created_at: new Date('2026-06-01'),
+        total_fx_cards_cost: 4,
+        total_cop_cards_cost: 20000,
+        cards_cost_currency: 'USD',
+      },
+      {
+        _id: { toString: () => 'lot-est' },
+        status: 'open',
+        source: 'ct0',
+        purchase_date: new Date('2026-06-02'),
+        created_at: new Date('2026-06-02'),
+        total_fx_cards_cost: 1,
+        total_cop_cards_cost: 5000,
+        cards_cost_currency: 'USD',
+        owner: 'esteban',
+      },
+    ]);
+    lineRepository.findByLotId.mockResolvedValue([]);
+
+    const rows = await service.listOpenLots();
+
+    expect(lotRepository.backfillMissingOwner).toHaveBeenCalled();
+    expect(rows[0].owner).toBe('pablo');
+    expect(rows[1].owner).toBe('esteban');
+  });
+
+  it('getLot incluye owner con fallback pablo', async () => {
+    lotRepository.findById.mockResolvedValue({
+      _id: { toString: () => 'lot-1' },
+      status: 'open',
+      source: 'ct0',
+      purchase_date: new Date('2026-06-01'),
+      created_at: new Date('2026-06-01'),
+      total_fx_cards_cost: 4,
+      total_cop_cards_cost: 20000,
+      real_fx_rate_cop: 5000,
+      cards_cost_currency: 'USD',
+    });
+    lineRepository.findByLotId.mockResolvedValue([]);
+
+    const lot = await service.getLot('lot-1');
+    expect(lot.owner).toBe('pablo');
+    expect(lot.owner_editable).toBe(true);
+  });
+
+  it('getLot owner_editable true si todas las líneas están intactas', async () => {
+    lotRepository.findById.mockResolvedValue({
+      _id: { toString: () => 'lot-1' },
+      status: 'open',
+      source: 'ct0',
+      purchase_date: new Date('2026-06-01'),
+      created_at: new Date('2026-06-01'),
+      total_fx_cards_cost: 4,
+      total_cop_cards_cost: 20000,
+      real_fx_rate_cop: 5000,
+      cards_cost_currency: 'USD',
+      owner: 'esteban',
+    });
+    lineRepository.findByLotId.mockResolvedValue([
+      { remaining_quantity: 2, quantity_ordered: 2 },
+      { remaining_quantity: 1, quantity_ordered: 1 },
+    ]);
+
+    const lot = await service.getLot('lot-1');
+    expect(lot.owner).toBe('esteban');
+    expect(lot.owner_editable).toBe(true);
+  });
+
+  it('getLot owner_editable false si alguna línea decrementó', async () => {
+    lotRepository.findById.mockResolvedValue({
+      _id: { toString: () => 'lot-1' },
+      status: 'open',
+      source: 'ct0',
+      purchase_date: new Date('2026-06-01'),
+      created_at: new Date('2026-06-01'),
+      total_fx_cards_cost: 4,
+      total_cop_cards_cost: 20000,
+      real_fx_rate_cop: 5000,
+      cards_cost_currency: 'USD',
+      owner: 'pablo',
+    });
+    lineRepository.findByLotId.mockResolvedValue([
+      { remaining_quantity: 1, quantity_ordered: 2 },
+    ]);
+
+    const lot = await service.getLot('lot-1');
+    expect(lot.owner_editable).toBe(false);
+  });
+
+  it('updateLot persiste owner esteban si las líneas están intactas', async () => {
+    lotRepository.findById.mockResolvedValue({
+      _id: { toString: () => 'lot-1' },
+      owner: 'pablo',
+      total_fx_cards_cost: 4,
+    });
+    lineRepository.findByLotId.mockResolvedValue([
+      { remaining_quantity: 2, quantity_ordered: 2 },
+    ]);
+    lotRepository.updateById.mockResolvedValue({});
+
+    const result = await service.updateLot('lot-1', { owner: 'esteban' });
+
+    expect(result).toEqual({ success: true });
+    expect(lotRepository.updateById).toHaveBeenCalledWith(
+      'lot-1',
+      expect.objectContaining({ owner: 'esteban' }),
+    );
+  });
+
+  it('updateLot 409 si alguna línea ya decrementó y no persiste owner', async () => {
+    lotRepository.findById.mockResolvedValue({
+      _id: { toString: () => 'lot-1' },
+      owner: 'pablo',
+      total_fx_cards_cost: 4,
+    });
+    lineRepository.findByLotId.mockResolvedValue([
+      { remaining_quantity: 1, quantity_ordered: 2 },
+    ]);
+
+    await expect(
+      service.updateLot('lot-1', { owner: 'esteban' }),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(lotRepository.updateById).not.toHaveBeenCalled();
+  });
+
+  it('updateLot owner inválido lanza BadRequestException', async () => {
+    await expect(
+      service.updateLot('lot-1', { owner: 'otro' as any }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(lotRepository.updateById).not.toHaveBeenCalled();
   });
 
   it('rechaza lote ct0 con COP 0', async () => {

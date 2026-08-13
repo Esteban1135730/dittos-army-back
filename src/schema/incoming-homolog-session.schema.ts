@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import type { OwnerKey } from '../config/owners.config';
 
 export type IncomingHomologSessionDocument =
   HydratedDocument<IncomingHomologSession>;
@@ -113,6 +114,24 @@ export class IncomingHomologUnit {
 export const IncomingHomologUnitSchema =
   SchemaFactory.createForClass(IncomingHomologUnit);
 
+export type HomologCreatedStockRef = {
+  stock_id: string;
+  owner: OwnerKey;
+};
+
+@Schema({ _id: false })
+export class IncomingHomologCreatedStock implements HomologCreatedStockRef {
+  @Prop({ required: true })
+  stock_id: string;
+
+  @Prop({ required: true, enum: ['pablo', 'esteban'] })
+  owner: OwnerKey;
+}
+
+export const IncomingHomologCreatedStockSchema = SchemaFactory.createForClass(
+  IncomingHomologCreatedStock,
+);
+
 @Schema({ collection: 'incoming_homolog_sessions' })
 export class IncomingHomologSession {
   @Prop({ required: true, type: String })
@@ -127,6 +146,10 @@ export class IncomingHomologSession {
   /** Stock creado en createTanda CT (sin ship round); usado para revert. */
   @Prop({ type: [String], default: [] })
   created_stock_ids: string[];
+
+  /** Fuente de verdad stock_id + owner (037). Sesiones legacy: vacío. */
+  @Prop({ type: [IncomingHomologCreatedStockSchema], default: [] })
+  created_stocks: IncomingHomologCreatedStock[];
 
   @Prop({ type: [IncomingHomologUnitSchema], default: [] })
   units: IncomingHomologUnit[];

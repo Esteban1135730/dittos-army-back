@@ -29,6 +29,35 @@ export class Sale {
 
   @Prop({ required: false })
   cycle_closed_at?: Date;
+
+  /** Costo COP de la línea al momento de la venta (analítica 036). */
+  @Prop({ required: false })
+  cost_cop_snapshot?: number;
+
+  /** PVP COP si se resolvió en el flujo de venta. */
+  @Prop({ required: false })
+  pvp_cop_snapshot?: number;
+
+  @Prop({ required: false })
+  product_kind_snapshot?: string;
+
+  @Prop({ required: false })
+  rareza_snapshot?: string;
+
+  /**
+   * Tags operativos al momento de la venta (vintage/bulk/jugable/brillo).
+   * Preferido en métricas frente al mapa vivo `card_stock_tags`.
+   */
+  @Prop({ type: [String], required: false })
+  tags_snapshot?: string[];
+
+  /**
+   * Fecha de recepción/ingreso a inventario al vender
+   * (`stocked_at` o timestamp ObjectId del stock).
+   */
+  @Prop({ required: false })
+  received_at_snapshot?: Date;
 }
 
 export const SaleSchema = SchemaFactory.createForClass(Sale);
+SaleSchema.index({ type: 1, created_at: 1 });

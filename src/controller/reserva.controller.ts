@@ -18,6 +18,8 @@ import { ReservaDto } from 'src/Dto/reserva.dto';
 import { IncomingReservationService } from 'src/service/incoming-reservation.service';
 import { StoreWhatsAppReservationImportService } from 'src/service/store-whatsapp-reservation-import.service';
 import { precioToCop } from 'src/utils/precio-to-cop';
+import { enrichSaleCreatePayload } from 'src/utils/sale-cost-snapshot';
+import { CardStockTagRepository } from 'src/repository/card-stock-tag.repository';
 
 const ESTADO_RESERVA = 'reserva';
 const ESTADO_DISPONIBLE = 'disponible';
@@ -31,6 +33,7 @@ export class ReservaController {
     private readonly saleRepository: SaleRepository,
     private readonly incomingReservationService: IncomingReservationService,
     private readonly storeWhatsAppImportService: StoreWhatsAppReservationImportService,
+    private readonly cardStockTagRepository: CardStockTagRepository,
   ) {}
 
   @Post('import-store-whatsapp/preview')
@@ -213,14 +216,25 @@ export class ReservaController {
         };
       }
       const amountCop = precioToCop(reserva.precio, reserva.currency ?? 'COP');
-      await this.saleRepository.create({
-        stock_id: reserva.stock_id,
-        card_id: stock.card_id,
-        type: 'venta',
-        amount_cop: amountCop,
-        client_id: clientId,
-        notes: `Venta finalizada desde reserva (cliente ${clientId}). Precio original: ${reserva.precio} ${reserva.currency ?? 'COP'}.`,
-      });
+      const tagsMap = await this.cardStockTagRepository.findMapByCardIds([
+        stock.card_id,
+      ]);
+      await this.saleRepository.create(
+        enrichSaleCreatePayload(
+          {
+            stock_id: reserva.stock_id,
+            card_id: stock.card_id,
+            type: 'venta',
+            amount_cop: amountCop,
+            client_id: clientId,
+            notes: `Venta finalizada desde reserva (cliente ${clientId}). Precio original: ${reserva.precio} ${reserva.currency ?? 'COP'}.`,
+          },
+          stock,
+          {
+            tags_snapshot: tagsMap.get(String(stock.card_id).trim()) ?? [],
+          },
+        ),
+      );
       await this.stockRepository.updateCardState(
         reserva.stock_id,
         ESTADO_VENDIDA,

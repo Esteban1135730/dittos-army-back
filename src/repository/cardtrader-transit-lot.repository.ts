@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { OWNERS_CONFIG, type OwnerKey } from '../config/owners.config';
 import { OwnerModelsService } from '../owner/owner-models.service';
 import { Model } from 'mongoose';
 import {
@@ -26,12 +27,24 @@ export class CardtraderTransitLotRepository {
     cards_cost_currency?: string;
     legacy_incoming_batch_id?: string;
     legacy_incoming_cop_hint?: number;
+    owner: OwnerKey;
   }): Promise<CardtraderTransitLotDocument> {
     const created = new this.lotModel({
       ...data,
       created_at: new Date(),
     });
     return created.save();
+  }
+
+  /** Idempotente: documentos antiguos sin `owner` pasan a Pablo. */
+  async backfillMissingOwner(): Promise<number> {
+    const result = await this.lotModel
+      .updateMany(
+        { owner: { $exists: false } },
+        { $set: { owner: OWNERS_CONFIG.defaultOwner } },
+      )
+      .exec();
+    return result.modifiedCount ?? 0;
   }
 
   async findById(id: string): Promise<CardtraderTransitLotDocument | null> {
@@ -79,6 +92,7 @@ export class CardtraderTransitLotRepository {
       total_cop_cards_cost: number;
       real_fx_rate_cop: number;
       cards_cost_currency: string;
+      owner: OwnerKey;
     }>,
   ): Promise<CardtraderTransitLotDocument | null> {
     return this.lotModel.findByIdAndUpdate(id, data, { new: true }).exec();

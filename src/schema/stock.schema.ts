@@ -60,6 +60,18 @@ export class Stock {
   /** Existencias restantes; significativo solo si `product_kind === 'quantity'`. */
   @Prop({ type: Number, required: false })
   quantity?: number;
+
+  /** Fecha de ingreso a inventario (analítica 036). */
+  @Prop({ required: false, type: Date })
+  stocked_at?: Date;
+
+  /** Momento de baja por pérdida. */
+  @Prop({ required: false, type: Date })
+  lost_at?: Date;
+
+  /** Costo COP al marcar pérdida. */
+  @Prop({ required: false, type: Number })
+  lost_cost_cop?: number;
 }
 
 export const StockSchema = SchemaFactory.createForClass(Stock);

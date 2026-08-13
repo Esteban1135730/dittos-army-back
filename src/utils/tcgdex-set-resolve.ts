@@ -169,6 +169,89 @@ export function formatPromoLocalIdForSet(
   return localId;
 }
 
+/** CardTrader lista Trainer Gallery bajo el set padre (Lost Origin + #TG23). */
+const SWSH_TRAINER_GALLERY_BY_PARENT: Record<string, string> = {
+  swsh9: 'swsh9.5tg',
+  swsh10: 'swsh10.5tg',
+  swsh11: 'swsh11.5tg',
+  swsh12: 'swsh12.5tg',
+};
+
+export function isTrainerGalleryLocalId(localId: string | null | undefined): boolean {
+  return /^TG\d+/i.test(String(localId ?? '').trim());
+}
+
+/** Sufijo de colisión CardTrader: `{localId}_{blueprintId}` (p. ej. M2a-205_360075). */
+const BLUEPRINT_COLLISION_SUFFIX = /_(\d{5,})$/;
+
+export function tcgdexLocalIdWithBlueprintCollision(
+  localId: string,
+  blueprintId?: number | null,
+): string {
+  const base = localId.trim();
+  if (
+    !base ||
+    blueprintId == null ||
+    !Number.isInteger(blueprintId) ||
+    blueprintId < 10000
+  ) {
+    return base;
+  }
+  if (base.endsWith(`_${blueprintId}`)) return base;
+  return `${base}_${blueprintId}`;
+}
+
+export function stripBlueprintCollisionLocalId(localId: string): string | null {
+  const match = BLUEPRINT_COLLISION_SUFFIX.exec(localId.trim());
+  if (!match) return null;
+  const stripped = localId.trim().slice(0, -match[0].length);
+  return stripped || null;
+}
+
+/** swsh11 + TG23 → swsh11.5tg (catálogo local). */
+export function remapSetIdForTrainerGallery(
+  setId: string,
+  localId: string | null | undefined,
+): string {
+  if (!isTrainerGalleryLocalId(localId)) return setId;
+  const lower = setId.trim().toLowerCase();
+  return SWSH_TRAINER_GALLERY_BY_PARENT[lower] ?? setId;
+}
+
+/** Local `swsh11.5tg` vs producción `swsh11tg`, más el padre `swsh11`. */
+export function trainerGallerySetIdAliases(setId: string): string[] {
+  const trimmed = setId.trim();
+  if (!trimmed) return [];
+  const lower = trimmed.toLowerCase();
+  const aliases = [trimmed];
+  const push = (id: string) => {
+    if (id && !aliases.some((x) => x.toLowerCase() === id.toLowerCase())) {
+      aliases.push(id);
+    }
+  };
+
+  const dotted = /^swsh(\d+)\.5tg$/i.exec(lower);
+  if (dotted) {
+    push(`swsh${dotted[1]}.5tg`);
+    push(`swsh${dotted[1]}tg`);
+    push(`swsh${dotted[1]}`);
+    return aliases;
+  }
+  const prod = /^swsh(\d+)tg$/i.exec(lower);
+  if (prod) {
+    push(`swsh${prod[1]}.5tg`);
+    push(`swsh${prod[1]}tg`);
+    push(`swsh${prod[1]}`);
+    return aliases;
+  }
+  const gallery = SWSH_TRAINER_GALLERY_BY_PARENT[lower];
+  if (gallery) {
+    push(gallery);
+    push(gallery.replace('.5tg', 'tg'));
+  }
+  return aliases;
+}
+
 export function formatLocalIdForLocale(
   raw: string | null | undefined,
   locale: string | null | undefined,
@@ -226,6 +309,8 @@ export function buildTcgdexCardIdLookupCandidates(
   const rawSetId = trimmed.slice(0, dash);
   const localId = trimmed.slice(dash + 1);
   const setId = normalizeMangledAsiaSetId(rawSetId);
+  const remappedSetId = remapSetIdForTrainerGallery(setId, localId);
+  const strippedLocalId = stripBlueprintCollisionLocalId(localId);
   const ordered: string[] = [];
   const push = (id: string) => {
     const v = id.trim();
@@ -238,10 +323,27 @@ export function buildTcgdexCardIdLookupCandidates(
     'ja',
   ].filter((loc, index, arr) => arr.indexOf(loc) === index);
 
-  for (const setCandidate of [setId, rawSetId]) {
+  const setCandidates = [
+    remappedSetId,
+    ...trainerGallerySetIdAliases(remappedSetId),
+    ...trainerGallerySetIdAliases(setId),
+    rawSetId,
+  ];
+
+  const localIdCandidates = [localId, strippedLocalId].filter(
+    (id): id is string => Boolean(id),
+  );
+
+  for (const setCandidate of setCandidates) {
     for (const locale of locales) {
-      const formatted = formatLocalIdForLocale(localId, locale, setCandidate);
-      if (formatted) push(`${setCandidate}-${formatted}`);
+      for (const localCandidate of localIdCandidates) {
+        const formatted = formatLocalIdForLocale(
+          localCandidate,
+          locale,
+          setCandidate,
+        );
+        if (formatted) push(`${setCandidate}-${formatted}`);
+      }
     }
   }
 

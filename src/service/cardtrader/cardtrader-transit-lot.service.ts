@@ -25,6 +25,7 @@ import {
   resolveIncomingBatchItemImageUrl,
   type TcgDexBatchEnrichment,
 } from 'src/utils/incoming-batch-item-meta';
+import { isOwnerKey, OWNERS_CONFIG, type OwnerKey } from 'src/config/owners.config';
 import { normalizeCardsCostCurrency } from 'src/utils/purchase-currency';
 import {
   findLegacyItemByCardName,
@@ -40,6 +41,28 @@ export class CardtraderTransitLotService {
     private readonly incomingBatchItemRepository: IncomingBatchItemRepository,
     private readonly tcgDexService: TCGDexService,
   ) {}
+
+  private resolveLotOwner(raw: unknown): OwnerKey {
+    return isOwnerKey(raw) ? raw : OWNERS_CONFIG.defaultOwner;
+  }
+
+  private isLotOwnerEditable(
+    lines: Array<{ remaining_quantity: number; quantity_ordered: number }>,
+  ): boolean {
+    return lines.every(
+      (line) => line.remaining_quantity === line.quantity_ordered,
+    );
+  }
+
+  private parseCreateOwner(body: CreateCardtraderTransitLotDto): OwnerKey {
+    if (body.owner == null) {
+      return OWNERS_CONFIG.defaultOwner;
+    }
+    if (!isOwnerKey(body.owner)) {
+      throw new BadRequestException('owner inválido');
+    }
+    return body.owner;
+  }
 
   private async resolveLegacyLotPricing(body: CreateCardtraderTransitLotDto): Promise<{
     total_fx_cards_cost: number;
@@ -111,8 +134,10 @@ export class CardtraderTransitLotService {
       legacy_incoming_batch_id: string | null;
       registered_items_fx_subtotal: number | null;
       remaining_total_quantity: number;
+      owner: OwnerKey;
     }>
   > {
+    await this.lotRepository.backfillMissingOwner();
     const lots = await this.lotRepository.findOpenLots();
     if (lots.length === 0) return [];
 
@@ -137,6 +162,7 @@ export class CardtraderTransitLotService {
           legacy_incoming_batch_id: lot.legacy_incoming_batch_id ?? null,
           registered_items_fx_subtotal: lot.registered_items_fx_subtotal ?? null,
           remaining_total_quantity: remainingTotal,
+          owner: this.resolveLotOwner(lot.owner),
         };
       }),
     );
@@ -147,6 +173,7 @@ export class CardtraderTransitLotService {
   async getLot(lotId: string) {
     const lot = await this.lotRepository.findById(lotId);
     if (!lot) throw new NotFoundException('Lote no encontrado');
+    const lines = await this.lineRepository.findByLotId(lotId);
     return {
       lot_id: lot._id.toString(),
       status: lot.status,
@@ -161,6 +188,8 @@ export class CardtraderTransitLotService {
       legacy_incoming_cop_hint: lot.legacy_incoming_cop_hint ?? null,
       registered_items_fx_subtotal: lot.registered_items_fx_subtotal ?? null,
       created_at: lot.created_at,
+      owner: this.resolveLotOwner(lot.owner),
+      owner_editable: this.isLotOwnerEditable(lines),
     };
   }
 
@@ -417,6 +446,8 @@ export class CardtraderTransitLotService {
         ? 'manual'
         : 'ct0';
 
+    const owner = this.parseCreateOwner(body);
+
     const lot = await this.lotRepository.create({
       status: 'open',
       source,
@@ -432,6 +463,7 @@ export class CardtraderTransitLotService {
         body.legacy_incoming_cop_hint != null && body.legacy_incoming_cop_hint > 0
           ? body.legacy_incoming_cop_hint
           : undefined,
+      owner,
     });
 
     const cardIds = cardIdsNeedingTcgDexEnrichment(
@@ -527,10 +559,27 @@ export class CardtraderTransitLotService {
     lotId: string,
     body: UpdateCardtraderTransitLotDto,
   ): Promise<{ success: boolean; message?: string }> {
+    if (body.owner != null && !isOwnerKey(body.owner)) {
+      throw new BadRequestException('owner inválido');
+    }
+
     const lot = await this.lotRepository.findById(lotId);
     if (!lot) return { success: false, message: 'Lote no encontrado' };
 
     const updateData: Record<string, unknown> = {};
+
+    if (body.owner != null) {
+      const currentOwner = this.resolveLotOwner(lot.owner);
+      if (body.owner !== currentOwner) {
+        const lines = await this.lineRepository.findByLotId(lotId);
+        if (!this.isLotOwnerEditable(lines)) {
+          throw new ConflictException(
+            'No se puede cambiar el dueño porque ya se creó stock o se recibió parte del lote',
+          );
+        }
+      }
+      updateData.owner = body.owner;
+    }
 
     if (body.purchase_date != null) {
       const parsed = new Date(body.purchase_date);

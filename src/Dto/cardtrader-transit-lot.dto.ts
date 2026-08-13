@@ -1,3 +1,5 @@
+import type { OwnerKey } from '../config/owners.config';
+
 export type CardtraderTransitLineInput = {
   card_id: string;
   language: string;
@@ -27,12 +29,15 @@ export type CreateCardtraderTransitLotDto = {
   legacy_basis_total_cop_cards_cost?: number;
   legacy_basis_real_fx_rate_cop?: number;
   legacy_basis_cards_cost_currency?: string;
+  /** Default `pablo` si se omite. */
+  owner?: OwnerKey;
 };
 
 export type UpdateCardtraderTransitLotDto = {
   purchase_date?: string;
   total_cop_cards_cost?: number;
   cards_cost_currency?: string;
+  owner?: OwnerKey;
 };
 
 export type MarkNotArrivedDto = {

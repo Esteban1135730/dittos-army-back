@@ -7,6 +7,43 @@ describe('CardTraderTcgdexResolveService', () => {
     service = new CardTraderTcgdexResolveService();
   });
 
+  it('resuelve Lost Origin #TG23 → swsh11.5tg-TG23', () => {
+    const byName = service.resolveTcgdexCardId({
+      expansionName: 'Lost Origin',
+      collectorNumber: 'TG23',
+      language: 'it',
+    });
+    expect(byName.tcgdex_set_id).toBe('swsh11.5tg');
+    expect(byName.tcgdex_card_id).toBe('swsh11.5tg-TG23');
+    expect(byName.error).toBeNull();
+
+    const regular = service.resolveTcgdexCardId({
+      expansionName: 'Lost Origin',
+      collectorNumber: '075',
+      language: 'it',
+    });
+    expect(regular.tcgdex_card_id).toBe('swsh11-75');
+  });
+
+  it('resuelve EX Dragon Frontiers (it) #047 → ex15-47', () => {
+    const byName = service.resolveTcgdexCardId({
+      expansionName: 'EX Dragon Frontiers',
+      collectorNumber: '047',
+      language: 'it',
+    });
+    expect(byName.tcgdex_set_id).toBe('ex15');
+    expect(byName.tcgdex_card_id).toBe('ex15-47');
+    expect(byName.error).toBeNull();
+
+    const byId = service.resolveTcgdexCardId({
+      expansionId: 1514,
+      collectorNumber: '047',
+      language: 'it',
+    });
+    expect(byId.tcgdex_card_id).toBe('ex15-47');
+    expect(byId.error).toBeNull();
+  });
+
   it('resuelve tcgdex_card_id por nombre de expansión y collector_number', () => {
     const result = service.resolveTcgdexCardId({
       expansionName: 'Base Set',

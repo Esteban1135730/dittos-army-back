@@ -6,6 +6,7 @@ import { ReservaRepository } from '../repository/reserva.repository';
 import { ReservaIncomingRepository } from '../repository/reserva-incoming.repository';
 import { IncomingBatchRepository } from '../repository/incoming-batch.repository';
 import { IncomingBatchItemRepository } from '../repository/incoming-batch-item.repository';
+import { CardtraderTransitLineRepository } from '../repository/cardtrader-transit-line.repository';
 import { PvpRepository } from '../repository/pvp.repository';
 import {
   effectiveOperationalRarezaFromStock,
@@ -150,6 +151,7 @@ export class DashboardOverviewService {
     private readonly reservaIncomingRepository: ReservaIncomingRepository,
     private readonly incomingBatchRepository: IncomingBatchRepository,
     private readonly incomingBatchItemRepository: IncomingBatchItemRepository,
+    private readonly cardtraderTransitLineRepository: CardtraderTransitLineRepository,
     private readonly pvpRepository: PvpRepository,
   ) {}
 
@@ -162,6 +164,7 @@ export class DashboardOverviewService {
       reservas,
       reservasIncoming,
       openBatches,
+      ctTransitLines,
     ] = await Promise.all([
       this.stockRepository.findAll(),
       this.saleRepository.findActiveVentas(),
@@ -170,6 +173,7 @@ export class DashboardOverviewService {
       this.reservaRepository.findAll(),
       this.reservaIncomingRepository.findAll(),
       this.incomingBatchRepository.findOpenBatches(),
+      this.cardtraderTransitLineRepository.findByRemainingQuantityGreaterThanZero(),
     ]);
 
     const stockById = new Map<string, Stock>();
@@ -259,6 +263,7 @@ export class DashboardOverviewService {
       )
       .filter(Boolean);
 
+    // Incoming legacy: remaining_quantity * unit_cost_cop (no lot totals).
     let units_in_transit = 0;
     let estimated_cost_cop = 0;
     if (openBatchIds.length > 0) {
@@ -270,10 +275,19 @@ export class DashboardOverviewService {
       for (const items of itemGroups) {
         for (const item of items) {
           const remaining = item.remaining_quantity ?? 0;
+          if (remaining <= 0) continue;
           units_in_transit += remaining;
           estimated_cost_cop += remaining * (item.unit_cost_cop ?? 0);
         }
       }
+    }
+
+    // CardTrader transit: only lines still pending (remaining > 0); never fx_total_lot.
+    for (const line of ctTransitLines) {
+      const remaining = line.remaining_quantity ?? 0;
+      if (remaining <= 0) continue;
+      units_in_transit += remaining;
+      estimated_cost_cop += remaining * (line.unit_cost_cop ?? 0);
     }
 
     const roundedTransitCost = Math.round(estimated_cost_cop);

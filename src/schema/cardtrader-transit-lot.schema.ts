@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import { OWNERS_CONFIG, type OwnerKey } from '../config/owners.config';
 
 export type CardtraderTransitLotDocument =
   HydratedDocument<CardtraderTransitLot>;
@@ -48,6 +49,14 @@ export class CardtraderTransitLot {
 
   @Prop()
   legacy_incoming_cop_hint?: number;
+
+  /** Dueño del stock que se creará al recibir (Pablo o Esteban). Default Pablo. */
+  @Prop({
+    required: true,
+    enum: ['pablo', 'esteban'],
+    default: OWNERS_CONFIG.defaultOwner,
+  })
+  owner: OwnerKey;
 
   @Prop({ default: Date.now })
   created_at: Date;

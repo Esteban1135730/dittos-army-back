@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
+import { TCGDexService } from '../tcgdex/tcgdex.service';
 import {
   expansionLabel,
   formatLocalIdForLocale,
@@ -6,6 +7,8 @@ import {
   catalogLocaleForLanguage,
   adjustSetIdForCatalog,
   normalizeMangledAsiaSetId,
+  remapSetIdForTrainerGallery,
+  tcgdexLocalIdWithBlueprintCollision,
   resolveSetFromLocaleAliases,
   resolveSetFromLocaleMap,
 } from '../../utils/tcgdex-set-resolve';
@@ -26,7 +29,7 @@ export type TcgdexResolveResult = {
 export class CardTraderTcgdexResolveService {
   private readonly index: TcgdexSetResolveIndex;
 
-  constructor() {
+  constructor(@Optional() private readonly tcgDexService?: TCGDexService) {
     this.index = loadTcgdexSetResolveIndex();
   }
 
@@ -137,12 +140,13 @@ export class CardTraderTcgdexResolveService {
       : null;
   }
 
-  resolveTcgdexCardId(args: {
+  async resolveTcgdexCardId(args: {
     expansionName?: string;
     expansionId?: number;
     collectorNumber?: string;
     language?: string;
-  }): TcgdexResolveResult {
+    blueprint_id?: number;
+  }): Promise<TcgdexResolveResult> {
     const set = this.findSet(args);
     if (!set) {
       return {
@@ -169,22 +173,44 @@ export class CardTraderTcgdexResolveService {
       };
     }
 
+    const tcgdex_set_id = remapSetIdForTrainerGallery(set.tcgdex_set_id, localId);
+    const collisionLocalId = tcgdexLocalIdWithBlueprintCollision(
+      localId,
+      args.blueprint_id,
+    );
+    if (
+      collisionLocalId !== localId &&
+      this.tcgDexService
+    ) {
+      const collisionId = `${tcgdex_set_id}-${collisionLocalId}`;
+      const hit = await this.tcgDexService.getCard(collisionId, locale);
+      if (hit?.name) {
+        return {
+          tcgdex_card_id: collisionId,
+          tcgdex_set_id,
+          locale,
+          error: null,
+        };
+      }
+    }
+
     return {
-      tcgdex_card_id: `${set.tcgdex_set_id}-${localId}`,
-      tcgdex_set_id: set.tcgdex_set_id,
+      tcgdex_card_id: `${tcgdex_set_id}-${localId}`,
+      tcgdex_set_id,
       locale,
       error: null,
     };
   }
 
-  resolveTcgdexCardIdBatch(
+  async resolveTcgdexCardIdBatch(
     lines: Array<{
       expansionName?: string;
       expansionId?: number;
       collectorNumber?: string;
       language?: string;
+      blueprint_id?: number;
     }>,
-  ): TcgdexResolveResult[] {
-    return lines.map((line) => this.resolveTcgdexCardId(line));
+  ): Promise<TcgdexResolveResult[]> {
+    return Promise.all(lines.map((line) => this.resolveTcgdexCardId(line)));
   }
 }

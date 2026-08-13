@@ -7,6 +7,7 @@ import { StockRepository } from 'src/repository/stock.repository';
 import { PvpRepository } from 'src/repository/pvp.repository';
 import { ReservaRepository } from 'src/repository/reserva.repository';
 import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
+import { CardStockTagRepository } from 'src/repository/card-stock-tag.repository';
 import { runWithOwnerAsync } from 'src/owner/owner-context';
 import { assertFeatureAllowed } from 'src/owner/feature-acl.guard';
 
@@ -59,6 +60,12 @@ describe('SaleController sell-batch multi-owner (034)', () => {
         { provide: PvpRepository, useValue: {} },
         { provide: ReservaRepository, useValue: reservaRepository },
         { provide: TCGDexService, useValue: {} },
+        {
+          provide: CardStockTagRepository,
+          useValue: {
+            findMapByCardIds: jest.fn().mockResolvedValue(new Map()),
+          },
+        },
       ],
     }).compile();
 

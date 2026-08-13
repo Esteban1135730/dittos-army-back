@@ -29,6 +29,9 @@ import {
   getCurrentOwner,
   runWithOwnerAsync,
 } from 'src/owner/owner-context';
+import { enrichSaleCreatePayload } from 'src/utils/sale-cost-snapshot';
+import { CardStockTagRepository } from 'src/repository/card-stock-tag.repository';
+import type { Stock } from 'src/schema/stock.schema';
 
 function pvpToCop(pvp: number, currency: string): number {
   if (currency === 'COP') return Math.round(pvp);
@@ -52,7 +55,25 @@ export class SaleController {
     private readonly pvpRepository: PvpRepository,
     private readonly reservaRepository: ReservaRepository,
     private readonly tcgDexService: TCGDexService,
+    private readonly cardStockTagRepository: CardStockTagRepository,
   ) {}
+
+  private async tagsForCard(cardId: string): Promise<string[]> {
+    const map = await this.cardStockTagRepository.findMapByCardIds([cardId]);
+    return map.get(String(cardId ?? '').trim()) ?? [];
+  }
+
+  private async enrichVenta(
+    base: Parameters<typeof enrichSaleCreatePayload>[0],
+    stock: Stock & { _id?: unknown },
+    opts?: Parameters<typeof enrichSaleCreatePayload>[2],
+  ) {
+    const tags_snapshot = await this.tagsForCard(stock.card_id);
+    return enrichSaleCreatePayload(base, stock, {
+      ...opts,
+      tags_snapshot,
+    });
+  }
 
   @Post('keep')
   async keepCard(
@@ -205,13 +226,18 @@ export class SaleController {
       const amount = Math.round(body.amount_cop);
       const notes = body.notes ?? '';
       for (let i = 0; i < sellQty; i++) {
-        await this.saleRepository.create({
-          stock_id: body.stock_id,
-          card_id: body.card_id,
-          type: 'venta',
-          amount_cop: amount,
-          notes,
-        });
+        await this.saleRepository.create(
+          await this.enrichVenta(
+            {
+              stock_id: body.stock_id,
+              card_id: body.card_id,
+              type: 'venta',
+              amount_cop: amount,
+              notes,
+            },
+            stock,
+          ),
+        );
       }
 
       // No marcar vendida mientras quede cantidad > 0.
@@ -226,13 +252,18 @@ export class SaleController {
       };
     }
 
-    await this.saleRepository.create({
-      stock_id: body.stock_id,
-      card_id: body.card_id,
-      type: 'venta',
-      amount_cop: body.amount_cop,
-      notes: body.notes ?? '',
-    });
+    await this.saleRepository.create(
+      await this.enrichVenta(
+        {
+          stock_id: body.stock_id,
+          card_id: body.card_id,
+          type: 'venta',
+          amount_cop: body.amount_cop,
+          notes: body.notes ?? '',
+        },
+        stock,
+      ),
+    );
 
     await this.stockRepository.updateCardState(body.stock_id, 'vendida');
 
@@ -424,13 +455,18 @@ export class SaleController {
             ? (updated as { quantity: number }).quantity
             : remaining - 1,
         );
-        await this.saleRepository.create({
-          stock_id: stockId,
-          card_id: stock.card_id,
-          type: 'venta',
-          amount_cop: Math.round(item.amount_cop),
-          notes: item.notes ?? 'Venta asistida QR',
-        });
+        await this.saleRepository.create(
+          await this.enrichVenta(
+            {
+              stock_id: stockId,
+              card_id: stock.card_id,
+              type: 'venta',
+              amount_cop: Math.round(item.amount_cop),
+              notes: item.notes ?? 'Venta asistida QR',
+            },
+            stock,
+          ),
+        );
         return { stock_id: stockId, success: true, owner };
       } catch {
         return {
@@ -443,13 +479,18 @@ export class SaleController {
     }
 
     try {
-      await this.saleRepository.create({
-        stock_id: stockId,
-        card_id: stock.card_id,
-        type: 'venta',
-        amount_cop: Math.round(item.amount_cop),
-        notes: item.notes ?? 'Venta asistida QR',
-      });
+      await this.saleRepository.create(
+        await this.enrichVenta(
+          {
+            stock_id: stockId,
+            card_id: stock.card_id,
+            type: 'venta',
+            amount_cop: Math.round(item.amount_cop),
+            notes: item.notes ?? 'Venta asistida QR',
+          },
+          stock,
+        ),
+      );
       await this.stockRepository.updateCardState(stockId, 'vendida');
       if (cardState === 'reserva') {
         await this.reservaRepository.deleteByStockId(stockId);
@@ -759,13 +800,19 @@ export class SaleController {
       return { success: false, message: 'No hay PVP asignado para esta carta' };
     }
     const amountCop = pvpToCop(resolved.pvp, resolved.pvp_currency ?? 'COP');
-    await this.saleRepository.create({
-      stock_id: body.stock_id,
-      card_id: stock.card_id,
-      type: 'venta',
-      amount_cop: amountCop,
-      notes: `Registrado desde consistencia (venta al PVP: ${resolved.pvp} ${resolved.pvp_currency ?? 'COP'})`,
-    });
+    await this.saleRepository.create(
+      await this.enrichVenta(
+        {
+          stock_id: body.stock_id,
+          card_id: stock.card_id,
+          type: 'venta',
+          amount_cop: amountCop,
+          notes: `Registrado desde consistencia (venta al PVP: ${resolved.pvp} ${resolved.pvp_currency ?? 'COP'})`,
+        },
+        stock,
+        { pvp_cop_snapshot: amountCop },
+      ),
+    );
     return { success: true };
   }
 

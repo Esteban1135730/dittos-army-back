@@ -7,6 +7,7 @@ import { ReservaRepository } from '../repository/reserva.repository';
 import { ReservaIncomingRepository } from '../repository/reserva-incoming.repository';
 import { IncomingBatchRepository } from '../repository/incoming-batch.repository';
 import { IncomingBatchItemRepository } from '../repository/incoming-batch-item.repository';
+import { CardtraderTransitLineRepository } from '../repository/cardtrader-transit-line.repository';
 import { PvpRepository } from '../repository/pvp.repository';
 
 const stockId = '507f1f77bcf86cd799439011';
@@ -23,9 +24,26 @@ describe('DashboardOverviewService', () => {
   const reservaIncomingRepository = { findAll: jest.fn() };
   const incomingBatchRepository = { findOpenBatches: jest.fn() };
   const incomingBatchItemRepository = { findByBatchId: jest.fn() };
+  const cardtraderTransitLineRepository = {
+    findByRemainingQuantityGreaterThanZero: jest.fn(),
+  };
   const pvpRepository = { findByCardIds: jest.fn() };
 
   let service: DashboardOverviewService;
+
+  function mockEmptyBase() {
+    stockRepository.findAll.mockResolvedValue([]);
+    saleRepository.findActiveVentas.mockResolvedValue([]);
+    saleRepository.findHistoricalVentas.mockResolvedValue([]);
+    clientRepository.findAll.mockResolvedValue([]);
+    reservaRepository.findAll.mockResolvedValue([]);
+    reservaIncomingRepository.findAll.mockResolvedValue([]);
+    incomingBatchRepository.findOpenBatches.mockResolvedValue([]);
+    cardtraderTransitLineRepository.findByRemainingQuantityGreaterThanZero.mockResolvedValue(
+      [],
+    );
+    pvpRepository.findByCardIds.mockResolvedValue([]);
+  }
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -47,6 +65,10 @@ describe('DashboardOverviewService', () => {
           provide: IncomingBatchItemRepository,
           useValue: incomingBatchItemRepository,
         },
+        {
+          provide: CardtraderTransitLineRepository,
+          useValue: cardtraderTransitLineRepository,
+        },
         { provide: PvpRepository, useValue: pvpRepository },
       ],
     }).compile();
@@ -55,14 +77,7 @@ describe('DashboardOverviewService', () => {
   });
 
   it('devuelve ceros cuando no hay documentos', async () => {
-    stockRepository.findAll.mockResolvedValue([]);
-    saleRepository.findActiveVentas.mockResolvedValue([]);
-    saleRepository.findHistoricalVentas.mockResolvedValue([]);
-    clientRepository.findAll.mockResolvedValue([]);
-    reservaRepository.findAll.mockResolvedValue([]);
-    reservaIncomingRepository.findAll.mockResolvedValue([]);
-    incomingBatchRepository.findOpenBatches.mockResolvedValue([]);
-    pvpRepository.findByCardIds.mockResolvedValue([]);
+    mockEmptyBase();
 
     const result = await service.getOverview();
 
@@ -70,6 +85,8 @@ describe('DashboardOverviewService', () => {
     expect(result.sales.active_count).toBe(0);
     expect(result.clients_reservations.clients_count).toBe(0);
     expect(result.incoming.open_batches_count).toBe(0);
+    expect(result.incoming.units_in_transit).toBe(0);
+    expect(result.incoming.estimated_cost_cop).toBe(0);
     expect(result.sales.consistency_issue_count).toBe(0);
     expect(result.charts.sales_by_month).toHaveLength(6);
     expect(result.highlights.capital_engaged_cop).toBe(0);
@@ -78,16 +95,10 @@ describe('DashboardOverviewService', () => {
   it('agrupa ventas por mes en los últimos 6 meses', async () => {
     const today = new Date();
     today.setHours(12, 0, 0, 0);
-    stockRepository.findAll.mockResolvedValue([]);
+    mockEmptyBase();
     saleRepository.findActiveVentas.mockResolvedValue([
       { created_at: today, amount_cop: 5000 },
     ]);
-    saleRepository.findHistoricalVentas.mockResolvedValue([]);
-    clientRepository.findAll.mockResolvedValue([]);
-    reservaRepository.findAll.mockResolvedValue([]);
-    reservaIncomingRepository.findAll.mockResolvedValue([]);
-    incomingBatchRepository.findOpenBatches.mockResolvedValue([]);
-    pvpRepository.findByCardIds.mockResolvedValue([]);
 
     const result = await service.getOverview();
     const monthKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
@@ -100,6 +111,7 @@ describe('DashboardOverviewService', () => {
   });
 
   it('agrupa conteos por card_state', async () => {
+    mockEmptyBase();
     stockRepository.findAll.mockResolvedValue([
       {
         _id: stockId,
@@ -120,13 +132,6 @@ describe('DashboardOverviewService', () => {
         cards_in_shipmet: 1,
       },
     ]);
-    saleRepository.findActiveVentas.mockResolvedValue([]);
-    saleRepository.findHistoricalVentas.mockResolvedValue([]);
-    clientRepository.findAll.mockResolvedValue([]);
-    reservaRepository.findAll.mockResolvedValue([]);
-    reservaIncomingRepository.findAll.mockResolvedValue([]);
-    incomingBatchRepository.findOpenBatches.mockResolvedValue([]);
-    pvpRepository.findByCardIds.mockResolvedValue([]);
 
     const result = await service.getOverview();
 
@@ -137,6 +142,7 @@ describe('DashboardOverviewService', () => {
   });
 
   it('calcula ganancia de ventas activas con costo EUR', async () => {
+    mockEmptyBase();
     stockRepository.findAll.mockResolvedValue([
       {
         _id: stockId,
@@ -151,12 +157,6 @@ describe('DashboardOverviewService', () => {
     saleRepository.findActiveVentas.mockResolvedValue([
       { stock_id: stockId, amount_cop: 15000 },
     ]);
-    saleRepository.findHistoricalVentas.mockResolvedValue([]);
-    clientRepository.findAll.mockResolvedValue([]);
-    reservaRepository.findAll.mockResolvedValue([]);
-    reservaIncomingRepository.findAll.mockResolvedValue([]);
-    incomingBatchRepository.findOpenBatches.mockResolvedValue([]);
-    pvpRepository.findByCardIds.mockResolvedValue([]);
 
     const result = await service.getOverview();
 
@@ -166,6 +166,7 @@ describe('DashboardOverviewService', () => {
   });
 
   it('cuenta discrepancias de consistencia', async () => {
+    mockEmptyBase();
     stockRepository.findAll.mockResolvedValue([
       {
         _id: stockId,
@@ -189,12 +190,6 @@ describe('DashboardOverviewService', () => {
     saleRepository.findActiveVentas.mockResolvedValue([
       { stock_id: stockId2, amount_cop: 1000 },
     ]);
-    saleRepository.findHistoricalVentas.mockResolvedValue([]);
-    clientRepository.findAll.mockResolvedValue([]);
-    reservaRepository.findAll.mockResolvedValue([]);
-    reservaIncomingRepository.findAll.mockResolvedValue([]);
-    incomingBatchRepository.findOpenBatches.mockResolvedValue([]);
-    pvpRepository.findByCardIds.mockResolvedValue([]);
 
     const result = await service.getOverview();
 
@@ -202,20 +197,92 @@ describe('DashboardOverviewService', () => {
   });
 
   it('reserva sin stock cuenta venta esperada y costo 0 en ganancia', async () => {
-    stockRepository.findAll.mockResolvedValue([]);
-    saleRepository.findActiveVentas.mockResolvedValue([]);
-    saleRepository.findHistoricalVentas.mockResolvedValue([]);
-    clientRepository.findAll.mockResolvedValue([]);
+    mockEmptyBase();
     reservaRepository.findAll.mockResolvedValue([
       { stock_id: 'missing', precio: 8000, currency: 'COP' },
     ]);
-    reservaIncomingRepository.findAll.mockResolvedValue([]);
-    incomingBatchRepository.findOpenBatches.mockResolvedValue([]);
-    pvpRepository.findByCardIds.mockResolvedValue([]);
 
     const result = await service.getOverview();
 
     expect(result.clients_reservations.ventas_esperadas_cop).toBe(8000);
     expect(result.clients_reservations.ganancia_estimada_cop).toBe(8000);
+  });
+
+  it('suma costo CT transit con remaining > 0 (remaining × unit_cost_cop)', async () => {
+    mockEmptyBase();
+    cardtraderTransitLineRepository.findByRemainingQuantityGreaterThanZero.mockResolvedValue(
+      [
+        { remaining_quantity: 2, unit_cost_cop: 1000 },
+        { remaining_quantity: 1, unit_cost_cop: 500 },
+      ],
+    );
+
+    const result = await service.getOverview();
+
+    expect(result.incoming.units_in_transit).toBe(3);
+    expect(result.incoming.estimated_cost_cop).toBe(2500);
+    expect(result.highlights.capital_engaged_cop).toBe(2500);
+    expect(
+      result.charts.money_flow.find((r) => r.key === 'transit')?.value_cop,
+    ).toBe(2500);
+  });
+
+  it('no suma líneas CT con remaining 0 aunque el repo las devolviera', async () => {
+    mockEmptyBase();
+    cardtraderTransitLineRepository.findByRemainingQuantityGreaterThanZero.mockResolvedValue(
+      [
+        { remaining_quantity: 2, unit_cost_cop: 1000 },
+        { remaining_quantity: 0, unit_cost_cop: 99999 },
+      ],
+    );
+
+    const result = await service.getOverview();
+
+    expect(result.incoming.units_in_transit).toBe(2);
+    expect(result.incoming.estimated_cost_cop).toBe(2000);
+    expect(result.highlights.capital_engaged_cop).toBe(2000);
+  });
+
+  it('CT vacío deja tránsito en 0 y capital solo inventario', async () => {
+    mockEmptyBase();
+    stockRepository.findAll.mockResolvedValue([
+      {
+        _id: stockId,
+        card_id: 'c1',
+        card_state: 'disponible',
+        currency: 'COP',
+        unity_cost: 3000,
+        shipment: 0,
+        cards_in_shipmet: 1,
+      },
+    ]);
+
+    const result = await service.getOverview();
+
+    expect(result.incoming.units_in_transit).toBe(0);
+    expect(result.incoming.estimated_cost_cop).toBe(0);
+    expect(result.highlights.capital_engaged_cop).toBe(3000);
+  });
+
+  it('suma CT transit + incoming legacy remaining', async () => {
+    mockEmptyBase();
+    const batchId = '507f1f77bcf86cd799439099';
+    incomingBatchRepository.findOpenBatches.mockResolvedValue([
+      { _id: batchId },
+    ]);
+    incomingBatchItemRepository.findByBatchId.mockResolvedValue([
+      { remaining_quantity: 1, unit_cost_cop: 400 },
+      { remaining_quantity: 0, unit_cost_cop: 9999 },
+    ]);
+    cardtraderTransitLineRepository.findByRemainingQuantityGreaterThanZero.mockResolvedValue(
+      [{ remaining_quantity: 2, unit_cost_cop: 1000 }],
+    );
+
+    const result = await service.getOverview();
+
+    expect(result.incoming.units_in_transit).toBe(3);
+    expect(result.incoming.estimated_cost_cop).toBe(2400);
+    expect(result.highlights.capital_engaged_cop).toBe(2400);
+    expect(result.incoming.open_batches_count).toBe(1);
   });
 });

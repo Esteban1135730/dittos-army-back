@@ -84,6 +84,8 @@ import { StockScanService } from './service/stock-scan.service';
 import { BulkProductService } from './service/bulk-product.service';
 import { DashboardController } from './controller/dashboard.controller';
 import { DashboardOverviewService } from './service/dashboard-overview.service';
+import { MetricsController } from './controller/metrics.controller';
+import { MetricsAnalyticsService } from './service/metrics-analytics.service';
 import { StockReviewController } from './controller/stock-review.controller';
 import { StockReviewService } from './service/stock-review.service';
 import { StockReviewSessionRepository } from './repository/stock-review-session.repository';
@@ -193,6 +195,7 @@ const MONGOOSE_FEATURE_MODELS = [
     CardTraderController,
     CardtraderTransitLotController,
     DashboardController,
+    MetricsController,
     StockReviewController,
     IncomingHomologController,
     CardtraderReceiptController,
@@ -227,6 +230,7 @@ const MONGOOSE_FEATURE_MODELS = [
     StockScanService,
     BulkProductService,
     DashboardOverviewService,
+    MetricsAnalyticsService,
     StockReviewService,
     StockReviewSessionRepository,
     IncomingHomologService,

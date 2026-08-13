@@ -45,11 +45,13 @@ describe('StockReviewService', () => {
       findById: jest.fn(),
       findByIds: jest.fn(),
       updateCardState: jest.fn(),
+      markAsLost: jest.fn(),
       findByCardState: jest.fn(),
     } as unknown as jest.Mocked<StockRepository>;
 
     cardStockTagRepository = {
       findCardIdsByTag: jest.fn(),
+      findMapByCardIds: jest.fn().mockResolvedValue(new Map()),
     } as unknown as jest.Mocked<CardStockTagRepository>;
 
     saleRepository = {
@@ -563,7 +565,7 @@ describe('StockReviewService', () => {
     expect(view.status).toBe('completada');
   });
 
-  it('resolve perdida actualiza stock', async () => {
+  it('resolve perdida actualiza stock con lost_at y lost_cost_cop', async () => {
     const doc = {
       _id: sessionId,
       scope: 'tag',
@@ -584,14 +586,15 @@ describe('StockReviewService', () => {
     stockRepository.findById.mockResolvedValue({
       card_id: 'sv1-1',
       card_state: 'disponible',
+      shipment: 100,
+      cards_in_shipmet: 10,
+      unity_cost: 5,
+      currency: 'COP',
     } as any);
 
     await service.resolveItem(sessionId, stockId, 'perdida');
 
-    expect(stockRepository.updateCardState).toHaveBeenCalledWith(
-      stockId,
-      'perdida',
-    );
+    expect(stockRepository.markAsLost).toHaveBeenCalledWith(stockId, 15);
     expect(doc.status).toBe('completada');
   });
 

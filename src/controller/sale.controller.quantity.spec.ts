@@ -6,6 +6,7 @@ import { StockRepository } from 'src/repository/stock.repository';
 import { PvpRepository } from 'src/repository/pvp.repository';
 import { ReservaRepository } from 'src/repository/reserva.repository';
 import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
+import { CardStockTagRepository } from 'src/repository/card-stock-tag.repository';
 
 const stockId = '507f1f77bcf86cd799439011';
 
@@ -35,6 +36,12 @@ describe('SaleController quantity products', () => {
         { provide: PvpRepository, useValue: {} },
         { provide: ReservaRepository, useValue: { deleteByStockId: jest.fn() } },
         { provide: TCGDexService, useValue: {} },
+        {
+          provide: CardStockTagRepository,
+          useValue: {
+            findMapByCardIds: jest.fn().mockResolvedValue(new Map()),
+          },
+        },
       ],
     }).compile();
 

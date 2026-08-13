@@ -23,6 +23,16 @@ export class SaleRepository {
     return this.saleModel.find({ type }).sort({ created_at: -1 }).exec();
   }
 
+  async findVentasInPeriod(from: Date, to: Date): Promise<SaleDocument[]> {
+    return this.saleModel
+      .find({
+        type: 'venta',
+        created_at: { $gte: from, $lte: to },
+      })
+      .sort({ created_at: 1 })
+      .exec();
+  }
+
   async findActiveVentas(): Promise<SaleDocument[]> {
     return this.saleModel
       .find({

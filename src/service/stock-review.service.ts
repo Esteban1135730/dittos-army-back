@@ -24,6 +24,8 @@ import {
   effectiveOperationalRarezaFromStock,
   resolvePvpForLine,
 } from '../utils/pvp-resolve';
+import { enrichSaleCreatePayload } from '../utils/sale-cost-snapshot';
+import { stockLineCostCop } from '../utils/stock-line-cost-cop';
 
 function pvpToCop(pvp: number, currency: string): number {
   if (currency === 'COP') return Math.round(pvp);
@@ -576,7 +578,10 @@ export class StockReviewService {
     }
 
     if (outcome === 'perdida') {
-      await this.stockRepository.updateCardState(stockId, 'perdida');
+      await this.stockRepository.markAsLost(
+        stockId,
+        stockLineCostCop(stock),
+      );
     } else if (outcome === 'propiedad') {
       await this.saleRepository.create({
         stock_id: stockId,
@@ -588,13 +593,25 @@ export class StockReviewService {
       await this.stockRepository.updateCardState(stockId, 'propiedad');
     } else if (outcome === 'vendida') {
       const amount = await this.resolveSaleAmountCop(stock, amountCop);
-      await this.saleRepository.create({
-        stock_id: stockId,
-        card_id: stock.card_id,
-        type: 'venta',
-        amount_cop: amount,
-        notes: 'Registrada en revisión de stock',
-      });
+      const tagsMap = await this.cardStockTagRepository.findMapByCardIds([
+        stock.card_id,
+      ]);
+      await this.saleRepository.create(
+        enrichSaleCreatePayload(
+          {
+            stock_id: stockId,
+            card_id: stock.card_id,
+            type: 'venta',
+            amount_cop: amount,
+            notes: 'Registrada en revisión de stock',
+          },
+          stock,
+          {
+            pvp_cop_snapshot: amount,
+            tags_snapshot: tagsMap.get(String(stock.card_id).trim()) ?? [],
+          },
+        ),
+      );
       await this.stockRepository.updateCardState(stockId, 'vendida');
     } else if (outcome === 'en_stock') {
       // Sin cambios en stock ni ventas: solo cierra la línea en la sesión.
