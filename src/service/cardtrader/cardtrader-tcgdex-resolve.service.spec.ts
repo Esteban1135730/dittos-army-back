@@ -7,8 +7,8 @@ describe('CardTraderTcgdexResolveService', () => {
     service = new CardTraderTcgdexResolveService();
   });
 
-  it('resuelve Lost Origin #TG23 → swsh11.5tg-TG23', () => {
-    const byName = service.resolveTcgdexCardId({
+  it('resuelve Lost Origin #TG23 → swsh11.5tg-TG23', async () => {
+    const byName = await service.resolveTcgdexCardId({
       expansionName: 'Lost Origin',
       collectorNumber: 'TG23',
       language: 'it',
@@ -17,7 +17,7 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(byName.tcgdex_card_id).toBe('swsh11.5tg-TG23');
     expect(byName.error).toBeNull();
 
-    const regular = service.resolveTcgdexCardId({
+    const regular = await service.resolveTcgdexCardId({
       expansionName: 'Lost Origin',
       collectorNumber: '075',
       language: 'it',
@@ -25,8 +25,8 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(regular.tcgdex_card_id).toBe('swsh11-75');
   });
 
-  it('resuelve EX Dragon Frontiers (it) #047 → ex15-47', () => {
-    const byName = service.resolveTcgdexCardId({
+  it('resuelve EX Dragon Frontiers (it) #047 → ex15-47', async () => {
+    const byName = await service.resolveTcgdexCardId({
       expansionName: 'EX Dragon Frontiers',
       collectorNumber: '047',
       language: 'it',
@@ -35,7 +35,7 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(byName.tcgdex_card_id).toBe('ex15-47');
     expect(byName.error).toBeNull();
 
-    const byId = service.resolveTcgdexCardId({
+    const byId = await service.resolveTcgdexCardId({
       expansionId: 1514,
       collectorNumber: '047',
       language: 'it',
@@ -44,8 +44,8 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(byId.error).toBeNull();
   });
 
-  it('resuelve tcgdex_card_id por nombre de expansión y collector_number', () => {
-    const result = service.resolveTcgdexCardId({
+  it('resuelve tcgdex_card_id por nombre de expansión y collector_number', async () => {
+    const result = await service.resolveTcgdexCardId({
       expansionName: 'Base Set',
       collectorNumber: '004',
     });
@@ -54,8 +54,8 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(result.error).toBeNull();
   });
 
-  it('resuelve por expansion_id de CardTrader', () => {
-    const result = service.resolveTcgdexCardId({
+  it('resuelve por expansion_id de CardTrader', async () => {
+    const result = await service.resolveTcgdexCardId({
       expansionId: 1472,
       collectorNumber: '58',
     });
@@ -63,16 +63,16 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(result.error).toBeNull();
   });
 
-  it('devuelve error si falta collector_number', () => {
-    const result = service.resolveTcgdexCardId({
+  it('devuelve error si falta collector_number', async () => {
+    const result = await service.resolveTcgdexCardId({
       expansionName: 'Base Set',
     });
     expect(result.tcgdex_card_id).toBeNull();
     expect(result.error).toContain('collector_number');
   });
 
-  it('resuelve Prismatic Evolutions Poké Ball RH por expansion_id', () => {
-    const result = service.resolveTcgdexCardId({
+  it('resuelve Prismatic Evolutions Poké Ball RH por expansion_id', async () => {
+    const result = await service.resolveTcgdexCardId({
       expansionId: 4053,
       collectorNumber: '071',
     });
@@ -80,8 +80,8 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(result.error).toBeNull();
   });
 
-  it('resuelve Inferno X por expansion_id con localId de 3 dígitos', () => {
-    const result = service.resolveTcgdexCardId({
+  it('resuelve Inferno X por expansion_id con localId de 3 dígitos', async () => {
+    const result = await service.resolveTcgdexCardId({
       expansionId: 4313,
       collectorNumber: '083',
       language: 'jp',
@@ -92,8 +92,8 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(result.error).toBeNull();
   });
 
-  it('resuelve SV Black Star Promos EN → svp (no Svpromo JA)', () => {
-    const byName = service.resolveTcgdexCardId({
+  it('resuelve SV Black Star Promos EN → svp (no Svpromo JA)', async () => {
+    const byName = await service.resolveTcgdexCardId({
       expansionName: 'SV Black Star Promos',
       collectorNumber: '145',
       language: 'en',
@@ -101,7 +101,7 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(byName.tcgdex_set_id).toBe('svp');
     expect(byName.tcgdex_card_id).toBe('svp-145');
 
-    const byId = service.resolveTcgdexCardId({
+    const byId = await service.resolveTcgdexCardId({
       expansionId: 3221,
       collectorNumber: '012',
       language: 'en',
@@ -110,8 +110,8 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(byId.tcgdex_card_id).toBe('svp-12');
   });
 
-  it('resuelve CSV5 zh-cn → CSV5C-134', () => {
-    const result = service.resolveTcgdexCardId({
+  it('resuelve CSV5 zh-cn → CSV5C-134', async () => {
+    const result = await service.resolveTcgdexCardId({
       expansionName: 'CSV5: Dark Crystal Blaze',
       collectorNumber: '134',
       language: 'zh',
@@ -120,8 +120,8 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(result.tcgdex_card_id).toBe('CSV5C-134');
   });
 
-  it('resuelve Gem Pack CBB1C con collector 03-06/09', () => {
-    const result = service.resolveTcgdexCardId({
+  it('resuelve Gem Pack CBB1C con collector 03-06/09', async () => {
+    const result = await service.resolveTcgdexCardId({
       expansionName: 'Gem Pack Vol.1',
       collectorNumber: '03-06/09',
       language: 'zh',
@@ -130,8 +130,8 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(result.tcgdex_card_id).toBe('CBB1C-03-06_09');
   });
 
-  it('resuelve sets japoneses por alias CardTrader en inglés', () => {
-    const result = service.resolveTcgdexCardId({
+  it('resuelve sets japoneses por alias CardTrader en inglés', async () => {
+    const result = await service.resolveTcgdexCardId({
       expansionName: 'MEGA Dream ex',
       collectorNumber: '211',
       language: 'jp',
@@ -141,8 +141,46 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(result.error).toBeNull();
   });
 
-  it('devuelve error si expansión no está homologada', () => {
-    const result = service.resolveTcgdexCardId({
+  it('desambigua M2a-205 Mimikyu IR vs accesorios con blueprint_id', async () => {
+    const tcg = {
+      getCardExact: jest.fn(async (id: string) => {
+        if (id === 'M2a-205_360075') {
+          return { id: 'M2a-205_360075', name: "Team Rocket's Mimikyu" };
+        }
+        return undefined;
+      }),
+    };
+    const withProbe = new CardTraderTcgdexResolveService(
+      tcg as never,
+    );
+
+    const mimikyu = await withProbe.resolveTcgdexCardId({
+      expansionName: 'MEGA Dream ex',
+      collectorNumber: '205',
+      language: 'zh',
+      blueprint_id: 360075,
+    });
+    expect(mimikyu.tcgdex_card_id).toBe('M2a-205_360075');
+    expect(mimikyu.tcgdex_set_id).toBe('M2a');
+
+    const sleeves = await withProbe.resolveTcgdexCardId({
+      expansionName: 'MEGA Dream ex',
+      collectorNumber: '205',
+      language: 'zh',
+      blueprint_id: 359507,
+    });
+    expect(sleeves.tcgdex_card_id).toBe('M2a-205');
+
+    const noBlueprint = await service.resolveTcgdexCardId({
+      expansionName: 'MEGA Dream ex',
+      collectorNumber: '205',
+      language: 'zh',
+    });
+    expect(noBlueprint.tcgdex_card_id).toBe('M2a-205');
+  });
+
+  it('devuelve error si expansión no está homologada', async () => {
+    const result = await service.resolveTcgdexCardId({
       expansionName: 'Expansion Inventada XYZ',
       collectorNumber: '1',
     });
@@ -157,8 +195,8 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(stats.expansionIds).toBeGreaterThan(200);
   });
 
-  it('resuelve set por nombre japonés del catálogo', () => {
-    const result = service.resolveTcgdexCardId({
+  it('resuelve set por nombre japonés del catálogo', async () => {
+    const result = await service.resolveTcgdexCardId({
       expansionName: 'メガロキャノン',
       collectorNumber: '001',
       language: 'jp',
@@ -167,8 +205,8 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(result.tcgdex_card_id).toBe('BW9-001');
   });
 
-  it('resuelve Surging Sparks JP vía set_locale_map', () => {
-    const result = service.resolveTcgdexCardId({
+  it('resuelve Surging Sparks JP vía set_locale_map', async () => {
+    const result = await service.resolveTcgdexCardId({
       expansionName: 'Surging Sparks',
       collectorNumber: '108',
       language: 'jp',
@@ -177,8 +215,8 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(result.tcgdex_card_id).toBe('SV8-108');
   });
 
-  it('resuelve CSM2.5 Striking Competition zh (código CT csm25)', () => {
-    const result = service.resolveTcgdexCardId({
+  it('resuelve CSM2.5 Striking Competition zh (código CT csm25)', async () => {
+    const result = await service.resolveTcgdexCardId({
       expansionName: 'CSM2.5: Striking Competition',
       collectorNumber: '044',
       language: 'zh',
@@ -188,8 +226,8 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(result.error).toBeNull();
   });
 
-  it('resuelve CSM2a / CSM2c zh con casing canónico', () => {
-    const a = service.resolveTcgdexCardId({
+  it('resuelve CSM2a / CSM2c zh con casing canónico', async () => {
+    const a = await service.resolveTcgdexCardId({
       expansionName: 'CSM2a: Shining Synergy - Shower',
       collectorNumber: '112',
       language: 'zh',
@@ -197,7 +235,7 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(a.tcgdex_set_id).toBe('CSM2a');
     expect(a.tcgdex_card_id).toBe('CSM2a-112');
 
-    const c = service.resolveTcgdexCardId({
+    const c = await service.resolveTcgdexCardId({
       expansionName: 'CSM2c: Shining Synergy - Summon',
       collectorNumber: '046',
       language: 'zh',
@@ -206,8 +244,8 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(c.tcgdex_card_id).toBe('CSM2c-046');
   });
 
-  it('resolveTcgdexCardIdBatch resuelve múltiples líneas', () => {
-    const results = service.resolveTcgdexCardIdBatch([
+  it('resolveTcgdexCardIdBatch resuelve múltiples líneas', async () => {
+    const results = await service.resolveTcgdexCardIdBatch([
       { expansionName: 'Base Set', collectorNumber: '004' },
       { expansionName: 'Expansion Inventada XYZ', collectorNumber: '1' },
     ]);

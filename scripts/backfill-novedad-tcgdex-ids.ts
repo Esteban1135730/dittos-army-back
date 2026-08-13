@@ -154,7 +154,7 @@ async function main() {
       blueprint,
     });
 
-    const resolved = tcgdxResolve.resolveTcgdexCardId(resolveInput);
+    const resolved = await tcgdxResolve.resolveTcgdexCardId(resolveInput);
     if (!resolved.tcgdex_card_id) {
       console.warn(
         `[backfill-novedad] SKIP stock=${target.stockId} ${target.cardName} (${target.cardId}): ${resolved.error}`,

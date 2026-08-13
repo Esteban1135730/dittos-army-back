@@ -2004,22 +2004,24 @@ export class IncomingHomologService {
     const expansion = unit.expansion || ct?.expansion || '';
     const collectorNumber = ct?.collector_number ?? undefined;
 
-    let resolved = this.tcgdexResolve.resolveTcgdexCardId(
+    let resolved = await this.tcgdexResolve.resolveTcgdexCardId(
       buildNovedadTcgdexResolveInput({
         expansionName: expansion || undefined,
         collectorNumber,
         language,
+        blueprintId: unit.blueprint_id,
       }),
     );
 
     let blueprint: CtBlueprintLike | null = null;
     if (!resolved.tcgdex_card_id && unit.blueprint_id > 0) {
       blueprint = await this.fetchBlueprintMeta(unit.blueprint_id);
-      resolved = this.tcgdexResolve.resolveTcgdexCardId(
+      resolved = await this.tcgdexResolve.resolveTcgdexCardId(
         buildNovedadTcgdexResolveInput({
           expansionName: expansion || undefined,
           collectorNumber,
           language,
+          blueprintId: unit.blueprint_id,
           blueprint,
         }),
       );

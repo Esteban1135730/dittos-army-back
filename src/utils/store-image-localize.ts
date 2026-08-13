@@ -1,4 +1,4 @@
-import { copyFile, mkdir, writeFile } from 'fs/promises';
+import { copyFile, mkdir, readdir, readFile, rmdir, unlink, writeFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import * as path from 'path';
 
@@ -9,6 +9,10 @@ export type LocalizeStoreImagesOptions = {
   storeRepoPath: string;
   localImagesRoot: string;
   assetsSubdir?: string;
+  resolveLocalRelativePath?: (
+    cardId: string,
+    language?: string,
+  ) => string | undefined;
   resolveRemoteImage?: (
     cardId: string,
     language?: string,
@@ -18,6 +22,15 @@ export type LocalizeStoreImagesOptions = {
   existsFn?: (p: string) => boolean;
 };
 
+export type PruneStoreAssetsOptions = {
+  storeRepoPath: string;
+  assetsSubdir?: string;
+  existsFn?: (p: string) => boolean;
+  listFilesFn?: (root: string) => Promise<string[]>;
+  unlinkFn?: (p: string) => Promise<void>;
+  rmdirFn?: (p: string) => Promise<void>;
+};
+
 export function isLocalhostImageUrl(url: string): boolean {
   return LOCALHOST_IMAGE_RE.test(url.trim());
 }
@@ -25,9 +38,21 @@ export function isLocalhostImageUrl(url: string): boolean {
 export function isPublicRemoteImageUrl(url: string): boolean {
   const trimmed = url.trim();
   if (!trimmed || isLocalhostImageUrl(trimmed)) return false;
+  if (isBlockedVendorImageUrl(trimmed)) return false;
   try {
     const parsed = new URL(trimmed);
     return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
+const BLOCKED_IMAGE_HOST_RE = /(^|\.)cardtrader\.com$/i;
+
+export function isBlockedVendorImageUrl(url: string): boolean {
+  try {
+    const host = new URL(url.trim()).hostname.toLowerCase();
+    return BLOCKED_IMAGE_HOST_RE.test(host);
   } catch {
     return false;
   }
@@ -95,6 +120,30 @@ async function defaultFetchLocalhost(url: string): Promise<Buffer | undefined> {
   }
 }
 
+export async function copyLocalImageToStore(
+  relativePath: string,
+  options: LocalizeStoreImagesOptions,
+): Promise<string> {
+  const safe = sanitizeRelativeAssetPath(relativePath);
+  if (!safe) return '';
+
+  const copy = options.copyFileFn ?? copyFile;
+  const exists = options.existsFn ?? existsSync;
+  const assetsSubdir = options.assetsSubdir ?? 'assets/cards';
+  const sourcePath = path.join(options.localImagesRoot, ...safe.split('/'));
+  if (!exists(sourcePath)) return '';
+
+  const destPath = path.join(
+    options.storeRepoPath,
+    'public',
+    ...assetsSubdir.split('/'),
+    ...safe.split('/'),
+  );
+  await mkdir(path.dirname(destPath), { recursive: true });
+  await copy(sourcePath, destPath);
+  return storeAssetPublicUrl(safe, assetsSubdir);
+}
+
 export async function localizeStoreImageUrl(
   imageUrl: string,
   options: LocalizeStoreImagesOptions,
@@ -102,34 +151,24 @@ export async function localizeStoreImageUrl(
   const trimmed = imageUrl.trim();
   if (!trimmed || !isLocalhostImageUrl(trimmed)) return trimmed;
 
-  const assetsSubdir = options.assetsSubdir ?? 'assets/cards';
-  const copy = options.copyFileFn ?? copyFile;
-  const exists = options.existsFn ?? existsSync;
-  const assetsRoot = path.join(
-    options.storeRepoPath,
-    'public',
-    ...assetsSubdir.split('/'),
-  );
-
   const relativeFromCardImages = parseCardImagesRelativePath(trimmed);
   if (relativeFromCardImages) {
-    const sourcePath = path.join(
-      options.localImagesRoot,
-      ...relativeFromCardImages.split('/'),
-    );
-    if (exists(sourcePath)) {
-      const destPath = path.join(assetsRoot, ...relativeFromCardImages.split('/'));
-      await mkdir(path.dirname(destPath), { recursive: true });
-      await copy(sourcePath, destPath);
-      return storeAssetPublicUrl(relativeFromCardImages, assetsSubdir);
-    }
+    const copied = await copyLocalImageToStore(relativeFromCardImages, options);
+    if (copied) return copied;
   }
 
+  const assetsSubdir = options.assetsSubdir ?? 'assets/cards';
   const fetchFn = options.fetchLocalhost ?? defaultFetchLocalhost;
   const fetched = await fetchFn(trimmed);
   if (fetched?.length) {
     const fileName = fallbackAssetName(trimmed);
-    const destPath = path.join(assetsRoot, 'imported', fileName);
+    const destPath = path.join(
+      options.storeRepoPath,
+      'public',
+      ...assetsSubdir.split('/'),
+      'imported',
+      fileName,
+    );
     await mkdir(path.dirname(destPath), { recursive: true });
     await writeFile(destPath, fetched);
     return storeAssetPublicUrl(`imported/${fileName}`, assetsSubdir);
@@ -146,6 +185,8 @@ export async function localizeStoreItemImages<
 >(items: T[], options: LocalizeStoreImagesOptions): Promise<T[]> {
   const localCache = new Map<string, string>();
   const localInFlight = new Map<string, Promise<string>>();
+  const relativeCache = new Map<string, string>();
+  const relativeInFlight = new Map<string, Promise<string>>();
   const remoteCache = new Map<string, string>();
   const remoteInFlight = new Map<string, Promise<string | undefined>>();
 
@@ -161,6 +202,24 @@ export async function localizeStoreItemImages<
         return localized;
       });
       localInFlight.set(original, pending);
+    }
+    return pending;
+  };
+
+  const resolveByRelativePath = async (relative: string): Promise<string> => {
+    const safe = sanitizeRelativeAssetPath(relative);
+    if (!safe) return '';
+    const cached = relativeCache.get(safe);
+    if (cached !== undefined) return cached;
+
+    let pending = relativeInFlight.get(safe);
+    if (!pending) {
+      pending = copyLocalImageToStore(safe, options).then((copied) => {
+        relativeCache.set(safe, copied);
+        relativeInFlight.delete(safe);
+        return copied;
+      });
+      relativeInFlight.set(safe, pending);
     }
     return pending;
   };
@@ -198,15 +257,151 @@ export async function localizeStoreItemImages<
   return Promise.all(
     items.map(async (item) => {
       const original = item.image?.trim() ?? '';
-      if (!original || !isLocalhostImageUrl(original)) return item;
+      const alreadyUsable =
+        Boolean(original) &&
+        !isLocalhostImageUrl(original) &&
+        !isBlockedVendorImageUrl(original);
 
-      const remote = await resolveRemote(item.card_id, item.language);
-      if (remote) {
-        return { ...item, image: remote };
+      if (alreadyUsable) return item;
+
+      if (isLocalhostImageUrl(original)) {
+        const localized = await resolveLocalAsset(original);
+        if (localized) return { ...item, image: localized };
       }
 
-      const localized = await resolveLocalAsset(original);
-      return { ...item, image: localized };
+      if (options.resolveLocalRelativePath) {
+        const relative = options.resolveLocalRelativePath(
+          item.card_id,
+          item.language,
+        );
+        if (relative) {
+          const copied = await resolveByRelativePath(relative);
+          if (copied) return { ...item, image: copied };
+        }
+      }
+
+      const remote = await resolveRemote(item.card_id, item.language);
+      if (remote) return { ...item, image: remote };
+
+      return { ...item, image: '' };
     }),
   );
+}
+
+export function imageUrlsFromCatalogItems(items: unknown): string[] {
+  if (!Array.isArray(items)) return [];
+  const urls: string[] = [];
+  for (const item of items) {
+    if (!item || typeof item !== 'object') continue;
+    const image = (item as { image?: unknown }).image;
+    if (typeof image === 'string' && image.trim()) urls.push(image.trim());
+  }
+  return urls;
+}
+
+export async function readCatalogImageUrls(filePath: string): Promise<string[]> {
+  try {
+    const raw = await readFile(filePath, 'utf8');
+    return imageUrlsFromCatalogItems(JSON.parse(raw) as unknown);
+  } catch {
+    return [];
+  }
+}
+
+export function usedStoreAssetRelativePaths(
+  imageUrls: Iterable<string>,
+  assetsSubdir = 'assets/cards',
+): Set<string> {
+  const prefix = `/${assetsSubdir}/`.replace(/\/+/g, '/');
+  const used = new Set<string>();
+  for (const raw of imageUrls) {
+    const trimmed = String(raw ?? '').trim();
+    if (!trimmed) continue;
+    let pathname = trimmed;
+    try {
+      pathname = new URL(trimmed).pathname;
+    } catch {
+      // ruta relativa de la tienda
+    }
+    const normalized = pathname.replace(/\\/g, '/');
+    if (!normalized.startsWith(prefix)) continue;
+    const relative = sanitizeRelativeAssetPath(normalized.slice(prefix.length));
+    if (relative) used.add(relative);
+  }
+  return used;
+}
+
+async function listFilesRecursive(root: string): Promise<string[]> {
+  if (!existsSync(root)) return [];
+  const out: string[] = [];
+  const walk = async (dir: string): Promise<void> => {
+    const entries = await readdir(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) await walk(full);
+      else if (entry.isFile()) out.push(full);
+    }
+  };
+  await walk(root);
+  return out;
+}
+
+export async function pruneUnusedStoreCardAssets(
+  imageUrls: Iterable<string>,
+  options: PruneStoreAssetsOptions,
+): Promise<{ removed: number; kept: number }> {
+  const assetsSubdir = options.assetsSubdir ?? 'assets/cards';
+  const assetsRoot = path.join(
+    options.storeRepoPath,
+    'public',
+    ...assetsSubdir.split('/'),
+  );
+  const exists = options.existsFn ?? existsSync;
+  if (!exists(assetsRoot)) return { removed: 0, kept: 0 };
+
+  const used = usedStoreAssetRelativePaths(imageUrls, assetsSubdir);
+  const listFiles = options.listFilesFn ?? listFilesRecursive;
+  const unlinkFn = options.unlinkFn ?? unlink;
+  const rmdirFn = options.rmdirFn ?? rmdir;
+  const files = await listFiles(assetsRoot);
+
+  let removed = 0;
+  let kept = 0;
+  const dirsToCheck = new Set<string>();
+
+  for (const filePath of files) {
+    const relative = sanitizeRelativeAssetPath(
+      path.relative(assetsRoot, filePath).replace(/\\/g, '/'),
+    );
+    if (!relative) continue;
+    if (used.has(relative)) {
+      kept += 1;
+      continue;
+    }
+    await unlinkFn(filePath);
+    removed += 1;
+    dirsToCheck.add(path.dirname(filePath));
+  }
+
+  const dirs = [...dirsToCheck].sort(
+    (a, b) => b.split(path.sep).length - a.split(path.sep).length,
+  );
+  for (const dir of dirs) {
+    let current = dir;
+    while (
+      current.startsWith(assetsRoot) &&
+      path.resolve(current) !== path.resolve(assetsRoot)
+    ) {
+      try {
+        const entries = await readdir(current);
+        if (entries.length > 0) break;
+        await rmdirFn(current);
+      } catch {
+        break;
+      }
+      current = path.dirname(current);
+    }
+  }
+
+  return { removed, kept };
 }

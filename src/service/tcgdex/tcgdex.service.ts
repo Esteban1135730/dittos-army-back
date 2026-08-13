@@ -278,6 +278,16 @@ export class TCGDexService {
     return undefined;
   }
 
+  /** Lookup exacto (sin candidatos ni fallback de locale). Para colisiones `{id}_{blueprintId}`. */
+  async getCardExact(
+    cardId: string,
+    locale?: string,
+  ): Promise<CardDto | undefined> {
+    const id = typeof cardId === 'string' ? cardId.trim() : '';
+    if (!id) return undefined;
+    return this.fetchCardForLocale(id, this.normalizeLocale(locale));
+  }
+
   private async fetchCardForLocale(
     id: string,
     normalizedLocale: TcgDexLocale,
@@ -382,8 +392,8 @@ export class TCGDexService {
   }
 
   /**
-   * Imagen pública en CDN TCGdex (API de producción), sin sustituir por archivos locales.
-   * Usar en export de tienda para no subir assets al hosting cuando hay URL remota.
+   * Imagen pública en CDN TCGdex (API de producción).
+   * Fallback del export de tienda cuando no hay archivo local que copiar.
    */
   async getRemoteStoreCardImageUrl(
     cardId: string,

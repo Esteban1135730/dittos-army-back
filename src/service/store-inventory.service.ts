@@ -3,6 +3,8 @@ import { promises as fs } from 'fs';
 import * as path from 'path';
 import { StockRepository } from '../repository/stock.repository';
 import { PvpRepository } from '../repository/pvp.repository';
+import { SaleRepository } from '../repository/sale.repository';
+import { CardStockTagRepository } from '../repository/card-stock-tag.repository';
 import { CardtraderTransitLotRepository } from '../repository/cardtrader-transit-lot.repository';
 import { CardtraderTransitLineRepository } from '../repository/cardtrader-transit-line.repository';
 import { TCGDexService } from './tcgdex/tcgdex.service';
@@ -13,8 +15,15 @@ import {
   resolvePvpForLine,
 } from '../utils/pvp-resolve';
 import {
+  pickStoreExportCardName,
+  tcgdexMetaSpread,
   type StoreCardExportMeta,
 } from '../utils/store-card-meta';
+import {
+  applySoldUnits90d,
+  storeDemandWindowUtc,
+  countSoldUnitsByCardId,
+} from '../utils/store-demand-units';
 import {
   isStoreAutoPublishEnabled,
   publishStoreCatalogToGit,
@@ -22,8 +31,18 @@ import {
   resolveStoreRepoPath,
   type StoreGitPublishResult,
 } from '../utils/store-git-publish';
-import { localizeStoreItemImages } from '../utils/store-image-localize';
+import {
+  localizeStoreItemImages,
+  pruneUnusedStoreCardAssets,
+  readCatalogImageUrls,
+} from '../utils/store-image-localize';
 import { assertFeatureAllowed } from '../owner/feature-acl.guard';
+import {
+  groupStockUnitsByLine,
+  inventoryLineKey,
+  normalizeExportLanguage,
+} from '../utils/store-inventory-group';
+import { toStorePublicTags } from '../utils/store-public-tags';
 
 export type StoreExportResult = {
   success: boolean;
@@ -46,22 +65,6 @@ function storeMetaCacheKey(cardId: string, lang: string): string {
   return `${cardId}::${lang}`;
 }
 
-function normalizeExportLanguage(raw: unknown): string {
-  return (raw || 'en').toString().trim().toLowerCase() || 'en';
-}
-
-function inventoryLineKey(
-  cardId: string,
-  lang: string,
-  rareza: string | undefined | null,
-): string {
-  const v =
-    rareza == null || String(rareza).trim() === ''
-      ? ''
-      : String(rareza).trim().toLowerCase();
-  return `${cardId}::${lang}::${v}`;
-}
-
 /** One item in the store inventory JSON */
 export type StoreInventoryItem = {
   lineId: string;
@@ -75,9 +78,18 @@ export type StoreInventoryItem = {
   rareza?: string | null;
   expansion?: string;
   card_number?: string;
+  /** ISO de la recepción más reciente del grupo; `null` si no hay fecha */
+  stocked_at?: string | null;
+  /** Unidades vendidas del card_id en los últimos 90 días */
+  sold_units_90d?: number;
+  tcg_rarity?: string;
+  category?: string;
+  types?: string[];
+  hp?: number;
+  tags?: string[];
 };
 
-/** Cartas en tránsito CardTrader (lotes abiertos) para la tienda pública */
+/** Cartas en camino al local (lotes abiertos) para la tienda pública */
 export type StoreUpcomingItem = {
   id: string;
   card_id: string;
@@ -88,6 +100,14 @@ export type StoreUpcomingItem = {
   rareza: string | null;
   expansion?: string;
   card_number?: string;
+  /** Unidades vendidas del card_id en los últimos 90 días */
+  sold_units_90d: number;
+  tcg_rarity?: string;
+  category?: string;
+  types?: string[];
+  hp?: number;
+  pvp?: number;
+  tags?: string[];
 };
 
 @Injectable()
@@ -99,7 +119,23 @@ export class StoreInventoryService {
     private readonly transitLineRepository: CardtraderTransitLineRepository,
     private readonly tcgDexService: TCGDexService,
     private readonly localCardImagesService: LocalCardImagesService,
+    private readonly saleRepository: SaleRepository,
+    private readonly cardStockTagRepository: CardStockTagRepository,
   ) {}
+
+  private async loadDemandCounts(): Promise<Map<string, number> | null> {
+    try {
+      const { from, to } = storeDemandWindowUtc();
+      const sales = await this.saleRepository.findVentasInPeriod(from, to);
+      return countSoldUnitsByCardId(sales);
+    } catch (e) {
+      console.warn(
+        'StoreInventory: error counting sold_units_90d; exporting zeros',
+        e,
+      );
+      return null;
+    }
+  }
 
   private async localizeImagesForStore<
     T extends { image: string; card_id: string; language?: string },
@@ -107,9 +143,40 @@ export class StoreInventoryService {
     return localizeStoreItemImages(items, {
       storeRepoPath: resolveStoreRepoPath(),
       localImagesRoot: this.localCardImagesService.getImagesRoot(),
+      resolveLocalRelativePath: (cardId, language) =>
+        this.localCardImagesService.findRelativePath(cardId, language ?? 'en'),
       resolveRemoteImage: (cardId, language) =>
         this.tcgDexService.getRemoteStoreCardImageUrl(cardId, language),
     });
+  }
+
+  private async pruneUnusedStoreCardImages(): Promise<void> {
+    const storeRepo = resolveStoreRepoPath();
+    const inventoryPath =
+      process.env.STORE_INVENTORY_PATH ||
+      path.join(storeRepo, 'public', 'inventory.json');
+    const upcomingPath =
+      process.env.STORE_UPCOMING_PATH ||
+      path.join(storeRepo, 'public', 'upcoming.json');
+    try {
+      const urls = [
+        ...(await readCatalogImageUrls(inventoryPath)),
+        ...(await readCatalogImageUrls(upcomingPath)),
+      ];
+      const result = await pruneUnusedStoreCardAssets(urls, {
+        storeRepoPath: storeRepo,
+      });
+      if (result.removed > 0) {
+        console.log(
+          `[store-inventory] Imágenes no usadas eliminadas: ${result.removed}`,
+        );
+      }
+    } catch (err) {
+      console.warn(
+        '[store-inventory] No se pudieron limpiar imágenes no usadas',
+        err,
+      );
+    }
   }
 
   private pvpToCop(pvp: number, currency: string): number {
@@ -146,6 +213,7 @@ export class StoreInventoryService {
       );
       if (filtered.length === 0) {
         await this.writeInventory(outputPath, []);
+        await this.pruneUnusedStoreCardImages();
         return { success: true, path: outputPath, count: 0 };
       }
 
@@ -216,7 +284,17 @@ export class StoreInventoryService {
         const pvpData = resolvePvpForLine(list, rzLine);
         return {
           ...stock._doc,
-          card_name: card?.name ?? stock.card_name ?? '',
+          card_id: stock.card_id,
+          _id: stock._id,
+          stocked_at: stock.stocked_at ?? stock._doc?.stocked_at ?? null,
+          rareza: stock.rareza ?? stock._doc?.rareza,
+          league_card: stock.league_card ?? stock._doc?.league_card,
+          holofoil: stock.holofoil ?? stock._doc?.holofoil,
+          card_name: pickStoreExportCardName(
+            stock.card_name,
+            card?.name,
+            stock.card_id,
+          ),
           image_url: stock.image_url || card?.image || '',
           pvp: pvpData?.pvp,
           pvp_currency: pvpData?.pvp_currency,
@@ -224,73 +302,60 @@ export class StoreInventoryService {
         };
       });
 
-      const byLine = new Map<
-        string,
-        {
-          card_id: string;
-          name: string;
-          language: string;
-          pvp: number;
-          image: string;
-          quantity: number;
-          rareza: string | null;
-          expansion?: string;
-          card_number?: string;
-        }
-      >();
-
+      const groups = groupStockUnitsByLine(enriched);
+      const firstByLine = new Map<string, (typeof enriched)[number]>();
       for (const item of enriched) {
-        const cardId = item.card_id;
-        const lang =
-          (item.language || 'en').toString().trim().toLowerCase() || 'en';
+        const lang = normalizeExportLanguage(
+          item.language || item.languaje || 'en',
+        );
         const rzEff = effectiveOperationalRarezaFromStock(item);
-        const key = inventoryLineKey(cardId, lang, rzEff);
-        const list = pvpByCard.get(cardId) ?? [];
-        const pvpData = resolvePvpForLine(list, rzEff);
+        const key = inventoryLineKey(item.card_id, lang, rzEff);
+        if (!firstByLine.has(key)) firstByLine.set(key, item);
+      }
+
+      const inventoryRaw: StoreInventoryItem[] = groups.map((g) => {
+        const item = firstByLine.get(g.lineId);
+        const list = pvpByCard.get(g.card_id) ?? [];
+        const pvpData = resolvePvpForLine(list, g.rareza);
         const pvpCop =
           pvpData != null
             ? this.pvpToCop(pvpData.pvp, pvpData.pvp_currency)
             : 0;
-        const card = cardMap.get(storeMetaCacheKey(cardId, lang));
-        const name = card?.name || item.card_name || cardId;
-        const image = item.image_url || card?.image || '';
+        const card = cardMap.get(storeMetaCacheKey(g.card_id, g.language));
+        const name = pickStoreExportCardName(
+          item?.card_name,
+          card?.name,
+          g.card_id,
+        );
+        const image = item?.image_url || card?.image || '';
+        return {
+          lineId: g.lineId,
+          card_id: g.card_id,
+          name,
+          language: g.language,
+          pvp: pvpCop,
+          quantity: g.quantity,
+          image,
+          status: 'available' as const,
+          stocked_at: g.stocked_at,
+          ...(g.rareza != null ? { rareza: g.rareza } : {}),
+          ...(card?.expansion ? { expansion: card.expansion } : {}),
+          ...(card?.card_number ? { card_number: card.card_number } : {}),
+          ...tcgdexMetaSpread(card),
+        };
+      });
 
-        if (byLine.has(key)) {
-          const existing = byLine.get(key)!;
-          existing.quantity += 1;
-        } else {
-          byLine.set(key, {
-            card_id: cardId,
-            name,
-            language: lang,
-            pvp: pvpCop,
-            image,
-            quantity: 1,
-            rareza: rzEff,
-            ...(card?.expansion ? { expansion: card.expansion } : {}),
-            ...(card?.card_number ? { card_number: card.card_number } : {}),
-          });
-        }
-      }
-
-      const inventoryRaw: StoreInventoryItem[] = Array.from(
-        byLine.entries(),
-      ).map(([lineId, data]) => ({
-        lineId,
-        card_id: data.card_id,
-        name: data.name,
-        language: data.language,
-        pvp: data.pvp,
-        quantity: data.quantity,
-        image: data.image,
-        status: 'available' as const,
-        ...(data.rareza != null ? { rareza: data.rareza } : {}),
-        ...(data.expansion ? { expansion: data.expansion } : {}),
-        ...(data.card_number ? { card_number: data.card_number } : {}),
-      }));
-
-      const inventory = await this.localizeImagesForStore(inventoryRaw);
+      const demandCounts = await this.loadDemandCounts();
+      const tagMap = await this.cardStockTagRepository.findMapByCardIds(cardIds);
+      const inventoryWithDemand = applySoldUnits90d(inventoryRaw, demandCounts).map(
+        (row) => {
+          const tags = toStorePublicTags(tagMap.get(row.card_id));
+          return tags ? { ...row, tags } : row;
+        },
+      );
+      const inventory = await this.localizeImagesForStore(inventoryWithDemand);
       await this.writeInventory(outputPath, inventory);
+      await this.pruneUnusedStoreCardImages();
       return { success: true, path: outputPath, count: inventory.length };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -347,6 +412,7 @@ export class StoreInventoryService {
 
       if (openTransitLines.length === 0) {
         await this.writeUpcomingJson(outputPath, []);
+        await this.pruneUnusedStoreCardImages();
         return { success: true, path: outputPath, count: 0 };
       }
 
@@ -399,8 +465,13 @@ export class StoreInventoryService {
       for (const it of openTransitLines) {
         const lang = normalizeExportLanguage(it.language);
         const meta = cardMap.get(storeMetaCacheKey(it.card_id, lang));
-        const name = meta?.name || it.card_id;
-        const image = (it.image_url && String(it.image_url).trim()) || meta?.image || '';
+        const name = pickStoreExportCardName(
+          it.card_name,
+          meta?.name,
+          it.card_id,
+        );
+        const image =
+          (it.image_url && String(it.image_url).trim()) || meta?.image || '';
         const rz =
           it.rareza == null || String(it.rareza).trim() === ''
             ? null
@@ -431,15 +502,63 @@ export class StoreInventoryService {
             rareza: rz,
             ...(meta?.expansion ? { expansion: meta.expansion } : {}),
             ...(meta?.card_number ? { card_number: meta.card_number } : {}),
+            ...tcgdexMetaSpread(meta),
           });
         }
       }
 
-      const rowsRaw: StoreUpcomingItem[] = Array.from(byKey.values());
-      rowsRaw.sort((a, b) => a.name.localeCompare(b.name, 'es'));
+      const upcomingCardIds = [
+        ...new Set(Array.from(byKey.values()).map((r) => r.card_id)),
+      ];
+      const pvpByCard = new Map<
+        string,
+        {
+          card_id: string;
+          rareza?: string | null;
+          pvp: number;
+          currency: string;
+        }[]
+      >();
+      try {
+        const pvps = await this.pvpRepository.findByCardIds(upcomingCardIds);
+        for (const [cid, list] of groupPvpsByCardId(pvps)) {
+          pvpByCard.set(cid, list);
+        }
+      } catch (e) {
+        console.warn('StoreUpcoming: error loading PVP', e);
+      }
+      const tagMap =
+        await this.cardStockTagRepository.findMapByCardIds(upcomingCardIds);
+      const demandCounts = await this.loadDemandCounts();
+
+      const withMeta = Array.from(byKey.values()).map((row) => {
+        const list = pvpByCard.get(row.card_id) ?? [];
+        const pvpData = resolvePvpForLine(list, row.rareza);
+        const pvpCop =
+          pvpData != null
+            ? this.pvpToCop(pvpData.pvp, pvpData.pvp_currency)
+            : 0;
+        const tags = toStorePublicTags(tagMap.get(row.card_id));
+        return {
+          ...row,
+          ...(pvpCop > 0 ? { pvp: pvpCop } : {}),
+          ...(tags ? { tags } : {}),
+        };
+      });
+
+      const rowsRaw: StoreUpcomingItem[] = applySoldUnits90d(
+        withMeta,
+        demandCounts,
+      );
+      rowsRaw.sort((a, b) => {
+        const sold = (b.sold_units_90d ?? 0) - (a.sold_units_90d ?? 0);
+        if (sold !== 0) return sold;
+        return (b.pvp ?? 0) - (a.pvp ?? 0);
+      });
 
       const rows = await this.localizeImagesForStore(rowsRaw);
       await this.writeUpcomingJson(outputPath, rows);
+      await this.pruneUnusedStoreCardImages();
       return { success: true, path: outputPath, count: rows.length };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -510,7 +629,10 @@ export class StoreInventoryService {
       };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error('StoreInventoryService.publishStoreCatalog git error:', message);
+      console.error(
+        'StoreInventoryService.publishStoreCatalog git error:',
+        message,
+      );
       return {
         success: false,
         inventory,

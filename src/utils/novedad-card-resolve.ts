@@ -1,4 +1,5 @@
 export type CtBlueprintLike = {
+  id?: number;
   expansion_id?: number;
   expansion?: { id?: number; name_en?: string; name?: string };
   version?: string;
@@ -99,12 +100,14 @@ export function buildNovedadTcgdexResolveInput(args: {
   collectorNumber?: string | null;
   expansionId?: number;
   language?: string | null;
+  blueprintId?: number | null;
   blueprint?: CtBlueprintLike | null;
 }): {
   expansionName?: string;
   expansionId?: number;
   collectorNumber?: string;
   language?: string;
+  blueprint_id?: number;
 } {
   const blueprint = args.blueprint;
   const collectorNumber =
@@ -127,10 +130,21 @@ export function buildNovedadTcgdexResolveInput(args: {
       ? String(args.language).trim()
       : undefined;
 
+  const rawBlueprintId =
+    args.blueprintId ??
+    (typeof blueprint?.id === 'number' ? blueprint.id : undefined);
+  const blueprint_id =
+    rawBlueprintId != null &&
+    Number.isInteger(rawBlueprintId) &&
+    rawBlueprintId > 0
+      ? rawBlueprintId
+      : undefined;
+
   return {
     expansionName,
     expansionId,
     collectorNumber: collectorNumber ?? undefined,
     language,
+    blueprint_id,
   };
 }

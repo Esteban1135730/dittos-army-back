@@ -42,6 +42,18 @@ export type ResolveLocalImageInput = {
   remoteImageBase?: string;
 };
 
+function inferSetIdFromCardId(cardId: string): string | undefined {
+  const dash = cardId.lastIndexOf('-');
+  if (dash <= 0) return undefined;
+  const setId = cardId.slice(0, dash).trim();
+  return setId || undefined;
+}
+
+function uniqueLocales(locale: string): string[] {
+  const preferred = locale.trim() || 'en';
+  return preferred.toLowerCase() === 'en' ? [preferred] : [preferred, 'en'];
+}
+
 @Injectable()
 export class LocalCardImagesService implements OnModuleInit {
   private readonly logger = new Logger(LocalCardImagesService.name);
@@ -165,19 +177,42 @@ export class LocalCardImagesService implements OnModuleInit {
     return `${base}/high.png`;
   }
 
+  findRelativePath(
+    cardId: string,
+    locale = 'en',
+    setId?: string,
+  ): string | undefined {
+    const id = cardId?.trim();
+    if (!id) return undefined;
+
+    const inferredSetId = setId ?? inferSetIdFromCardId(id);
+    const locales = uniqueLocales(locale);
+    for (const loc of locales) {
+      for (const relativePath of this.candidateRelativePaths(
+        id,
+        loc,
+        inferredSetId,
+      )) {
+        if (this.localFileExists(relativePath)) {
+          return relativePath.replace(/\\/g, '/');
+        }
+      }
+    }
+    return undefined;
+  }
+
   resolve(input: ResolveLocalImageInput): ResolvedCardImages | undefined {
     const cardId = input.cardId?.trim();
     if (!cardId) return undefined;
 
-    for (const relativePath of this.candidateRelativePaths(
+    const relativePath = this.findRelativePath(
       cardId,
       input.locale,
       input.setId,
-    )) {
-      if (this.localFileExists(relativePath)) {
-        const url = this.toPublicUrl(relativePath);
-        return { image: url, small: url, large: url, source: 'local' };
-      }
+    );
+    if (relativePath) {
+      const url = this.toPublicUrl(relativePath);
+      return { image: url, small: url, large: url, source: 'local' };
     }
 
     this.recordPendingDownload(input);

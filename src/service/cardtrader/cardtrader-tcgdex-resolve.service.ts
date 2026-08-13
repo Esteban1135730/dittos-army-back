@@ -178,19 +178,25 @@ export class CardTraderTcgdexResolveService {
       localId,
       args.blueprint_id,
     );
-    if (
-      collisionLocalId !== localId &&
-      this.tcgDexService
-    ) {
+    const probeExact = this.tcgDexService?.getCardExact?.bind(
+      this.tcgDexService,
+    );
+    if (collisionLocalId !== localId && probeExact) {
       const collisionId = `${tcgdex_set_id}-${collisionLocalId}`;
-      const hit = await this.tcgDexService.getCard(collisionId, locale);
-      if (hit?.name) {
-        return {
-          tcgdex_card_id: collisionId,
-          tcgdex_set_id,
-          locale,
-          error: null,
-        };
+      const localesToTry = [locale, 'ja', 'en'].filter(
+        (loc, index, arr): loc is string =>
+          Boolean(loc) && arr.indexOf(loc) === index,
+      );
+      for (const tryLocale of localesToTry) {
+        const hit = await probeExact(collisionId, tryLocale);
+        if (hit?.id === collisionId && hit.name) {
+          return {
+            tcgdex_card_id: collisionId,
+            tcgdex_set_id,
+            locale,
+            error: null,
+          };
+        }
       }
     }
 

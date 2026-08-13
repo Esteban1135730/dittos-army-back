@@ -4,6 +4,7 @@ import {
   parseSetIdFromSetField,
   storeCardMetaFromDto,
   isUnreliableStoreCardName,
+  isCjkCardName,
   pickStoreExportCardName,
   resolveStoreExportCardMeta,
 } from './store-card-meta';
@@ -41,8 +42,10 @@ describe('storeCardMetaFromDto', () => {
       id: 'sv08-130',
       localId: '130',
       name: 'Archaludon ex',
-      rarity: '',
-      category: '',
+      rarity: 'Double Rare',
+      category: 'Pokemon',
+      types: ['Metal'],
+      hp: 300,
       legal: { standard: true, expanded: true },
       set: 'sv08(Surging Sparks)',
       image: 'https://example.com/low.png',
@@ -51,6 +54,10 @@ describe('storeCardMetaFromDto', () => {
     expect(meta.expansion).toBe('Surging Sparks');
     expect(meta.card_number).toBe('130');
     expect(meta.name).toBe('Archaludon ex');
+    expect(meta.tcg_rarity).toBe('Double Rare');
+    expect(meta.category).toBe('Pokemon');
+    expect(meta.types).toEqual(['Metal']);
+    expect(meta.hp).toBe(300);
   });
 
   it('prioriza setEnglishName sobre el nombre localizado del set', () => {
@@ -78,6 +85,13 @@ describe('isUnreliableStoreCardName', () => {
   });
 });
 
+describe('isCjkCardName', () => {
+  it('detecta escritura japonesa', () => {
+    expect(isCjkCardName('ランターン')).toBe(true);
+    expect(isCjkCardName('Lanturn')).toBe(false);
+  });
+});
+
 describe('resolveStoreExportCardMeta', () => {
   it('prefiere nombre EN cuando el localizado es corrupto', () => {
     const meta = resolveStoreExportCardMeta({
@@ -100,6 +114,21 @@ describe('resolveStoreExportCardMeta', () => {
       sourceName: 'Lanturn',
     });
     expect(meta.name).toBe('Lanturn');
+  });
+
+  it('prioriza el nombre local de inventario sobre TCGdex en japonés', () => {
+    const meta = resolveStoreExportCardMeta({
+      cardId: 's10a-045',
+      sourceName: 'Snorunt',
+      localized: { name: 'ユキカブリ', image: '', expansion: 'ダークファンタズマ' },
+      english: {
+        name: 'Snorunt',
+        image: 'https://assets.tcgdex.net/en/swsh/swsh10/45/low.png',
+        expansion: 'Dark Phantasma',
+      },
+    });
+    expect(meta.name).toBe('Snorunt');
+    expect(meta.expansion).toBe('Dark Phantasma');
   });
 });
 

@@ -19,6 +19,8 @@ import {
   normalizeCrossLocaleSetToken,
   buildTcgdexCardIdLookupCandidates,
   tcgDexCatalogLocaleForExpansion,
+  tcgdexLocalIdWithBlueprintCollision,
+  stripBlueprintCollisionLocalId,
 } from './tcgdex-set-resolve';
 
 describe('tcgdex-set-resolve', () => {
@@ -221,6 +223,24 @@ describe('set_locale_map', () => {
     expect(normalizeMangledAsiaSetId('CSM2C')).toBe('CSM2c');
     expect(buildTcgdexCardIdLookupCandidates('Csm25-044', 'zh')).toEqual(
       expect.arrayContaining(['CSM2.5-044', 'Csm25-044']),
+    );
+  });
+
+  it('sufijo de colisión CardTrader solo con blueprint de 5+ dígitos', () => {
+    expect(tcgdexLocalIdWithBlueprintCollision('205', 360075)).toBe(
+      '205_360075',
+    );
+    expect(tcgdexLocalIdWithBlueprintCollision('205', 359507)).toBe(
+      '205_359507',
+    );
+    expect(tcgdexLocalIdWithBlueprintCollision('079', 9)).toBe('079');
+    expect(tcgdexLocalIdWithBlueprintCollision('03-06_09', null)).toBe(
+      '03-06_09',
+    );
+    expect(stripBlueprintCollisionLocalId('205_360075')).toBe('205');
+    expect(stripBlueprintCollisionLocalId('03-06_09')).toBeNull();
+    expect(buildTcgdexCardIdLookupCandidates('M2a-205_360075', 'ja')).toEqual(
+      expect.arrayContaining(['M2a-205_360075', 'M2a-205']),
     );
   });
 });

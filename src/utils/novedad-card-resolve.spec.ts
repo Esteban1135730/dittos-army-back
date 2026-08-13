@@ -48,6 +48,7 @@ describe('novedad-card-resolve', () => {
       expansionName: 'Paldea Evolved',
       collectorNumber: null,
       blueprint: {
+        id: 360075,
         expansion_id: 9999,
         fixed_properties: { collector_number: '086' },
       },
@@ -55,5 +56,6 @@ describe('novedad-card-resolve', () => {
     expect(input.expansionName).toBe('Paldea Evolved');
     expect(input.expansionId).toBe(9999);
     expect(input.collectorNumber).toBe('086');
+    expect(input.blueprint_id).toBe(360075);
   });
 });

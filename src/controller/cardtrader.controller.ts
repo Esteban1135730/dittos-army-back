@@ -223,6 +223,7 @@ export class CardTraderController {
     @Query('expansion_id') expansionId?: string,
     @Query('collector_number') collectorNumber?: string,
     @Query('language') language?: string,
+    @Query('blueprint_id') blueprintId?: string,
   ): Promise<unknown> {
     const expName = expansion?.trim() || undefined;
     const expId =
@@ -235,11 +236,19 @@ export class CardTraderController {
     if (!expName && expId === undefined) {
       throw new BadRequestException('expansion o expansion_id es obligatorio');
     }
+    const bpId =
+      blueprintId !== undefined && blueprintId !== ''
+        ? Number(blueprintId)
+        : undefined;
+    if (bpId !== undefined && (!Number.isInteger(bpId) || bpId < 1)) {
+      throw new BadRequestException('blueprint_id inválido');
+    }
     return this.tcgdxResolve.resolveTcgdexCardId({
       expansionName: expName,
       expansionId: expId,
       collectorNumber: collectorNumber?.trim() || undefined,
       language: language?.trim() || undefined,
+      blueprint_id: bpId,
     });
   }
 
@@ -252,6 +261,7 @@ export class CardTraderController {
         expansion_id?: number;
         collector_number?: string;
         language?: string;
+        blueprint_id?: number;
       }>;
     },
   ): Promise<{ results: unknown[] }> {
@@ -274,16 +284,22 @@ export class CardTraderController {
           `expansion o expansion_id obligatorio en línea ${index + 1}`,
         );
       }
+      const bpId =
+        line?.blueprint_id != null ? Number(line.blueprint_id) : undefined;
+      if (bpId !== undefined && (!Number.isInteger(bpId) || bpId < 1)) {
+        throw new BadRequestException(`blueprint_id inválido en línea ${index + 1}`);
+      }
       return {
         expansionName: expName,
         expansionId: expId,
         collectorNumber: line?.collector_number?.trim() || undefined,
         language: line?.language?.trim() || undefined,
+        blueprint_id: bpId,
       };
     });
 
     return {
-      results: this.tcgdxResolve.resolveTcgdexCardIdBatch(normalized),
+      results: await this.tcgdxResolve.resolveTcgdexCardIdBatch(normalized),
     };
   }
 

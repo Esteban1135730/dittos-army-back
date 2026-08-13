@@ -51,6 +51,13 @@ describe('LocalCardImagesService', () => {
     expect(resolved?.image).toBe('http://test/card-images/swsh3/swsh3-136.png');
   });
 
+  it('encuentra ruta relativa local sin setId explícito', () => {
+    const { service } = createFixture();
+    expect(service.findRelativePath('swsh3-136', 'en')).toBe(
+      'swsh3/swsh3-136.png',
+    );
+  });
+
   it('resuelve imagen zh-tw con clave prefijada del índice', () => {
     const { service } = createFixture();
     const resolved = service.resolve({

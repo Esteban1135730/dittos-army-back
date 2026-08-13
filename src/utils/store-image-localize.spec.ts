@@ -1,12 +1,15 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import * as path from 'path';
 import {
+  isBlockedVendorImageUrl,
   isLocalhostImageUrl,
   localizeStoreImageUrl,
   localizeStoreItemImages,
   parseCardImagesRelativePath,
+  pruneUnusedStoreCardAssets,
   storeAssetPublicUrl,
+  usedStoreAssetRelativePaths,
 } from './store-image-localize';
 
 describe('store-image-localize', () => {
@@ -53,15 +56,11 @@ describe('store-image-localize', () => {
 
     expect(result).toBe('/assets/cards/swsh3/swsh3-136.png');
     expect(
-      await import('fs/promises').then((fs) =>
-        fs
-          .access(
-            path.join(storeRepo, 'public', 'assets', 'cards', relative),
-          )
-          .then(() => true)
-          .catch(() => false),
+      await readFile(
+        path.join(storeRepo, 'public', 'assets', 'cards', relative),
+        'utf8',
       ),
-    ).toBe(true);
+    ).toBe('png-bytes');
 
     await rm(root, { recursive: true, force: true });
   });
@@ -91,7 +90,7 @@ describe('store-image-localize', () => {
     expect(copyFileFn).toHaveBeenCalledTimes(1);
   });
 
-  it('prioriza imagen remota TCGdex antes de copiar assets', async () => {
+  it('copia localhost antes de usar la imagen remota', async () => {
     const copyFileFn = jest.fn().mockResolvedValue(undefined);
     const existsFn = jest.fn().mockReturnValue(true);
     const resolveRemoteImage = jest
@@ -115,10 +114,114 @@ describe('store-image-localize', () => {
       },
     );
 
+    expect(result[0].image).toBe('/assets/cards/set/card.png');
+    expect(copyFileFn).toHaveBeenCalled();
+    expect(resolveRemoteImage).not.toHaveBeenCalled();
+  });
+
+  it('completa imagen vacía desde el índice local antes que la remota', async () => {
+    const copyFileFn = jest.fn().mockResolvedValue(undefined);
+    const existsFn = jest.fn().mockReturnValue(true);
+    const resolveRemoteImage = jest
+      .fn()
+      .mockResolvedValue('https://assets.tcgdex.net/en/sv/sv07/128/low.png');
+
+    const result = await localizeStoreItemImages(
+      [{ image: '', card_id: 'sv07-128', language: 'en' }],
+      {
+        storeRepoPath: 'C:\\store',
+        localImagesRoot: 'C:\\images',
+        resolveLocalRelativePath: (cardId) =>
+          cardId === 'sv07-128' ? 'sv07/sv07-128.png' : undefined,
+        resolveRemoteImage,
+        copyFileFn,
+        existsFn,
+      },
+    );
+
+    expect(result[0].image).toBe('/assets/cards/sv07/sv07-128.png');
+    expect(copyFileFn).toHaveBeenCalled();
+    expect(resolveRemoteImage).not.toHaveBeenCalled();
+  });
+
+  it('sustituye imágenes de host bloqueado por archivo local o remota pública', async () => {
+    expect(
+      isBlockedVendorImageUrl(
+        'https://www.cardtrader.com/uploads/blueprints/image/1.png',
+      ),
+    ).toBe(true);
+
+    const resolveRemoteImage = jest
+      .fn()
+      .mockResolvedValue('https://assets.tcgdex.net/en/sv/sv07/128/low.png');
+
+    const result = await localizeStoreItemImages(
+      [
+        {
+          image: 'https://www.cardtrader.com/uploads/blueprints/image/1.png',
+          card_id: 'sv07-128',
+          language: 'en',
+        },
+      ],
+      {
+        storeRepoPath: 'C:\\store',
+        localImagesRoot: 'C:\\images',
+        resolveRemoteImage,
+      },
+    );
+
     expect(result[0].image).toBe(
       'https://assets.tcgdex.net/en/sv/sv07/128/low.png',
     );
-    expect(resolveRemoteImage).toHaveBeenCalledWith('sv07-128', 'en');
-    expect(copyFileFn).not.toHaveBeenCalled();
+  });
+
+  it('completa imagen vacía con la remota pública si no hay archivo local', async () => {
+    const resolveRemoteImage = jest
+      .fn()
+      .mockResolvedValue('https://assets.tcgdex.net/en/sv/sv07/128/low.png');
+
+    const result = await localizeStoreItemImages(
+      [{ image: '', card_id: 'sv07-128', language: 'en' }],
+      {
+        storeRepoPath: 'C:\\store',
+        localImagesRoot: 'C:\\images',
+        resolveRemoteImage,
+      },
+    );
+
+    expect(result[0].image).toBe(
+      'https://assets.tcgdex.net/en/sv/sv07/128/low.png',
+    );
+  });
+
+  it('identifica assets usados por la tienda', () => {
+    expect(
+      [...usedStoreAssetRelativePaths(['/assets/cards/swsh3/swsh3-136.png'])],
+    ).toEqual(['swsh3/swsh3-136.png']);
+  });
+
+  it('elimina imágenes que el catálogo ya no referencia', async () => {
+    const root = await mkdtemp(path.join(tmpdir(), 'store-prune-'));
+    const storeRepo = path.join(root, 'store');
+    const cardsRoot = path.join(storeRepo, 'public', 'assets', 'cards');
+    await mkdir(path.join(cardsRoot, 'keep'), { recursive: true });
+    await mkdir(path.join(cardsRoot, 'gone'), { recursive: true });
+    await writeFile(path.join(cardsRoot, 'keep', 'a.png'), 'keep');
+    await writeFile(path.join(cardsRoot, 'gone', 'b.png'), 'gone');
+
+    const result = await pruneUnusedStoreCardAssets(
+      ['/assets/cards/keep/a.png'],
+      { storeRepoPath: storeRepo },
+    );
+
+    expect(result).toEqual({ removed: 1, kept: 1 });
+    await expect(
+      readFile(path.join(cardsRoot, 'keep', 'a.png'), 'utf8'),
+    ).resolves.toBe('keep');
+    await expect(
+      readFile(path.join(cardsRoot, 'gone', 'b.png'), 'utf8'),
+    ).rejects.toThrow();
+
+    await rm(root, { recursive: true, force: true });
   });
 });

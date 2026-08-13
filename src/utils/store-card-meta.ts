@@ -9,6 +9,10 @@ export type StoreCardExportMeta = {
   image: string;
   expansion?: string;
   card_number?: string;
+  tcg_rarity?: string;
+  category?: string;
+  types?: string[];
+  hp?: number;
 };
 
 /** Nombres corruptos en catálogos regionales de TCGdex (p. ej. neo3-032 → "b" en ja). */
@@ -20,6 +24,11 @@ export function isUnreliableStoreCardName(
   if (n.length <= 1) return true;
   if (/^[a-zA-Z]$/.test(n)) return true;
   return false;
+}
+
+/** Nombres en escritura japonesa/CJK: no sustituyen el nombre local de inventario. */
+export function isCjkCardName(name: string | undefined | null): boolean {
+  return /[\u3040-\u30ff\u3400-\u9fff]/.test(String(name ?? ''));
 }
 
 export function pickStoreExportCardName(
@@ -42,20 +51,39 @@ export function resolveStoreExportCardMeta(args: {
   localized?: StoreCardExportMeta | null;
   english?: StoreCardExportMeta | null;
 }): StoreCardExportMeta {
+  const localizedName =
+    args.localized?.name && !isCjkCardName(args.localized.name)
+      ? args.localized.name
+      : undefined;
   const name = pickStoreExportCardName(
-    args.localized?.name,
-    args.english?.name,
     args.sourceName,
+    args.english?.name,
+    localizedName,
     args.cardId,
   );
-  const preferredMeta =
-    args.localized && !isUnreliableStoreCardName(args.localized.name)
-      ? args.localized
-      : (args.english ?? args.localized);
+  const localizedUsable =
+    args.localized &&
+    !isUnreliableStoreCardName(args.localized.name) &&
+    !isCjkCardName(args.localized.name);
+  const preferredMeta = localizedUsable
+    ? args.localized
+    : (args.english ?? args.localized);
   const cardNumber =
     preferredMeta?.card_number ??
     args.english?.card_number ??
     parseCardNumberFromCardId(args.cardId);
+
+  const tcgRarity =
+    preferredMeta?.tcg_rarity ??
+    args.english?.tcg_rarity ??
+    args.localized?.tcg_rarity;
+  const category =
+    preferredMeta?.category ??
+    args.english?.category ??
+    args.localized?.category;
+  const types =
+    preferredMeta?.types ?? args.english?.types ?? args.localized?.types;
+  const hp = preferredMeta?.hp ?? args.english?.hp ?? args.localized?.hp;
 
   return {
     name,
@@ -68,6 +96,10 @@ export function resolveStoreExportCardMeta(args: {
       ? { expansion: preferredMeta?.expansion ?? args.english?.expansion }
       : {}),
     ...(cardNumber ? { card_number: cardNumber } : {}),
+    ...(tcgRarity ? { tcg_rarity: tcgRarity } : {}),
+    ...(category ? { category: category } : {}),
+    ...(types && types.length ? { types } : {}),
+    ...(hp != null ? { hp } : {}),
   };
 }
 
@@ -118,10 +150,32 @@ export function storeCardMetaFromDto(card: CardDto): StoreCardExportMeta {
     parseCardNumberFromCardId(card.id);
   const expansion =
     card.setEnglishName?.trim() || parseExpansionFromSetField(card.set);
+  const rarity = (card.rarity || '').trim();
+  const category = (card.category || '').trim();
+  const types = (card.types || []).map((t) => String(t).trim()).filter(Boolean);
   return {
     name: card.name,
     image: card.image || card.images?.small || card.images?.large || '',
     expansion,
     ...(cardNumber ? { card_number: cardNumber } : {}),
+    ...(rarity ? { tcg_rarity: rarity } : {}),
+    ...(category ? { category } : {}),
+    ...(types.length ? { types } : {}),
+    ...(card.hp != null ? { hp: card.hp } : {}),
+  };
+}
+
+export function tcgdexMetaSpread(card?: StoreCardExportMeta | null): {
+  tcg_rarity?: string;
+  category?: string;
+  types?: string[];
+  hp?: number;
+} {
+  if (!card) return {};
+  return {
+    ...(card.tcg_rarity ? { tcg_rarity: card.tcg_rarity } : {}),
+    ...(card.category ? { category: card.category } : {}),
+    ...(card.types && card.types.length ? { types: card.types } : {}),
+    ...(card.hp != null ? { hp: card.hp } : {}),
   };
 }
