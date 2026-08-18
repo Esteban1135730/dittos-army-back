@@ -20,6 +20,15 @@ import { StoreWhatsAppReservationImportService } from 'src/service/store-whatsap
 import { precioToCop } from 'src/utils/precio-to-cop';
 import { enrichSaleCreatePayload } from 'src/utils/sale-cost-snapshot';
 import { CardStockTagRepository } from 'src/repository/card-stock-tag.repository';
+import { isQuantityKind } from 'src/constants/bulk-product';
+import type { Stock } from 'src/schema/stock.schema';
+
+function reservaQty(quantity: number | undefined): number {
+  if (typeof quantity === 'number' && Number.isInteger(quantity) && quantity >= 1) {
+    return quantity;
+  }
+  return 1;
+}
 
 const ESTADO_RESERVA = 'reserva';
 const ESTADO_DISPONIBLE = 'disponible';
@@ -139,6 +148,9 @@ export class ReservaController {
     if (!stock) {
       return { error: 'Stock no encontrado' };
     }
+    if (isQuantityKind((stock as { product_kind?: string }).product_kind)) {
+      return this.createQuantityReserva(dto, stock);
+    }
     if (stock.card_state === ESTADO_RESERVA) {
       return { error: 'La carta ya está reservada' };
     }
@@ -157,6 +169,52 @@ export class ReservaController {
     return reserva;
   }
 
+  /** Reserva de SKU con cantidad (bulk): no bloquea la línea; varios clientes pueden reservar. */
+  private async createQuantityReserva(
+    dto: ReservaDto,
+    stock: Stock,
+  ): Promise<Reserva | { error: string }> {
+    if (stock.card_state === 'vendida' || stock.card_state === 'propiedad') {
+      return { error: 'La carta no está disponible para reservar' };
+    }
+    if (stock.card_state === ESTADO_RESERVA) {
+      await this.stockRepository.updateCardState(dto.stock_id, ESTADO_DISPONIBLE);
+    }
+    const qtyRaw = dto.quantity;
+    const qty = qtyRaw === undefined || qtyRaw === null ? 1 : Number(qtyRaw);
+    if (!Number.isInteger(qty) || qty < 1) {
+      return { error: 'quantity debe ser un entero >= 1' };
+    }
+    const available =
+      typeof (stock as { quantity?: number }).quantity === 'number'
+        ? (stock as { quantity: number }).quantity
+        : 0;
+    if (qty > available) {
+      return { error: `Stock insuficiente (disponible: ${available})` };
+    }
+    const decremented = await this.stockRepository.decrementQuantityAtomic(
+      dto.stock_id,
+      qty,
+    );
+    if (!decremented) {
+      return { error: 'Stock insuficiente' };
+    }
+    const existing = await this.reservaRepository.findByClientAndStockId(
+      dto.client_id,
+      dto.stock_id,
+    );
+    if (existing) {
+      const id = String((existing as { _id?: unknown })._id ?? '');
+      const updated = await this.reservaRepository.addQuantity(id, qty);
+      return updated ?? existing;
+    }
+    return this.reservaRepository.create({
+      ...dto,
+      currency: dto.currency ?? 'COP',
+      quantity: qty,
+    });
+  }
+
   @Get()
   async findAll(): Promise<Reserva[]> {
     return this.reservaRepository.findAll();
@@ -170,10 +228,28 @@ export class ReservaController {
   @Delete('stock/:stockId')
   async cancelByStockId(
     @Param('stockId') stockId: string,
+    @Query('client_id') clientId?: string,
   ): Promise<{ success: boolean; error?: string }> {
-    const reserva = await this.reservaRepository.findByStockId(stockId);
+    const reserva = clientId?.trim()
+      ? await this.reservaRepository.findByClientAndStockId(
+          clientId.trim(),
+          stockId,
+        )
+      : await this.reservaRepository.findByStockId(stockId);
     if (!reserva) {
       return { success: false, error: 'Reserva no encontrada' };
+    }
+    const stock = await this.stockRepository.findById(stockId);
+    const reservaId = String((reserva as { _id?: unknown })._id ?? '');
+    if (stock && isQuantityKind((stock as { product_kind?: string }).product_kind)) {
+      const held = reservaQty(reserva.quantity);
+      await this.stockRepository.incrementQuantityAtomic(stockId, held);
+      if (reservaId) {
+        await this.reservaRepository.deleteById(reservaId);
+      } else {
+        await this.reservaRepository.deleteByStockId(stockId);
+      }
+      return { success: true };
     }
     await this.reservaRepository.deleteByStockId(stockId);
     await this.stockRepository.updateCardState(stockId, ESTADO_DISPONIBLE);
@@ -183,19 +259,34 @@ export class ReservaController {
   @Put('stock/:stockId')
   async updatePrecioByStockId(
     @Param('stockId') stockId: string,
+    @Query('client_id') clientId: string | undefined,
     @Body() body: { precio: number; currency?: string },
   ): Promise<Reserva | { error: string }> {
     if (body.precio == null || body.precio < 0) {
       throw new Error('precio es requerido y debe ser mayor o igual a 0');
     }
-    const reserva = await this.reservaRepository.findByStockId(stockId);
+    const reserva = clientId?.trim()
+      ? await this.reservaRepository.findByClientAndStockId(
+          clientId.trim(),
+          stockId,
+        )
+      : await this.reservaRepository.findByStockId(stockId);
     if (!reserva) {
       return { error: 'Reserva no encontrada' };
     }
-    const updated = await this.reservaRepository.updateByStockId(stockId, {
-      precio: body.precio,
-      currency: body.currency ?? reserva.currency,
-    });
+    const updated = clientId?.trim()
+      ? await this.reservaRepository.updateByClientAndStockId(
+          clientId.trim(),
+          stockId,
+          {
+            precio: body.precio,
+            currency: body.currency ?? reserva.currency,
+          },
+        )
+      : await this.reservaRepository.updateByStockId(stockId, {
+          precio: body.precio,
+          currency: body.currency ?? reserva.currency,
+        });
     return updated ?? { error: 'Error al actualizar' };
   }
 
@@ -207,6 +298,7 @@ export class ReservaController {
     if (!reservas || reservas.length === 0) {
       return { success: false, error: 'El cliente no tiene reservas' };
     }
+    let vendidas = 0;
     for (const reserva of reservas) {
       const stock = await this.stockRepository.findById(reserva.stock_id);
       if (!stock) {
@@ -219,28 +311,42 @@ export class ReservaController {
       const tagsMap = await this.cardStockTagRepository.findMapByCardIds([
         stock.card_id,
       ]);
-      await this.saleRepository.create(
-        enrichSaleCreatePayload(
-          {
-            stock_id: reserva.stock_id,
-            card_id: stock.card_id,
-            type: 'venta',
-            amount_cop: amountCop,
-            client_id: clientId,
-            notes: `Venta finalizada desde reserva (cliente ${clientId}). Precio original: ${reserva.precio} ${reserva.currency ?? 'COP'}.`,
-          },
-          stock,
-          {
-            tags_snapshot: tagsMap.get(String(stock.card_id).trim()) ?? [],
-          },
-        ),
+      const isQty = isQuantityKind(
+        (stock as { product_kind?: string }).product_kind,
       );
-      await this.stockRepository.updateCardState(
-        reserva.stock_id,
-        ESTADO_VENDIDA,
-      );
-      await this.reservaRepository.deleteByStockId(reserva.stock_id);
+      const units = isQty ? reservaQty(reserva.quantity) : 1;
+      for (let i = 0; i < units; i++) {
+        await this.saleRepository.create(
+          enrichSaleCreatePayload(
+            {
+              stock_id: reserva.stock_id,
+              card_id: stock.card_id,
+              type: 'venta',
+              amount_cop: amountCop,
+              client_id: clientId,
+              notes: `Venta finalizada desde reserva (cliente ${clientId}). Precio original: ${reserva.precio} ${reserva.currency ?? 'COP'}.`,
+            },
+            stock,
+            {
+              tags_snapshot: tagsMap.get(String(stock.card_id).trim()) ?? [],
+            },
+          ),
+        );
+      }
+      vendidas += units;
+      if (!isQty) {
+        await this.stockRepository.updateCardState(
+          reserva.stock_id,
+          ESTADO_VENDIDA,
+        );
+      }
+      const reservaId = String((reserva as { _id?: unknown })._id ?? '');
+      if (reservaId) {
+        await this.reservaRepository.deleteById(reservaId);
+      } else {
+        await this.reservaRepository.deleteByStockId(reserva.stock_id);
+      }
     }
-    return { success: true, vendidas: reservas.length };
+    return { success: true, vendidas };
   }
 }

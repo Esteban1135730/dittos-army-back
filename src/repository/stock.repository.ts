@@ -137,6 +137,21 @@ export class StockRepository {
       .exec();
   }
 
+  /** Devuelve unidades a un SKU `quantity` (p. ej. al cancelar una reserva de bulk). */
+  async incrementQuantityAtomic(
+    stockId: string,
+    n: number,
+  ): Promise<Stock | null> {
+    if (!stockId?.trim() || !Number.isFinite(n) || n < 1) return null;
+    return this.stockModel
+      .findOneAndUpdate(
+        { _id: stockId, product_kind: 'quantity' },
+        { $inc: { quantity: n } },
+        { new: true },
+      )
+      .exec();
+  }
+
   async findByCardState(cardState: string): Promise<Stock[]> {
     return this.stockModel.find({ card_state: cardState }).exec();
   }

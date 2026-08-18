@@ -37,6 +37,39 @@ export class ReservaRepository {
     return this.reservaModel.findOne({ stock_id: stockId }).exec();
   }
 
+  async findByClientAndStockId(
+    clientId: string,
+    stockId: string,
+  ): Promise<Reserva | null> {
+    if (!clientId?.trim() || !stockId?.trim()) return null;
+    return this.reservaModel
+      .findOne({ client_id: clientId, stock_id: stockId })
+      .exec();
+  }
+
+  async addQuantity(id: string, n: number): Promise<Reserva | null> {
+    if (!id?.trim() || !Number.isFinite(n) || n < 1) return null;
+    const doc = await this.reservaModel.findById(id).exec();
+    if (!doc) return null;
+    const current =
+      typeof doc.quantity === 'number' && Number.isInteger(doc.quantity) && doc.quantity >= 1
+        ? doc.quantity
+        : 1;
+    return this.reservaModel
+      .findByIdAndUpdate(
+        id,
+        { $set: { quantity: current + n, updated_at: new Date() } },
+        { new: true },
+      )
+      .exec();
+  }
+
+  async deleteById(id: string): Promise<boolean> {
+    if (!id?.trim()) return false;
+    const result = await this.reservaModel.deleteOne({ _id: id }).exec();
+    return (result.deletedCount ?? 0) > 0;
+  }
+
   async deleteByStockId(stockId: string): Promise<boolean> {
     const result = await this.reservaModel
       .deleteOne({ stock_id: stockId })
@@ -51,6 +84,21 @@ export class ReservaRepository {
     return this.reservaModel
       .findOneAndUpdate(
         { stock_id: stockId },
+        { ...data, updated_at: new Date() },
+        { new: true },
+      )
+      .exec();
+  }
+
+  async updateByClientAndStockId(
+    clientId: string,
+    stockId: string,
+    data: { precio?: number; currency?: string },
+  ): Promise<Reserva | null> {
+    if (!clientId?.trim() || !stockId?.trim()) return null;
+    return this.reservaModel
+      .findOneAndUpdate(
+        { client_id: clientId, stock_id: stockId },
         { ...data, updated_at: new Date() },
         { new: true },
       )

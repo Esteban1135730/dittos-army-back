@@ -62,7 +62,8 @@ export class BulkProductService {
       if (!(existing as any).image_url) {
         patch.image_url = BULK_IMAGE_URL;
       }
-      if (!(existing as any).card_state) {
+      const state = String((existing as any).card_state ?? '').trim();
+      if (!state || state === 'reserva') {
         patch.card_state = 'disponible';
       }
       if (Object.keys(patch).length > 0) {

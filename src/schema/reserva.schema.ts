@@ -17,6 +17,13 @@ export class Reserva {
   @Prop({ default: 'COP' })
   currency: string;
 
+  /**
+   * Unidades reservadas. Significativo para `product_kind === 'quantity'` (p. ej. bulk).
+   * Ausente en documentos unitarios legacy (= 1).
+   */
+  @Prop({ required: false, default: 1 })
+  quantity?: number;
+
   /** Fecha de creación; las nuevas reservas la rellena el repositorio. Opcional en documentos antiguos. */
   @Prop({ type: Date, required: false })
   created_at?: Date;

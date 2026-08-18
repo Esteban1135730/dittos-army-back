@@ -4,4 +4,6 @@ export type ReservaDto = {
   stock_id: string;
   precio: number;
   currency?: string;
+  /** Unidades; solo aplica a productos `quantity` (p. ej. bulk). Default 1. */
+  quantity?: number;
 };
