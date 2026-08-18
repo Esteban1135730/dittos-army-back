@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { OwnerModelsService } from '../owner/owner-models.service';
 import { Model } from 'mongoose';
 import { ClientDto } from 'src/Dto/client.dto';
+import { toCelularE164 } from 'src/utils/phone-normalize';
 
 @Injectable()
 export class ClientRepository {
@@ -16,8 +17,8 @@ export class ClientRepository {
     const notasTrim = dto.notas?.trim();
     const created = new this.clientModel({
       nombre: dto.nombre,
-      tienda_entrega: dto.tienda_entrega,
       celular: dto.celular,
+      celular_e164: toCelularE164(dto.celular),
       metodo_contacto: dto.metodo_contacto,
       facebook_usuario:
         dto.metodo_contacto === 'facebook'
@@ -44,8 +45,8 @@ export class ClientRepository {
         id,
         {
           nombre: dto.nombre,
-          tienda_entrega: dto.tienda_entrega,
           celular: dto.celular,
+          celular_e164: toCelularE164(dto.celular) ?? null,
           metodo_contacto: dto.metodo_contacto,
           facebook_usuario:
             dto.metodo_contacto === 'facebook'
@@ -62,5 +63,18 @@ export class ClientRepository {
   async delete(id: string): Promise<boolean> {
     const result = await this.clientModel.findByIdAndDelete(id).exec();
     return !!result;
+  }
+
+  async findByCelularE164(waId: string): Promise<ClientDocument | null> {
+    if (!waId || typeof waId !== 'string' || !/^\d{10,15}$/.test(waId)) {
+      return null;
+    }
+    return this.clientModel.findOne({ celular_e164: waId }).exec();
+  }
+
+  async findAllWithCelular(): Promise<ClientDocument[]> {
+    return this.clientModel
+      .find({ celular: { $exists: true, $nin: [null, ''] } })
+      .exec();
   }
 }

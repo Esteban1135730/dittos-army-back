@@ -12,12 +12,7 @@ import { isValidObjectId } from 'mongoose';
 import { SaleRepository } from 'src/repository/sale.repository';
 import { ClientRepository } from 'src/repository/client.repository';
 import { StockRepository } from 'src/repository/stock.repository';
-import { PvpRepository } from 'src/repository/pvp.repository';
 import { ReservaRepository } from 'src/repository/reserva.repository';
-import {
-  effectiveOperationalRarezaFromStock,
-  resolvePvpForLine,
-} from 'src/utils/pvp-resolve';
 import { SaleDocument } from 'src/schema/sale.schema';
 import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
 import { isQuantityKind } from 'src/constants/bulk-product';
@@ -33,26 +28,12 @@ import { enrichSaleCreatePayload } from 'src/utils/sale-cost-snapshot';
 import { CardStockTagRepository } from 'src/repository/card-stock-tag.repository';
 import type { Stock } from 'src/schema/stock.schema';
 
-function pvpToCop(pvp: number, currency: string): number {
-  if (currency === 'COP') return Math.round(pvp);
-  if (currency === 'EUR') {
-    const rate = parseFloat(process.env.EUR_TO_COP || '0') || 5000;
-    return Math.round(pvp * rate);
-  }
-  if (currency === 'USD') {
-    const rate = parseFloat(process.env.USD_TO_COP || '0') || 4500;
-    return Math.round(pvp * rate);
-  }
-  return Math.round(pvp);
-}
-
 @Controller('sales')
 export class SaleController {
   constructor(
     private readonly saleRepository: SaleRepository,
     private readonly clientRepository: ClientRepository,
     private readonly stockRepository: StockRepository,
-    private readonly pvpRepository: PvpRepository,
     private readonly reservaRepository: ReservaRepository,
     private readonly tcgDexService: TCGDexService,
     private readonly cardStockTagRepository: CardStockTagRepository,
@@ -557,105 +538,6 @@ export class SaleController {
     return salesWithStockInfo.filter((sale) => sale !== null);
   }
 
-  @Get('consistency')
-  async getSalesConsistency(): Promise<{
-    stockVendidas: Array<{ _id: string; stock_id: string; card_id: string }>;
-    salesVentas: Array<{
-      _id: string;
-      stock_id: string;
-      card_id: string;
-      amount_cop: number;
-      created_at: Date;
-    }>;
-    onlyInStock: Array<{
-      _id: string;
-      stock_id: string;
-      card_id: string;
-      card_name?: string;
-      image_url?: string;
-    }>;
-    onlyInSales: Array<{
-      _id: string;
-      stock_id: string;
-      card_id: string;
-      amount_cop: number;
-      created_at: Date;
-    }>;
-    summary: {
-      totalStockVendida: number;
-      totalSales: number;
-      onlyInStockCount: number;
-      onlyInSalesCount: number;
-      matchingCount: number;
-    };
-  }> {
-    const [stockVendidas, salesVentas] = await Promise.all([
-      this.stockRepository.findByCardState('vendida'),
-      this.saleRepository.findActiveVentas(),
-    ]);
-
-    const stockVendidasNormalized = stockVendidas
-      .map((s) => ({
-        _id: (s as any)._id?.toString?.(),
-        stock_id: (s as any)._id?.toString?.(),
-        card_id: s.card_id,
-      }))
-      .filter((s) => s._id && s.stock_id);
-
-    const salesVentasNormalized = salesVentas.map((s) => ({
-      _id: (s as any)._id?.toString?.(),
-      stock_id: s.stock_id,
-      card_id: s.card_id,
-      amount_cop: s.amount_cop,
-      created_at: (s as any).created_at,
-    }));
-
-    const stockIds = new Set(stockVendidasNormalized.map((s) => s.stock_id));
-    const saleStockIds = new Set(salesVentasNormalized.map((s) => s.stock_id));
-
-    const onlyInStockRaw = stockVendidasNormalized.filter(
-      (s) => !saleStockIds.has(s.stock_id),
-    );
-    const onlyInSales = salesVentasNormalized.filter(
-      (s) => !stockIds.has(s.stock_id),
-    );
-    const matchingCount = stockVendidasNormalized.filter((s) =>
-      saleStockIds.has(s.stock_id),
-    ).length;
-
-    // Enriquecer onlyInStock con datos de TCG Dex (nombre e imagen)
-    const onlyInStock = await Promise.all(
-      onlyInStockRaw.map(async (item) => {
-        let card_name: string | undefined;
-        let image_url: string | undefined;
-        try {
-          const card = await this.tcgDexService.getCard(item.card_id);
-          if (card) {
-            card_name = card.name || '';
-            image_url = card.images?.small || card.images?.large || '';
-          }
-        } catch {
-          // dejar vacío si falla la API
-        }
-        return { ...item, card_name, image_url };
-      }),
-    );
-
-    return {
-      stockVendidas: stockVendidasNormalized,
-      salesVentas: salesVentasNormalized,
-      onlyInStock,
-      onlyInSales,
-      summary: {
-        totalStockVendida: stockVendidasNormalized.length,
-        totalSales: salesVentasNormalized.length,
-        onlyInStockCount: onlyInStock.length,
-        onlyInSalesCount: onlyInSales.length,
-        matchingCount,
-      },
-    };
-  }
-
   @Post('close-cycle')
   async closeCycle(): Promise<{
     success: boolean;
@@ -743,6 +625,37 @@ export class SaleController {
     return salesWithStockInfo.filter((sale) => sale !== null);
   }
 
+  private async enrichVentaClienteRow(sale: SaleDocument) {
+    const stock = await this.stockRepository.findById(sale.stock_id);
+    let cardName = stock?.card_name ?? '';
+    let imageUrl = stock?.image_url ?? '';
+    const cardId = sale.card_id ?? stock?.card_id ?? '';
+    if ((!cardName || !imageUrl) && cardId) {
+      try {
+        const card = await this.tcgDexService.getCard(cardId);
+        if (card) {
+          if (!cardName) cardName = card.name ?? '';
+          if (!imageUrl && card.images?.small) imageUrl = card.images.small;
+        }
+      } catch {
+        /* opcional */
+      }
+    }
+    return {
+      _id: (sale as any)._id.toString(),
+      stock_id: sale.stock_id,
+      card_id: cardId,
+      card_name: cardName || undefined,
+      image_url: imageUrl || undefined,
+      type: sale.type,
+      amount_cop: sale.amount_cop,
+      notes: sale.notes ?? '',
+      created_at: sale.created_at,
+      cycle_closed_at: (sale as any).cycle_closed_at ?? null,
+      client_id: sale.client_id,
+    };
+  }
+
   @Get('by-client/:clientId')
   async listVentasByCliente(
     @Param('clientId') clientId: string,
@@ -761,59 +674,7 @@ export class SaleController {
     const sales = await this.saleRepository.findVentasByClientId(clientId, {
       limit,
     });
-    return sales.map((sale) => ({
-      _id: (sale as any)._id.toString(),
-      stock_id: sale.stock_id,
-      card_id: sale.card_id,
-      type: sale.type,
-      amount_cop: sale.amount_cop,
-      notes: sale.notes ?? '',
-      created_at: sale.created_at,
-      cycle_closed_at: (sale as any).cycle_closed_at ?? null,
-      client_id: sale.client_id,
-    }));
-  }
-
-  @Post('register-from-stock-with-pvp')
-  async registerFromStockWithPvp(
-    @Body() body: { stock_id: string },
-  ): Promise<{ success: boolean; message?: string }> {
-    if (!body.stock_id) {
-      return { success: false, message: 'stock_id es requerido' };
-    }
-    const stock = await this.stockRepository.findById(body.stock_id);
-    if (!stock) {
-      return { success: false, message: 'Stock no encontrado' };
-    }
-    if (stock.card_state !== 'vendida') {
-      return {
-        success: false,
-        message: 'La carta no está marcada como vendida en stock',
-      };
-    }
-    const pvps = await this.pvpRepository.findAllByCardId(stock.card_id);
-    const resolved = resolvePvpForLine(
-      pvps,
-      effectiveOperationalRarezaFromStock(stock as any),
-    );
-    if (!resolved) {
-      return { success: false, message: 'No hay PVP asignado para esta carta' };
-    }
-    const amountCop = pvpToCop(resolved.pvp, resolved.pvp_currency ?? 'COP');
-    await this.saleRepository.create(
-      await this.enrichVenta(
-        {
-          stock_id: body.stock_id,
-          card_id: stock.card_id,
-          type: 'venta',
-          amount_cop: amountCop,
-          notes: `Registrado desde consistencia (venta al PVP: ${resolved.pvp} ${resolved.pvp_currency ?? 'COP'})`,
-        },
-        stock,
-        { pvp_cop_snapshot: amountCop },
-      ),
-    );
-    return { success: true };
+    return Promise.all(sales.map((sale) => this.enrichVentaClienteRow(sale)));
   }
 
   @Post('reopen/:id')

@@ -1,10 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
-import {
-  ESTEBAN_CONNECTION_NAME,
-  OWNERS_CONFIG,
-} from './config/owners.config';
+import { ESTEBAN_CONNECTION_NAME, OWNERS_CONFIG } from './config/owners.config';
 import { OwnerMiddleware } from './owner/owner.middleware';
 import { OwnerModelsService } from './owner/owner-models.service';
 import { FeatureAclGuard } from './owner/feature-acl.guard';
@@ -142,6 +139,10 @@ import {
   CardtraderReceiptLine,
   CardtraderReceiptLineSchema,
 } from './schema/cardtrader-receipt-line.schema';
+import { Pedido, PedidoSchema } from './schema/pedido.schema';
+import { PedidoRepository } from './repository/pedido.repository';
+import { PedidoService } from './service/pedido.service';
+import { PedidoController } from './controller/pedido.controller';
 
 const MONGOOSE_FEATURE_MODELS = [
   { name: Stock.name, schema: StockSchema },
@@ -179,6 +180,7 @@ const MONGOOSE_FEATURE_MODELS = [
     name: CardtraderReceiptLine.name,
     schema: CardtraderReceiptLineSchema,
   },
+  { name: Pedido.name, schema: PedidoSchema },
 ];
 
 @Module({
@@ -199,6 +201,7 @@ const MONGOOSE_FEATURE_MODELS = [
     StockReviewController,
     IncomingHomologController,
     CardtraderReceiptController,
+    PedidoController,
   ],
   providers: [
     OwnerModelsService,
@@ -244,6 +247,8 @@ const MONGOOSE_FEATURE_MODELS = [
     CardtraderReceiptService,
     CardtraderReceiptSessionRepository,
     CardtraderReceiptLineRepository,
+    PedidoRepository,
+    PedidoService,
   ],
   imports: [
     MongooseModule.forRootAsync({
@@ -276,10 +281,7 @@ const MONGOOSE_FEATURE_MODELS = [
       },
     }),
     MongooseModule.forFeature(MONGOOSE_FEATURE_MODELS),
-    MongooseModule.forFeature(
-      MONGOOSE_FEATURE_MODELS,
-      ESTEBAN_CONNECTION_NAME,
-    ),
+    MongooseModule.forFeature(MONGOOSE_FEATURE_MODELS, ESTEBAN_CONNECTION_NAME),
   ],
 })
 export class AppModule implements NestModule {

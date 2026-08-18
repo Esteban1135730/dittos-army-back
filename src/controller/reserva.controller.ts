@@ -13,27 +13,22 @@ import {
 import { Reserva } from 'src/schema/reserva.schema';
 import { ReservaRepository } from 'src/repository/reserva.repository';
 import { StockRepository } from 'src/repository/stock.repository';
-import { SaleRepository } from 'src/repository/sale.repository';
 import { ReservaDto } from 'src/Dto/reserva.dto';
 import { IncomingReservationService } from 'src/service/incoming-reservation.service';
+import { PedidoService } from 'src/service/pedido.service';
 import { StoreWhatsAppReservationImportService } from 'src/service/store-whatsapp-reservation-import.service';
-import { precioToCop } from 'src/utils/precio-to-cop';
-import { enrichSaleCreatePayload } from 'src/utils/sale-cost-snapshot';
-import { CardStockTagRepository } from 'src/repository/card-stock-tag.repository';
 
 const ESTADO_RESERVA = 'reserva';
 const ESTADO_DISPONIBLE = 'disponible';
-const ESTADO_VENDIDA = 'vendida';
 
 @Controller('reserva')
 export class ReservaController {
   constructor(
     private readonly reservaRepository: ReservaRepository,
     private readonly stockRepository: StockRepository,
-    private readonly saleRepository: SaleRepository,
     private readonly incomingReservationService: IncomingReservationService,
     private readonly storeWhatsAppImportService: StoreWhatsAppReservationImportService,
-    private readonly cardStockTagRepository: CardStockTagRepository,
+    private readonly pedidoService: PedidoService,
   ) {}
 
   @Post('import-store-whatsapp/preview')
@@ -149,8 +144,13 @@ export class ReservaController {
     if (existing) {
       return { error: 'Ya existe una reserva para esta carta' };
     }
+    const pedido = await this.pedidoService.requireReservadoPedido(
+      dto.client_id,
+      dto.pedido_id,
+    );
     const reserva = await this.reservaRepository.create({
       ...dto,
+      pedido_id: String(pedido._id),
       currency: dto.currency ?? 'COP',
     });
     await this.stockRepository.updateCardState(dto.stock_id, ESTADO_RESERVA);
@@ -175,6 +175,7 @@ export class ReservaController {
     if (!reserva) {
       return { success: false, error: 'Reserva no encontrada' };
     }
+    await this.pedidoService.assertReservaLineMutable(reserva);
     await this.reservaRepository.deleteByStockId(stockId);
     await this.stockRepository.updateCardState(stockId, ESTADO_DISPONIBLE);
     return { success: true };
@@ -192,6 +193,7 @@ export class ReservaController {
     if (!reserva) {
       return { error: 'Reserva no encontrada' };
     }
+    await this.pedidoService.assertReservaLineMutable(reserva);
     const updated = await this.reservaRepository.updateByStockId(stockId, {
       precio: body.precio,
       currency: body.currency ?? reserva.currency,
@@ -203,44 +205,6 @@ export class ReservaController {
   async finalizarVenta(
     @Param('clientId') clientId: string,
   ): Promise<{ success: boolean; vendidas?: number; error?: string }> {
-    const reservas = await this.reservaRepository.findByClientId(clientId);
-    if (!reservas || reservas.length === 0) {
-      return { success: false, error: 'El cliente no tiene reservas' };
-    }
-    for (const reserva of reservas) {
-      const stock = await this.stockRepository.findById(reserva.stock_id);
-      if (!stock) {
-        return {
-          success: false,
-          error: `Stock no encontrado: ${reserva.stock_id}`,
-        };
-      }
-      const amountCop = precioToCop(reserva.precio, reserva.currency ?? 'COP');
-      const tagsMap = await this.cardStockTagRepository.findMapByCardIds([
-        stock.card_id,
-      ]);
-      await this.saleRepository.create(
-        enrichSaleCreatePayload(
-          {
-            stock_id: reserva.stock_id,
-            card_id: stock.card_id,
-            type: 'venta',
-            amount_cop: amountCop,
-            client_id: clientId,
-            notes: `Venta finalizada desde reserva (cliente ${clientId}). Precio original: ${reserva.precio} ${reserva.currency ?? 'COP'}.`,
-          },
-          stock,
-          {
-            tags_snapshot: tagsMap.get(String(stock.card_id).trim()) ?? [],
-          },
-        ),
-      );
-      await this.stockRepository.updateCardState(
-        reserva.stock_id,
-        ESTADO_VENDIDA,
-      );
-      await this.reservaRepository.deleteByStockId(reserva.stock_id);
-    }
-    return { success: true, vendidas: reservas.length };
+    return this.pedidoService.pagarReservadoDeCliente(clientId);
   }
 }

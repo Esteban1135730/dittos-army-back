@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -28,14 +29,14 @@ export class ClientController {
 
   @Post()
   async create(@Body() dto: ClientDto): Promise<Client> {
-    if (!dto.nombre || !dto.tienda_entrega || !dto.metodo_contacto) {
-      throw new Error(
-        'nombre, tienda_entrega y metodo_contacto son requeridos',
+    if (!dto.nombre || !dto.metodo_contacto) {
+      throw new BadRequestException(
+        'nombre y metodo_contacto son requeridos',
       );
     }
     const contactErr = getClientContactValidationError(dto);
     if (contactErr) {
-      throw new Error(contactErr);
+      throw new BadRequestException(contactErr);
     }
     return this.clientRepository.create(dto);
   }
@@ -47,7 +48,7 @@ export class ClientController {
   ): Promise<Client | null> {
     const contactErr = getClientContactValidationError(dto);
     if (contactErr) {
-      throw new Error(contactErr);
+      throw new BadRequestException(contactErr);
     }
     return this.clientRepository.update(id, dto);
   }

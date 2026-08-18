@@ -4,4 +4,5 @@ export type ReservaDto = {
   stock_id: string;
   precio: number;
   currency?: string;
+  pedido_id?: string;
 };

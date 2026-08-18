@@ -3,6 +3,7 @@ import { ClientRepository } from '../repository/client.repository';
 import { StockRepository } from '../repository/stock.repository';
 import { ReservaRepository } from '../repository/reserva.repository';
 import { PvpRepository } from '../repository/pvp.repository';
+import { PedidoService } from './pedido.service';
 
 describe('StoreWhatsAppReservationImportService', () => {
   const sampleMessage = [
@@ -49,11 +50,16 @@ describe('StoreWhatsAppReservationImportService', () => {
       findByCardIds: jest.fn().mockResolvedValue(deps.pvps ?? []),
     } as unknown as PvpRepository;
 
+    const pedidoService = {
+      requireReservadoPedido: jest.fn().mockResolvedValue({ _id: 'p1' }),
+    } as unknown as PedidoService;
+
     const svc = new StoreWhatsAppReservationImportService(
       clientRepository,
       stockRepository,
       reservaRepository,
       pvpRepository,
+      pedidoService,
     );
 
     return { svc, reservaRepository, stockRepository };
@@ -115,7 +121,9 @@ describe('StoreWhatsAppReservationImportService', () => {
 
     const result = await svc.import('c1', sampleMessage);
     expect(result.created).toHaveLength(1);
-    expect(reservaRepository.create).toHaveBeenCalled();
+    expect(reservaRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({ pedido_id: 'p1', stock_id: 's1' }),
+    );
     expect(stockRepository.updateCardState).toHaveBeenCalledWith(
       's1',
       'reserva',

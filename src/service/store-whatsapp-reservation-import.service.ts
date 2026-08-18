@@ -7,6 +7,7 @@ import { ClientRepository } from '../repository/client.repository';
 import { PvpRepository } from '../repository/pvp.repository';
 import { ReservaRepository } from '../repository/reserva.repository';
 import { StockRepository } from '../repository/stock.repository';
+import { PedidoService } from './pedido.service';
 import { Stock } from '../schema/stock.schema';
 
 type StockRow = Stock & { _id: unknown };
@@ -71,6 +72,7 @@ export class StoreWhatsAppReservationImportService {
     private readonly stockRepository: StockRepository,
     private readonly reservaRepository: ReservaRepository,
     private readonly pvpRepository: PvpRepository,
+    private readonly pedidoService: PedidoService,
   ) {}
 
   async preview(
@@ -96,6 +98,7 @@ export class StoreWhatsAppReservationImportService {
     }
   > {
     await this.ensureClient(clientId);
+    const pedido = await this.pedidoService.requireReservadoPedido(clientId);
     const plan = await this.buildPlan(clientId, message);
     const created: ImportWhatsAppCreated[] = [];
     const skipped: {
@@ -125,6 +128,7 @@ export class StoreWhatsAppReservationImportService {
           stock_id: stockId,
           precio: precioCop,
           currency: 'COP',
+          pedido_id: String(pedido._id),
         });
         await this.stockRepository.updateCardState(stockId, 'reserva');
         created.push({

@@ -17,6 +17,10 @@ export class Reserva {
   @Prop({ default: 'COP' })
   currency: string;
 
+  /** Pedido de stock al que pertenece. Ausente en reservas materializadas de incoming. */
+  @Prop({ required: false })
+  pedido_id?: string;
+
   /** Fecha de creación; las nuevas reservas la rellena el repositorio. Opcional en documentos antiguos. */
   @Prop({ type: Date, required: false })
   created_at?: Date;
@@ -26,3 +30,4 @@ export class Reserva {
 }
 
 export const ReservaSchema = SchemaFactory.createForClass(Reserva);
+ReservaSchema.index({ pedido_id: 1 });

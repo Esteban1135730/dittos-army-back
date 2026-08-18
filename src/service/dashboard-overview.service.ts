@@ -39,7 +39,6 @@ export type DashboardOverviewResponse = {
     active_estimated_profit_cop: number;
     closed_last_30_days_count: number;
     closed_last_30_days_amount_cop: number;
-    consistency_issue_count: number;
   };
   clients_reservations: {
     clients_count: number;
@@ -235,11 +234,6 @@ export class DashboardOverviewService {
       }
     }
 
-    const consistency_issue_count = this.countConsistencyIssues(
-      stockItems,
-      activeSales,
-    );
-
     let ventas_esperadas_cop = 0;
     let ganancia_estimada_cop = 0;
     for (const reserva of reservas) {
@@ -356,7 +350,6 @@ export class DashboardOverviewService {
         active_estimated_profit_cop,
         closed_last_30_days_count,
         closed_last_30_days_amount_cop,
-        consistency_issue_count,
       },
       clients_reservations: {
         clients_count: clients.length,
@@ -377,28 +370,5 @@ export class DashboardOverviewService {
         money_flow,
       },
     };
-  }
-
-  private countConsistencyIssues(
-    stockItems: Stock[],
-    activeSales: SaleDocument[],
-  ): number {
-    const stockVendidaIds = new Set(
-      stockItems
-        .filter((s) => stockStateKey(s) === 'vendida')
-        .map((s) => stockDocId(s as Stock & { _id?: { toString(): string } }))
-        .filter(Boolean),
-    );
-    const saleStockIds = new Set(activeSales.map((s) => s.stock_id));
-
-    let onlyInStock = 0;
-    for (const id of stockVendidaIds) {
-      if (!saleStockIds.has(id)) onlyInStock += 1;
-    }
-    let onlyInSales = 0;
-    for (const id of saleStockIds) {
-      if (!stockVendidaIds.has(id)) onlyInSales += 1;
-    }
-    return onlyInStock + onlyInSales;
   }
 }

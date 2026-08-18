@@ -87,7 +87,6 @@ describe('DashboardOverviewService', () => {
     expect(result.incoming.open_batches_count).toBe(0);
     expect(result.incoming.units_in_transit).toBe(0);
     expect(result.incoming.estimated_cost_cop).toBe(0);
-    expect(result.sales.consistency_issue_count).toBe(0);
     expect(result.charts.sales_by_month).toHaveLength(6);
     expect(result.highlights.capital_engaged_cop).toBe(0);
   });
@@ -163,37 +162,6 @@ describe('DashboardOverviewService', () => {
     expect(result.sales.active_count).toBe(1);
     expect(result.sales.active_amount_cop).toBe(15000);
     expect(result.sales.active_estimated_profit_cop).toBe(5000);
-  });
-
-  it('cuenta discrepancias de consistencia', async () => {
-    mockEmptyBase();
-    stockRepository.findAll.mockResolvedValue([
-      {
-        _id: stockId,
-        card_id: 'c1',
-        card_state: 'vendida',
-        currency: 'COP',
-        unity_cost: 0,
-        shipment: 0,
-        cards_in_shipmet: 1,
-      },
-      {
-        _id: stockId2,
-        card_id: 'c2',
-        card_state: 'disponible',
-        currency: 'COP',
-        unity_cost: 0,
-        shipment: 0,
-        cards_in_shipmet: 1,
-      },
-    ]);
-    saleRepository.findActiveVentas.mockResolvedValue([
-      { stock_id: stockId2, amount_cop: 1000 },
-    ]);
-
-    const result = await service.getOverview();
-
-    expect(result.sales.consistency_issue_count).toBe(2);
   });
 
   it('reserva sin stock cuenta venta esperada y costo 0 en ganancia', async () => {

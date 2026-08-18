@@ -33,6 +33,13 @@ export class ReservaRepository {
       .exec();
   }
 
+  async findByPedidoId(pedidoId: string): Promise<Reserva[]> {
+    return this.reservaModel
+      .find({ pedido_id: pedidoId })
+      .sort({ created_at: -1 })
+      .exec();
+  }
+
   async findByStockId(stockId: string): Promise<Reserva | null> {
     return this.reservaModel.findOne({ stock_id: stockId }).exec();
   }
