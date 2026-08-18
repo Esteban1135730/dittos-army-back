@@ -11,11 +11,16 @@ export class Client {
   @Prop({ required: true })
   nombre: string;
 
-  @Prop({ required: true })
-  tienda_entrega: string;
+  /** Legado: la entrega vive en Pedido. Se deja de escribir. */
+  @Prop({ required: false })
+  tienda_entrega?: string;
 
   @Prop({ required: false })
   celular?: string;
+
+  /** E.164 sin `+` (wa_id). Nick `@...` o celular no numérico → ausente. */
+  @Prop({ required: false })
+  celular_e164?: string;
 
   /** Nombre de usuario de Facebook (solo texto); obligatorio en validación si `metodo_contacto` es facebook. */
   @Prop({ required: false })
@@ -36,3 +41,4 @@ export class Client {
 }
 
 export const ClientSchema = SchemaFactory.createForClass(Client);
+ClientSchema.index({ celular_e164: 1 });

@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Body,
+  ConflictException,
   Controller,
   Delete,
   Get,
@@ -13,13 +14,10 @@ import {
 import { Reserva } from 'src/schema/reserva.schema';
 import { ReservaRepository } from 'src/repository/reserva.repository';
 import { StockRepository } from 'src/repository/stock.repository';
-import { SaleRepository } from 'src/repository/sale.repository';
 import { ReservaDto } from 'src/Dto/reserva.dto';
 import { IncomingReservationService } from 'src/service/incoming-reservation.service';
+import { PedidoService } from 'src/service/pedido.service';
 import { StoreWhatsAppReservationImportService } from 'src/service/store-whatsapp-reservation-import.service';
-import { precioToCop } from 'src/utils/precio-to-cop';
-import { enrichSaleCreatePayload } from 'src/utils/sale-cost-snapshot';
-import { CardStockTagRepository } from 'src/repository/card-stock-tag.repository';
 import { isQuantityKind } from 'src/constants/bulk-product';
 import type { Stock } from 'src/schema/stock.schema';
 
@@ -32,17 +30,15 @@ function reservaQty(quantity: number | undefined): number {
 
 const ESTADO_RESERVA = 'reserva';
 const ESTADO_DISPONIBLE = 'disponible';
-const ESTADO_VENDIDA = 'vendida';
 
 @Controller('reserva')
 export class ReservaController {
   constructor(
     private readonly reservaRepository: ReservaRepository,
     private readonly stockRepository: StockRepository,
-    private readonly saleRepository: SaleRepository,
     private readonly incomingReservationService: IncomingReservationService,
     private readonly storeWhatsAppImportService: StoreWhatsAppReservationImportService,
-    private readonly cardStockTagRepository: CardStockTagRepository,
+    private readonly pedidoService: PedidoService,
   ) {}
 
   @Post('import-store-whatsapp/preview')
@@ -161,8 +157,13 @@ export class ReservaController {
     if (existing) {
       return { error: 'Ya existe una reserva para esta carta' };
     }
+    const pedido = await this.pedidoService.requireReservadoPedido(
+      dto.client_id,
+      dto.pedido_id,
+    );
     const reserva = await this.reservaRepository.create({
       ...dto,
+      pedido_id: String(pedido._id),
       currency: dto.currency ?? 'COP',
     });
     await this.stockRepository.updateCardState(dto.stock_id, ESTADO_RESERVA);
@@ -192,6 +193,23 @@ export class ReservaController {
     if (qty > available) {
       return { error: `Stock insuficiente (disponible: ${available})` };
     }
+    const pedido = await this.pedidoService.requireReservadoPedido(
+      dto.client_id,
+      dto.pedido_id,
+    );
+    const pedidoId = String(pedido._id);
+    const existing = await this.reservaRepository.findByClientAndStockId(
+      dto.client_id,
+      dto.stock_id,
+    );
+    if (existing) {
+      const existingPedido = (existing as { pedido_id?: string }).pedido_id;
+      if (existingPedido && existingPedido !== pedidoId) {
+        throw new ConflictException(
+          'Ya hay una reserva de este stock en otro pedido; no se mezclan cantidades',
+        );
+      }
+    }
     const decremented = await this.stockRepository.decrementQuantityAtomic(
       dto.stock_id,
       qty,
@@ -199,10 +217,6 @@ export class ReservaController {
     if (!decremented) {
       return { error: 'Stock insuficiente' };
     }
-    const existing = await this.reservaRepository.findByClientAndStockId(
-      dto.client_id,
-      dto.stock_id,
-    );
     if (existing) {
       const id = String((existing as { _id?: unknown })._id ?? '');
       const updated = await this.reservaRepository.addQuantity(id, qty);
@@ -210,6 +224,7 @@ export class ReservaController {
     }
     return this.reservaRepository.create({
       ...dto,
+      pedido_id: pedidoId,
       currency: dto.currency ?? 'COP',
       quantity: qty,
     });
@@ -239,6 +254,7 @@ export class ReservaController {
     if (!reserva) {
       return { success: false, error: 'Reserva no encontrada' };
     }
+    await this.pedidoService.assertReservaLineMutable(reserva);
     const stock = await this.stockRepository.findById(stockId);
     const reservaId = String((reserva as { _id?: unknown })._id ?? '');
     if (stock && isQuantityKind((stock as { product_kind?: string }).product_kind)) {
@@ -274,6 +290,7 @@ export class ReservaController {
     if (!reserva) {
       return { error: 'Reserva no encontrada' };
     }
+    await this.pedidoService.assertReservaLineMutable(reserva);
     const updated = clientId?.trim()
       ? await this.reservaRepository.updateByClientAndStockId(
           clientId.trim(),
@@ -294,59 +311,6 @@ export class ReservaController {
   async finalizarVenta(
     @Param('clientId') clientId: string,
   ): Promise<{ success: boolean; vendidas?: number; error?: string }> {
-    const reservas = await this.reservaRepository.findByClientId(clientId);
-    if (!reservas || reservas.length === 0) {
-      return { success: false, error: 'El cliente no tiene reservas' };
-    }
-    let vendidas = 0;
-    for (const reserva of reservas) {
-      const stock = await this.stockRepository.findById(reserva.stock_id);
-      if (!stock) {
-        return {
-          success: false,
-          error: `Stock no encontrado: ${reserva.stock_id}`,
-        };
-      }
-      const amountCop = precioToCop(reserva.precio, reserva.currency ?? 'COP');
-      const tagsMap = await this.cardStockTagRepository.findMapByCardIds([
-        stock.card_id,
-      ]);
-      const isQty = isQuantityKind(
-        (stock as { product_kind?: string }).product_kind,
-      );
-      const units = isQty ? reservaQty(reserva.quantity) : 1;
-      for (let i = 0; i < units; i++) {
-        await this.saleRepository.create(
-          enrichSaleCreatePayload(
-            {
-              stock_id: reserva.stock_id,
-              card_id: stock.card_id,
-              type: 'venta',
-              amount_cop: amountCop,
-              client_id: clientId,
-              notes: `Venta finalizada desde reserva (cliente ${clientId}). Precio original: ${reserva.precio} ${reserva.currency ?? 'COP'}.`,
-            },
-            stock,
-            {
-              tags_snapshot: tagsMap.get(String(stock.card_id).trim()) ?? [],
-            },
-          ),
-        );
-      }
-      vendidas += units;
-      if (!isQty) {
-        await this.stockRepository.updateCardState(
-          reserva.stock_id,
-          ESTADO_VENDIDA,
-        );
-      }
-      const reservaId = String((reserva as { _id?: unknown })._id ?? '');
-      if (reservaId) {
-        await this.reservaRepository.deleteById(reservaId);
-      } else {
-        await this.reservaRepository.deleteByStockId(reserva.stock_id);
-      }
-    }
-    return { success: true, vendidas };
+    return this.pedidoService.pagarReservadoDeCliente(clientId);
   }
 }
