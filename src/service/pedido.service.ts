@@ -25,6 +25,7 @@ import { Reserva } from 'src/schema/reserva.schema';
 import { Stock } from 'src/schema/stock.schema';
 import { precioToCop } from 'src/utils/precio-to-cop';
 import { enrichSaleCreatePayload } from 'src/utils/sale-cost-snapshot';
+import { isQuantityKind } from 'src/constants/bulk-product';
 import {
   TIENDAS_ENTREGA,
   getTiendaEntrega,
@@ -33,6 +34,13 @@ import {
 
 const ESTADO_VENDIDA = 'vendida';
 const ESTADO_DISPONIBLE = 'disponible';
+
+function reservaQty(quantity: number | undefined): number {
+  if (typeof quantity === 'number' && Number.isInteger(quantity) && quantity >= 1) {
+    return quantity;
+  }
+  return 1;
+}
 
 type EntregaFields = {
   entrega_en_tienda: boolean;
@@ -161,6 +169,21 @@ export class PedidoService {
       String(pedido._id),
     );
     for (const reserva of reservas) {
+      const stock = await this.stockRepository.findById(reserva.stock_id);
+      const reservaId = String((reserva as { _id?: unknown })._id ?? '');
+      if (stock && isQuantityKind((stock as { product_kind?: string }).product_kind)) {
+        const held = reservaQty(reserva.quantity);
+        await this.stockRepository.incrementQuantityAtomic(
+          reserva.stock_id,
+          held,
+        );
+        if (reservaId) {
+          await this.reservaRepository.deleteById(reservaId);
+        } else {
+          await this.reservaRepository.deleteByStockId(reserva.stock_id);
+        }
+        continue;
+      }
       await this.reservaRepository.deleteByStockId(reserva.stock_id);
       await this.stockRepository.updateCardState(
         reserva.stock_id,
@@ -195,27 +218,40 @@ export class PedidoService {
       const tagsMap = await this.cardStockTagRepository.findMapByCardIds([
         stock.card_id,
       ]);
-      await this.saleRepository.create(
-        enrichSaleCreatePayload(
-          {
-            stock_id: reserva.stock_id,
-            card_id: stock.card_id,
-            type: 'venta',
-            amount_cop: amountCop,
-            client_id: pedido.client_id,
-            notes: `Venta finalizada desde pedido ${String(pedido._id)} (cliente ${pedido.client_id}). Precio original: ${reserva.precio} ${reserva.currency ?? 'COP'}.`,
-          },
-          stock,
-          {
-            tags_snapshot: tagsMap.get(String(stock.card_id).trim()) ?? [],
-          },
-        ),
+      const isQty = isQuantityKind(
+        (stock as { product_kind?: string }).product_kind,
       );
-      await this.stockRepository.updateCardState(
-        reserva.stock_id,
-        ESTADO_VENDIDA,
-      );
-      await this.reservaRepository.deleteByStockId(reserva.stock_id);
+      const units = isQty ? reservaQty(reserva.quantity) : 1;
+      for (let i = 0; i < units; i++) {
+        await this.saleRepository.create(
+          enrichSaleCreatePayload(
+            {
+              stock_id: reserva.stock_id,
+              card_id: stock.card_id,
+              type: 'venta',
+              amount_cop: amountCop,
+              client_id: pedido.client_id,
+              notes: `Venta finalizada desde pedido ${String(pedido._id)} (cliente ${pedido.client_id}). Precio original: ${reserva.precio} ${reserva.currency ?? 'COP'}.`,
+            },
+            stock,
+            {
+              tags_snapshot: tagsMap.get(String(stock.card_id).trim()) ?? [],
+            },
+          ),
+        );
+      }
+      if (!isQty) {
+        await this.stockRepository.updateCardState(
+          reserva.stock_id,
+          ESTADO_VENDIDA,
+        );
+      }
+      const reservaId = String((reserva as { _id?: unknown })._id ?? '');
+      if (reservaId) {
+        await this.reservaRepository.deleteById(reservaId);
+      } else {
+        await this.reservaRepository.deleteByStockId(reserva.stock_id);
+      }
       snapshot.push(this.lineFromReserva(reserva, stock));
     }
 
@@ -293,7 +329,13 @@ export class PedidoService {
     }
     try {
       const paid = await this.pagar(String(open._id));
-      return { success: true, vendidas: paid.lines.length };
+      return {
+        success: true,
+        vendidas: paid.lines.reduce(
+          (n, l) => n + (typeof l.quantity === 'number' && l.quantity >= 1 ? l.quantity : 1),
+          0,
+        ),
+      };
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Error al pagar el pedido';
@@ -454,6 +496,7 @@ export class PedidoService {
       precio: l.precio,
       currency: l.currency ?? 'COP',
       image_url: l.image_url,
+      quantity: l.quantity,
     }));
   }
 
@@ -521,6 +564,7 @@ export class PedidoService {
   }
 
   private lineFromReserva(reserva: Reserva, stock: Stock): PedidoLineDto {
+    const qty = reservaQty(reserva.quantity);
     return {
       stock_id: reserva.stock_id,
       card_id: stock.card_id ?? '',
@@ -528,6 +572,10 @@ export class PedidoService {
       precio: reserva.precio,
       currency: reserva.currency ?? 'COP',
       image_url: stock.image_url,
+      ...(qty !== 1 ||
+      isQuantityKind((stock as { product_kind?: string }).product_kind)
+        ? { quantity: qty }
+        : {}),
     };
   }
 

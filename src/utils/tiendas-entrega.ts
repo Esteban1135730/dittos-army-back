@@ -41,6 +41,11 @@ export const TIENDAS_ENTREGA: readonly TiendaEntrega[] = [
     name: 'Valhalla',
     address: 'Cl. 150 #16-56 local 2074, CC Cedritos, Bogotá',
   },
+  {
+    id: 'real-burgers',
+    name: 'Real Burgers',
+    address: 'Cra. 19A #162-27, Bogotá',
+  },
 ] as const;
 
 const BY_ID = new Map(TIENDAS_ENTREGA.map((t) => [t.id, t]));
@@ -73,6 +78,7 @@ const ALIASES: { needles: string[]; id: string }[] = [
   { needles: ['play4cards', 'play 4 cards', 'play4 cards'], id: 'play4cards' },
   { needles: ['tokyo'], id: 'tokyo-hobby-nations' },
   { needles: ['valhalla'], id: 'valhalla' },
+  { needles: ['real burgers', 'real burguers', 'realburgers'], id: 'real-burgers' },
 ];
 
 /** Empareja el texto legado `Client.tienda_entrega` con el catálogo. */

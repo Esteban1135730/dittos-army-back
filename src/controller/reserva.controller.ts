@@ -18,6 +18,7 @@ import { ReservaDto } from 'src/Dto/reserva.dto';
 import { IncomingReservationService } from 'src/service/incoming-reservation.service';
 import { PedidoService } from 'src/service/pedido.service';
 import { StoreWhatsAppReservationImportService } from 'src/service/store-whatsapp-reservation-import.service';
+import { StoreWhatsAppIncomingImportService } from 'src/service/store-whatsapp-incoming-import.service';
 import { isQuantityKind } from 'src/constants/bulk-product';
 import type { Stock } from 'src/schema/stock.schema';
 
@@ -38,6 +39,7 @@ export class ReservaController {
     private readonly stockRepository: StockRepository,
     private readonly incomingReservationService: IncomingReservationService,
     private readonly storeWhatsAppImportService: StoreWhatsAppReservationImportService,
+    private readonly storeWhatsAppIncomingImportService: StoreWhatsAppIncomingImportService,
     private readonly pedidoService: PedidoService,
   ) {}
 
@@ -55,6 +57,27 @@ export class ReservaController {
 
   @Post('import-store-whatsapp')
   async importStoreWhatsApp(
+    @Body()
+    body: {
+      client_id?: string;
+      message?: string;
+      lines?: { index: number; pvp_cop?: number | null }[];
+    },
+  ) {
+    const client_id = body?.client_id?.trim();
+    const message = body?.message ?? '';
+    if (!client_id) {
+      throw new BadRequestException('client_id es requerido');
+    }
+    return this.storeWhatsAppImportService.import(
+      client_id,
+      message,
+      Array.isArray(body?.lines) ? body.lines : [],
+    );
+  }
+
+  @Post('import-upcoming-whatsapp/preview')
+  async previewImportUpcomingWhatsApp(
     @Body() body: { client_id?: string; message?: string },
   ) {
     const client_id = body?.client_id?.trim();
@@ -62,7 +85,28 @@ export class ReservaController {
     if (!client_id) {
       throw new BadRequestException('client_id es requerido');
     }
-    return this.storeWhatsAppImportService.import(client_id, message);
+    return this.storeWhatsAppIncomingImportService.preview(client_id, message);
+  }
+
+  @Post('import-upcoming-whatsapp')
+  async importUpcomingWhatsApp(
+    @Body()
+    body: {
+      client_id?: string;
+      message?: string;
+      lines?: { index: number; rareza?: string | null; pvp_cop?: number | null }[];
+    },
+  ) {
+    const client_id = body?.client_id?.trim();
+    const message = body?.message ?? '';
+    if (!client_id) {
+      throw new BadRequestException('client_id es requerido');
+    }
+    return this.storeWhatsAppIncomingImportService.import(
+      client_id,
+      message,
+      Array.isArray(body?.lines) ? body.lines : [],
+    );
   }
 
   @Post('incoming')
@@ -75,6 +119,7 @@ export class ReservaController {
       language?: string;
       rareza?: string | null;
       quantity?: number;
+      precio_cop?: number | null;
     },
   ): Promise<Record<string, unknown>> {
     const client_id = body?.client_id?.trim();
@@ -82,12 +127,17 @@ export class ReservaController {
     if (!client_id || quantity == null) {
       throw new BadRequestException('client_id y quantity son requeridos');
     }
+    const precio_cop =
+      body?.precio_cop != null && Number.isFinite(Number(body.precio_cop))
+        ? Number(body.precio_cop)
+        : undefined;
     const batch_item_id = body?.batch_item_id?.trim();
     if (batch_item_id) {
       return this.incomingReservationService.addQuantity(
         client_id,
         batch_item_id,
         Number(quantity),
+        precio_cop,
       );
     }
     const card_id = body?.card_id?.trim();
@@ -99,6 +149,7 @@ export class ReservaController {
         language,
         body.rareza,
         Number(quantity),
+        precio_cop,
       );
     }
     throw new BadRequestException(
@@ -116,15 +167,25 @@ export class ReservaController {
   @Patch('incoming/:id')
   async patchReservaIncoming(
     @Param('id') id: string,
-    @Body() body: { quantity?: number },
+    @Body() body: { quantity?: number; precio_cop?: number | null },
   ) {
-    if (body?.quantity == null) {
-      throw new BadRequestException('quantity es requerido');
+    if (body?.quantity == null && body?.precio_cop === undefined) {
+      throw new BadRequestException('quantity o precio_cop es requerido');
     }
-    return this.incomingReservationService.setAbsoluteQuantity(
-      id,
-      Number(body.quantity),
-    );
+    let saved: unknown = null;
+    if (body?.quantity != null) {
+      saved = await this.incomingReservationService.setAbsoluteQuantity(
+        id,
+        Number(body.quantity),
+      );
+    }
+    if (body?.precio_cop !== undefined) {
+      saved = await this.incomingReservationService.setPrecioCop(
+        id,
+        body.precio_cop == null ? null : Number(body.precio_cop),
+      );
+    }
+    return saved;
   }
 
   @Delete('incoming/:id')

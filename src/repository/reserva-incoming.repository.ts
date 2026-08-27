@@ -40,6 +40,7 @@ export class ReservaIncomingRepository {
     clientId: string,
     batchItemId: string,
     quantity: number,
+    precioCop?: number | null,
   ): Promise<ReservaIncomingDocument | null> {
     if (quantity <= 0) {
       await this.model
@@ -48,11 +49,18 @@ export class ReservaIncomingRepository {
       return null;
     }
     const now = new Date();
+    const set: Record<string, unknown> = { quantity, updated_at: now };
+    if (precioCop !== undefined) {
+      set.precio_cop =
+        typeof precioCop === 'number' && Number.isFinite(precioCop) && precioCop > 0
+          ? Math.round(precioCop)
+          : null;
+    }
     const doc = await this.model
       .findOneAndUpdate(
         { client_id: clientId, batch_item_id: batchItemId },
         {
-          $set: { quantity, updated_at: now },
+          $set: set,
           $setOnInsert: {
             client_id: clientId,
             batch_item_id: batchItemId,
@@ -63,6 +71,23 @@ export class ReservaIncomingRepository {
       )
       .exec();
     return doc;
+  }
+
+  async setPrecioCop(
+    id: string,
+    precioCop: number | null,
+  ): Promise<ReservaIncomingDocument | null> {
+    const value =
+      typeof precioCop === 'number' && Number.isFinite(precioCop) && precioCop > 0
+        ? Math.round(precioCop)
+        : null;
+    return this.model
+      .findByIdAndUpdate(
+        id,
+        { $set: { precio_cop: value, updated_at: new Date() } },
+        { new: true },
+      )
+      .exec();
   }
 
   async findById(id: string): Promise<ReservaIncomingDocument | null> {
@@ -85,7 +110,7 @@ export class ReservaIncomingRepository {
    */
   async consumeOneFifo(
     batchItemId: string,
-  ): Promise<{ client_id: string } | null> {
+  ): Promise<{ client_id: string; precio_cop: number | null } | null> {
     for (let attempt = 0; attempt < 10; attempt++) {
       const doc = await this.model
         .findOne({ batch_item_id: batchItemId, quantity: { $gt: 0 } })
@@ -105,7 +130,7 @@ export class ReservaIncomingRepository {
         if (updated.quantity <= 0) {
           await this.model.deleteOne({ _id: updated._id }).exec();
         }
-        return { client_id: doc.client_id };
+        return { client_id: doc.client_id, precio_cop: doc.precio_cop ?? null };
       }
     }
     throw new Error('consumeOneFifo: demasiados reintentos por concurrencia');

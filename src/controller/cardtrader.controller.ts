@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   Res,
@@ -15,6 +16,11 @@ import {
   CardTraderService,
 } from 'src/service/cardtrader/cardtrader.service';
 import { CardTraderTcgdexResolveService } from 'src/service/cardtrader/cardtrader-tcgdex-resolve.service';
+import {
+  CardTraderQuoteResolveService,
+  type QuoteLineInput,
+} from 'src/service/cardtrader/cardtrader-quote-resolve.service';
+import { CardTraderQuoteSessionService } from 'src/service/cardtrader/cardtrader-quote-session.service';
 import { RequireFeature } from 'src/owner/feature-acl.guard';
 
 const ORDER_STATES = new Set([
@@ -39,6 +45,8 @@ export class CardTraderController {
   constructor(
     private readonly cardTrader: CardTraderService,
     private readonly tcgdxResolve: CardTraderTcgdexResolveService,
+    private readonly quoteResolve: CardTraderQuoteResolveService,
+    private readonly quoteSessions: CardTraderQuoteSessionService,
   ) {}
 
   @Get('expansions')
@@ -75,6 +83,24 @@ export class CardTraderController {
       throw new BadRequestException('expansion_id inválido');
     }
     return this.cardTrader.getBlueprintsExport(id);
+  }
+
+  @Get('blueprints/search')
+  async searchBlueprints(
+    @Query('q') q?: string,
+    @Query('game_id') gameId?: string,
+  ): Promise<unknown> {
+    const query = q?.trim() ?? '';
+    if (query.length < 2 || query.length > 80) {
+      throw new BadRequestException('q debe tener entre 2 y 80 caracteres');
+    }
+    if (gameId !== undefined && gameId.trim() !== '') {
+      const g = Number(gameId);
+      if (!Number.isInteger(g) || g !== 5) {
+        throw new BadRequestException('game_id debe ser 5 (Pokémon)');
+      }
+    }
+    return this.quoteResolve.searchBlueprintsByName(query);
   }
 
   @Get('blueprints/item/:blueprintId')
@@ -250,6 +276,93 @@ export class CardTraderController {
       language: language?.trim() || undefined,
       blueprint_id: bpId,
     });
+  }
+
+  @Post('quote-lines/resolve')
+  async resolveQuoteLines(
+    @Body() body: { lines?: QuoteLineInput[] },
+  ): Promise<{ results: unknown[] }> {
+    if (!body || !Array.isArray(body.lines) || body.lines.length === 0) {
+      throw new BadRequestException('lines es obligatorio y debe ser un array');
+    }
+    if (body.lines.length > 100) {
+      throw new BadRequestException('máximo 100 líneas por solicitud');
+    }
+    const normalized: QuoteLineInput[] = body.lines.map((line, index) => {
+      const name = line?.name?.trim() ?? '';
+      const expansion = line?.expansion?.trim() ?? '';
+      const collector = line?.collector_number?.trim() ?? '';
+      if (!name || !expansion || !collector) {
+        throw new BadRequestException(
+          `name, expansion y collector_number obligatorios en línea ${index + 1}`,
+        );
+      }
+      return {
+        name,
+        expansion,
+        collector_number: collector,
+        language_label: line?.language_label?.trim() || undefined,
+        condition_label: line?.condition_label?.trim() || undefined,
+      };
+    });
+    return this.quoteResolve.resolveLines(normalized);
+  }
+
+  @Post('quote-sessions')
+  async createQuoteSession(
+    @Body()
+    body: {
+      source?: string;
+      raw_paste?: string;
+      lines?: Array<{
+        name?: string;
+        expansion?: string;
+        collector_number?: string;
+        language_label?: string | null;
+        condition_label?: string | null;
+        resolve?: Record<string, unknown>;
+      }>;
+    },
+  ): Promise<unknown> {
+    return this.quoteSessions.create(body);
+  }
+
+  @Get('quote-sessions')
+  async listQuoteSessions(
+    @Query('status') status?: string,
+  ): Promise<unknown> {
+    return this.quoteSessions.list(status);
+  }
+
+  @Get('quote-sessions/:id')
+  async getQuoteSession(@Param('id') id: string): Promise<unknown> {
+    return this.quoteSessions.getById(id);
+  }
+
+  @Patch('quote-sessions/:id')
+  async patchQuoteSession(
+    @Param('id') id: string,
+    @Body() body: { active_index?: number; status?: string },
+  ): Promise<unknown> {
+    return this.quoteSessions.patchSession(id, body ?? {});
+  }
+
+  @Patch('quote-sessions/:id/lines/:lineIndex')
+  async patchQuoteSessionLine(
+    @Param('id') id: string,
+    @Param('lineIndex') lineIndex: string,
+    @Body()
+    body: {
+      action?: string;
+      blueprint_id?: number;
+      expansion_id?: number;
+      expansion_name?: string;
+      name?: string;
+      collector_number?: string;
+      image_url?: string | null;
+    },
+  ): Promise<unknown> {
+    return this.quoteSessions.patchLine(id, lineIndex, body ?? {});
   }
 
   @Post('tcgdex/resolve-batch')

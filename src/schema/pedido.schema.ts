@@ -25,6 +25,10 @@ export class PedidoLineSnapshot {
 
   @Prop({ required: false })
   image_url?: string;
+
+  /** Unidades de la línea (bulk). Ausente en unitarios legacy (= 1). */
+  @Prop({ required: false })
+  quantity?: number;
 }
 
 export const PedidoLineSnapshotSchema =

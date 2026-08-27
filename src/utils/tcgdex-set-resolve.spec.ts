@@ -21,6 +21,7 @@ import {
   tcgDexCatalogLocaleForExpansion,
   tcgdexLocalIdWithBlueprintCollision,
   stripBlueprintCollisionLocalId,
+  resolveKnownCardTraderPrint,
 } from './tcgdex-set-resolve';
 
 describe('tcgdex-set-resolve', () => {
@@ -242,5 +243,29 @@ describe('set_locale_map', () => {
     expect(buildTcgdexCardIdLookupCandidates('M2a-205_360075', 'ja')).toEqual(
       expect.arrayContaining(['M2a-205_360075', 'M2a-205']),
     );
+  });
+
+  it('mapea Ancient Mew CT Miscellaneous Promos #011 → miscp-001', () => {
+    expect(
+      resolveKnownCardTraderPrint({
+        expansionName: 'Miscellaneous Promos',
+        collectorNumber: '011',
+      }),
+    ).toEqual({
+      tcgdex_card_id: 'miscp-001',
+      tcgdex_set_id: 'miscp',
+      locale: 'en',
+    });
+    expect(
+      resolveKnownCardTraderPrint({
+        blueprint_id: 152261,
+      })?.tcgdex_card_id,
+    ).toBe('miscp-001');
+    expect(
+      resolveKnownCardTraderPrint({
+        expansionName: 'Miscellaneous Promos',
+        collectorNumber: '001',
+      }),
+    ).toBeNull();
   });
 });

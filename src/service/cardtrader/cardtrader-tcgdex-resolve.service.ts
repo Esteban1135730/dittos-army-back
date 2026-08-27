@@ -8,6 +8,7 @@ import {
   adjustSetIdForCatalog,
   normalizeMangledAsiaSetId,
   remapSetIdForTrainerGallery,
+  resolveKnownCardTraderPrint,
   tcgdexLocalIdWithBlueprintCollision,
   resolveSetFromLocaleAliases,
   resolveSetFromLocaleMap,
@@ -147,6 +148,21 @@ export class CardTraderTcgdexResolveService {
     language?: string;
     blueprint_id?: number;
   }): Promise<TcgdexResolveResult> {
+    const known = resolveKnownCardTraderPrint({
+      expansionName: args.expansionName,
+      expansionId: args.expansionId,
+      collectorNumber: args.collectorNumber,
+      blueprint_id: args.blueprint_id,
+    });
+    if (known) {
+      return {
+        tcgdex_card_id: known.tcgdex_card_id,
+        tcgdex_set_id: known.tcgdex_set_id,
+        locale: known.locale,
+        error: null,
+      };
+    }
+
     const set = this.findSet(args);
     if (!set) {
       return {

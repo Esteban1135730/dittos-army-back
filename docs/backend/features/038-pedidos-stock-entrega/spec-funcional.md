@@ -60,6 +60,7 @@ Editar entrega y fecha: solo en `reservado`.
 | `play4cards` | Play4Cards | Cra. 62 #99-87, Barrio Los Andes, Bogotá *(por confirmar)* |
 | `tokyo-hobby-nations` | Tokyo Hobby Nations | Cl. 53 #70-18, Bogotá |
 | `valhalla` | Valhalla | Cl. 150 #16-56 local 2074, CC Cedritos, Bogotá |
+| `real-burgers` | Real Burgers | Cra. 19A #162-27, Bogotá |
 
 ## Comportamiento — error
 

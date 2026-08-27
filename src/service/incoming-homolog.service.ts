@@ -55,7 +55,7 @@ import {
 } from '../utils/novedad-card-resolve';
 import { IncomingReservationService } from './incoming-reservation.service';
 import type { StockDto } from '../Dto/stock.dto';
-import { isPublicRemoteImageUrl } from '../utils/store-image-localize';
+import { isUsableStockImageUrl, normalizeTcgdexCdnImageUrl } from '../utils/store-image-localize';
 import {
   isOwnerKey,
   OWNERS_CONFIG,
@@ -1131,7 +1131,7 @@ export class IncomingHomologService {
     }> = [];
     const tcgMetaCache = new Map<
       string,
-      { card_name: string; image_url: string }
+      { card_name: string; image_url: string; card_id: string }
     >();
     const lotOwnerCache = new Map<string, OwnerKey>();
 
@@ -1161,7 +1161,7 @@ export class IncomingHomologService {
       }
       stockItems.push({
         dto: {
-          card_id: cardId,
+          card_id: meta.card_id || cardId,
           card_name: meta.card_name,
           shipment: shipping,
           unity_cost: card.unit_cost_cop,
@@ -1370,6 +1370,7 @@ export class IncomingHomologService {
   /**
    * Resuelve nombre + imagen pública TCGdex para stock.
    * Evita URLs localhost/card-images (pueden 404 si el archivo local no existe).
+   * Si TCGdex no tiene arte, usa la imagen CardTrader del blueprint.
    */
   private async resolveStockTcgdexMeta(
     cardId: string,
@@ -1379,31 +1380,43 @@ export class IncomingHomologService {
       image_url?: string | null;
       blueprint_id?: number | null;
     },
-  ): Promise<{ card_name: string; image_url: string }> {
+  ): Promise<{ card_name: string; image_url: string; card_id: string }> {
     const fallbackName = String(fallback.card_name ?? '').trim() || cardId;
     const locales = [language, 'en']
       .map((l) => String(l ?? '').trim().toLowerCase())
       .filter((l, i, arr) => l.length > 0 && arr.indexOf(l) === i);
 
     let cardName = fallbackName;
+    let resolvedCardId = cardId;
     for (const locale of locales) {
       const card = await this.tcgdexService.getCard(cardId, locale);
       if (card?.name?.trim()) {
         cardName = card.name.trim();
       }
+      if (card?.id?.trim()) {
+        resolvedCardId = card.id.trim();
+      }
       const fromCard = this.pickPublicStockImageUrl(card);
       if (fromCard) {
-        return { card_name: cardName, image_url: fromCard };
+        return { card_name: cardName, image_url: fromCard, card_id: resolvedCardId };
       }
-      const fromCdn = await this.fetchTcgdexCdnImageUrl(cardId, locale);
+      const fromCdn = await this.fetchTcgdexCdnImageUrl(
+        resolvedCardId || cardId,
+        locale,
+      );
       if (fromCdn) {
-        return { card_name: cardName, image_url: fromCdn };
+        return { card_name: cardName, image_url: fromCdn, card_id: resolvedCardId };
       }
     }
 
     const fallbackImage = String(fallback.image_url ?? '').trim();
-    if (isPublicRemoteImageUrl(fallbackImage)) {
-      return { card_name: cardName, image_url: fallbackImage };
+    const normalizedFallback = normalizeTcgdexCdnImageUrl(fallbackImage);
+    if (isUsableStockImageUrl(normalizedFallback)) {
+      return {
+        card_name: cardName,
+        image_url: normalizedFallback,
+        card_id: resolvedCardId,
+      };
     }
 
     const blueprintId =
@@ -1413,17 +1426,18 @@ export class IncomingHomologService {
     if (blueprintId > 0) {
       const blueprint = await this.fetchBlueprintMeta(blueprintId);
       const ctImage = readBlueprintImageUrl(blueprint);
-      if (isPublicRemoteImageUrl(ctImage)) {
-        return { card_name: cardName, image_url: ctImage };
+      if (isUsableStockImageUrl(ctImage)) {
+        return { card_name: cardName, image_url: ctImage, card_id: resolvedCardId };
       }
     }
 
-    return { card_name: cardName, image_url: '' };
+    return { card_name: cardName, image_url: '', card_id: resolvedCardId };
   }
 
   private pickPublicStockImageUrl(
     card:
       | {
+          id?: string;
           image?: string;
           images?: { small?: string; large?: string };
         }
@@ -1435,8 +1449,8 @@ export class IncomingHomologService {
       card?.image,
       card?.images?.large,
     ]) {
-      const url = String(candidate ?? '').trim();
-      if (url && isPublicRemoteImageUrl(url)) return url;
+      const url = normalizeTcgdexCdnImageUrl(String(candidate ?? '').trim());
+      if (url && isUsableStockImageUrl(url)) return url;
     }
     return '';
   }
@@ -1454,11 +1468,8 @@ export class IncomingHomologService {
       const raw = (await res.json()) as { image?: string; name?: string };
       const base = String(raw?.image ?? '').trim();
       if (!base) return '';
-      if (/\.(png|jpg|jpeg|webp|gif)(\?|$)/i.test(base)) {
-        return isPublicRemoteImageUrl(base) ? base : '';
-      }
-      const low = `${base.replace(/\/+$/, '')}/low.png`;
-      return isPublicRemoteImageUrl(low) ? low : '';
+      const normalized = normalizeTcgdexCdnImageUrl(base);
+      return isUsableStockImageUrl(normalized) ? normalized : '';
     } catch {
       return '';
     }
@@ -1766,6 +1777,9 @@ export class IncomingHomologService {
         real_fx_rate_cop: lot?.real_fx_rate_cop ?? null,
         assigned_in_session: assigned,
         available_in_session: Math.max(0, line.remaining_quantity - assigned),
+        owner: isOwnerKey(lot?.owner)
+          ? lot.owner
+          : OWNERS_CONFIG.defaultOwner,
       };
     });
   }

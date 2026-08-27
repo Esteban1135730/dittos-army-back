@@ -4,6 +4,7 @@ import { ReservaRepository } from 'src/repository/reserva.repository';
 import { StockRepository } from 'src/repository/stock.repository';
 import { IncomingReservationService } from 'src/service/incoming-reservation.service';
 import { StoreWhatsAppReservationImportService } from 'src/service/store-whatsapp-reservation-import.service';
+import { StoreWhatsAppIncomingImportService } from 'src/service/store-whatsapp-incoming-import.service';
 import { PedidoService } from 'src/service/pedido.service';
 
 const stockId = '507f1f77bcf86cd799439011';
@@ -65,6 +66,7 @@ describe('ReservaController quantity products', () => {
         { provide: StockRepository, useValue: stockRepository },
         { provide: IncomingReservationService, useValue: {} },
         { provide: StoreWhatsAppReservationImportService, useValue: {} },
+        { provide: StoreWhatsAppIncomingImportService, useValue: {} },
         { provide: PedidoService, useValue: pedidoService },
       ],
     }).compile();

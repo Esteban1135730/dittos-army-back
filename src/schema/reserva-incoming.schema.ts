@@ -3,7 +3,7 @@ import { HydratedDocument } from 'mongoose';
 
 export type ReservaIncomingDocument = HydratedDocument<ReservaIncoming>;
 
-/** Reserva pendiente sobre una línea de lote incoming (sin precio hasta materializar en stock). */
+/** Reserva pendiente sobre una línea de lote incoming. El PVP acordado es opcional y editable. */
 @Schema({ collection: 'reserva_incoming' })
 export class ReservaIncoming {
   @Prop({ required: true })
@@ -14,6 +14,10 @@ export class ReservaIncoming {
 
   @Prop({ required: true, min: 1 })
   quantity: number;
+
+  /** PVP unitario en COP acordado al reservar (editable; opcional). */
+  @Prop({ type: Number, required: false, default: null })
+  precio_cop?: number | null;
 
   @Prop({ default: Date.now })
   created_at: Date;

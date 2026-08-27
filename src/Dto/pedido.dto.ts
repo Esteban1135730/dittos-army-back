@@ -24,6 +24,7 @@ export type PedidoLineDto = {
   precio: number;
   currency: string;
   image_url?: string;
+  quantity?: number;
 };
 
 export type PedidoResponseDto = {

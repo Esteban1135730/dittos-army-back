@@ -6,5 +6,7 @@ describe('buildCardLocaleFallbackChain', () => {
     expect(buildCardLocaleFallbackChain('zh-cn')).toEqual(['zh-cn', 'ja', 'en']);
     expect(buildCardLocaleFallbackChain('en')).toEqual(['en', 'ja', 'zh-cn']);
     expect(buildCardLocaleFallbackChain('ko')).toEqual(['ko', 'ja', 'zh-cn', 'en']);
+    expect(buildCardLocaleFallbackChain('it')).toEqual(['it', 'en', 'ja', 'zh-cn']);
+    expect(buildCardLocaleFallbackChain('es')).toEqual(['es', 'en', 'ja', 'zh-cn']);
   });
 });

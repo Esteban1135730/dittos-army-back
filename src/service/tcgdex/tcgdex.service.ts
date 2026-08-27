@@ -33,6 +33,7 @@ export const TCGDEX_SUPPORTED_LOCALES = [
   'ja',
   'ko',
   'zh-cn',
+  'zh-tw',
 ] as const;
 
 export type TcgDexLocale = (typeof TCGDEX_SUPPORTED_LOCALES)[number];
@@ -42,6 +43,14 @@ const DEFAULT_LOCALE: TcgDexLocale = 'en';
 export function buildCardLocaleFallbackChain(
   preferred: TcgDexLocale,
 ): TcgDexLocale[] {
+  const western: TcgDexLocale[] = ['en', 'es', 'fr', 'de', 'it', 'pt'];
+  if (western.includes(preferred) && preferred !== 'en') {
+    const chain: TcgDexLocale[] = [preferred, 'en'];
+    for (const locale of ['ja', 'zh-cn'] as const) {
+      if (!chain.includes(locale)) chain.push(locale);
+    }
+    return chain;
+  }
   const chain: TcgDexLocale[] = [preferred];
   for (const locale of ['ja', 'zh-cn', 'en'] as const) {
     if (!chain.includes(locale)) {

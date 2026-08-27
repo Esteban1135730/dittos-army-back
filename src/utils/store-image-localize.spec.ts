@@ -4,8 +4,10 @@ import * as path from 'path';
 import {
   isBlockedVendorImageUrl,
   isLocalhostImageUrl,
+  isUsableStockImageUrl,
   localizeStoreImageUrl,
   localizeStoreItemImages,
+  normalizeTcgdexCdnImageUrl,
   parseCardImagesRelativePath,
   pruneUnusedStoreCardAssets,
   storeAssetPublicUrl,
@@ -20,6 +22,27 @@ describe('store-image-localize', () => {
     expect(
       isLocalhostImageUrl('https://assets.tcgdex.net/en/sv/sv07/128/low.png'),
     ).toBe(false);
+  });
+
+  it('normaliza CDN TCGdex sin archivo a low.png', () => {
+    expect(
+      normalizeTcgdexCdnImageUrl('https://assets.tcgdex.net/en/neo/neo2/53'),
+    ).toBe('https://assets.tcgdex.net/en/neo/neo2/53/low.png');
+    expect(
+      normalizeTcgdexCdnImageUrl(
+        'https://assets.tcgdex.net/en/neo/neo2/53/low.png',
+      ),
+    ).toBe('https://assets.tcgdex.net/en/neo/neo2/53/low.png');
+  });
+
+  it('stock acepta CardTrader; tienda lo bloquea', () => {
+    const ct =
+      'https://www.cardtrader.com/uploads/blueprints/image/1/show_x.jpg';
+    expect(isUsableStockImageUrl(ct)).toBe(true);
+    expect(isBlockedVendorImageUrl(ct)).toBe(true);
+    expect(isUsableStockImageUrl('http://localhost:3000/card-images/a.png')).toBe(
+      false,
+    );
   });
 
   it('parsea ruta relativa de /card-images/', () => {

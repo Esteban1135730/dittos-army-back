@@ -6,6 +6,8 @@ export type ParsedStoreCartLine = {
   language: string;
   rareza: string | null;
   quantity: number;
+  /** PVP unitario en COP si el mensaje de catálogo trae Precio. */
+  unit_price_cop: number | null;
 };
 
 export type ParseLineResult =
@@ -18,6 +20,21 @@ export function extractClientNameFromStoreMessage(
   const m = message.match(/A nombre de:\s*(.+?)(?:\r?\n|$)/i);
   if (!m) return null;
   return m[1].trim() || null;
+}
+
+/** COP de la tienda: `$ 15.000` o `15.000` (punto de miles). */
+export function parseCopAmountFromStoreText(chunk: string): number | null {
+  const normalized = chunk.replace(/\u00a0/g, ' ');
+  const numMatch = normalized.match(/(\d{1,3}(?:\.\d{3})+|\d+)/);
+  if (!numMatch) return null;
+  const n = parseInt(numMatch[1].replace(/\./g, ''), 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function parseUnitPriceCopFromLine(line: string): number | null {
+  const m = line.match(/Precio:\s*([^|—]+)/i);
+  if (!m) return null;
+  return parseCopAmountFromStoreText(m[1]);
 }
 
 export function parseStoreCatalogCartLines(
@@ -53,7 +70,7 @@ export function parseStoreCatalogLine(line: string): ParseLineResult {
     return { ok: false, issue: 'invalid_line' };
   }
 
-  const qtyMatch = trimmed.match(/\sx(\d+)\s*$/i);
+  const qtyMatch = trimmed.match(/\sx(\d+)(?:\s*\([^)]+\))?\s*$/i);
   const quantity = qtyMatch ? Math.max(1, parseInt(qtyMatch[1], 10) || 1) : 1;
 
   let rareza: string | null = null;
@@ -69,6 +86,7 @@ export function parseStoreCatalogLine(line: string): ParseLineResult {
       language,
       rareza,
       quantity,
+      unit_price_cop: parseUnitPriceCopFromLine(trimmed),
     },
   };
 }

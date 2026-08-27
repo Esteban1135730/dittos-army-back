@@ -88,7 +88,9 @@ export class IncomingReservationService {
       const resolved = resolvePvpForLine(linePvps as any, rarezaLine);
       let precioCop = 0;
       const currency = 'COP';
-      if (resolved) {
+      if (slot.precio_cop != null && slot.precio_cop > 0) {
+        precioCop = slot.precio_cop;
+      } else if (resolved) {
         precioCop = precioToCop(resolved.pvp, resolved.pvp_currency);
       }
 
@@ -106,6 +108,7 @@ export class IncomingReservationService {
     clientId: string,
     lineId: string,
     delta: number,
+    precioCop?: number | null,
   ): Promise<any> {
     if (!delta || delta <= 0 || !Number.isFinite(delta)) {
       throw new BadRequestException('quantity debe ser un entero positivo');
@@ -133,6 +136,7 @@ export class IncomingReservationService {
       clientId,
       lineId,
       newQty,
+      precioCop,
     );
     if (!saved) throw new BadRequestException('Cantidad resultante inválida');
     return saved.toObject ? saved.toObject() : saved;
@@ -148,6 +152,7 @@ export class IncomingReservationService {
     language: string,
     rarezaRaw: string | null | undefined,
     delta: number,
+    precioCop?: number | null,
   ): Promise<any> {
     if (!delta || delta <= 0 || !Number.isFinite(delta)) {
       throw new BadRequestException('quantity debe ser un entero positivo');
@@ -186,7 +191,7 @@ export class IncomingReservationService {
       const free = Math.max(0, c.remaining - sumP);
       const take = Math.min(free, need);
       if (take <= 0) continue;
-      lastSaved = await this.addQuantity(clientId, c.lineId, take);
+      lastSaved = await this.addQuantity(clientId, c.lineId, take, precioCop);
       need -= take;
     }
 
@@ -197,6 +202,59 @@ export class IncomingReservationService {
       });
     }
     return lastSaved;
+  }
+
+  async listVariantCupos(
+    cardId: string,
+    language: string,
+  ): Promise<
+    Array<{
+      rareza: string | null;
+      cupo: number;
+      card_name: string;
+      image_url: string;
+      language: string;
+    }>
+  > {
+    const byRareza = new Map<
+      string,
+      {
+        rareza: string | null;
+        cupo: number;
+        card_name: string;
+        image_url: string;
+        language: string;
+      }
+    >();
+    const lang = String(language).trim().toLowerCase();
+    const openLots = await this.transitLotRepo.findOpenLots();
+    for (const lot of openLots) {
+      const lines = await this.transitLineRepo.findByLotId(lot._id.toString());
+      for (const line of lines) {
+        if (line.card_id !== cardId) continue;
+        if (String(line.language).trim().toLowerCase() !== lang) continue;
+        if ((line.remaining_quantity ?? 0) <= 0) continue;
+        const rz = normalizeOperationalRareza(line.rareza);
+        const key = rz ?? '';
+        const sumP = await this.reservaIncomingRepo.sumQuantityForBatchItem(
+          line._id.toString(),
+        );
+        const free = Math.max(0, (line.remaining_quantity ?? 0) - sumP);
+        const existing = byRareza.get(key);
+        if (!existing) {
+          byRareza.set(key, {
+            rareza: rz,
+            cupo: free,
+            card_name: line.card_name ?? line.card_id,
+            image_url: line.image_url ?? '',
+            language: String(line.language).trim(),
+          });
+        } else {
+          existing.cupo += free;
+        }
+      }
+    }
+    return [...byRareza.values()].filter((g) => g.cupo > 0);
   }
 
   async listIncoming(clientId?: string): Promise<
@@ -213,6 +271,7 @@ export class IncomingReservationService {
       rareza?: string;
       remaining_quantity?: number;
       language?: string;
+      precio_cop?: number | null;
     }>
   > {
     const rows = await this.reservaIncomingRepo.findAll(clientId);
@@ -237,6 +296,7 @@ export class IncomingReservationService {
         rareza: tl?.rareza,
         remaining_quantity: tl?.remaining_quantity,
         language: tl?.language,
+        precio_cop: r.precio_cop ?? null,
       };
     });
   }
@@ -264,6 +324,13 @@ export class IncomingReservationService {
       doc.batch_item_id,
       q,
     );
+  }
+
+  async setPrecioCop(id: string, precioCop: number | null): Promise<any> {
+    const doc = await this.reservaIncomingRepo.findById(id);
+    if (!doc) throw new NotFoundException('Reserva en camino no encontrada');
+    const saved = await this.reservaIncomingRepo.setPrecioCop(id, precioCop);
+    return saved?.toObject ? saved.toObject() : saved;
   }
 
   async deleteById(id: string): Promise<boolean> {
@@ -299,7 +366,11 @@ export class IncomingReservationService {
       const purchaseMs = new Date(lot.purchase_date).getTime();
       for (const line of lines) {
         if (line.card_id !== cardId) continue;
-        if (String(line.language).trim() !== String(language).trim()) continue;
+        if (
+          String(line.language).trim().toLowerCase() !==
+          String(language).trim().toLowerCase()
+        )
+          continue;
         const rz = normalizeOperationalRareza(line.rareza);
         if (rz !== targetRareza) continue;
         if ((line.remaining_quantity ?? 0) <= 0) continue;

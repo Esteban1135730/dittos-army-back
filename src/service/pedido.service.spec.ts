@@ -62,12 +62,14 @@ describe('PedidoService', () => {
     const reservaRepo = {
       findByPedidoId: jest.fn(async () => opts?.reservas ?? []),
       deleteByStockId: jest.fn(async () => true),
+      deleteById: jest.fn(async () => true),
     } as unknown as ReservaRepository;
 
     const stockRepo = {
       findById: jest.fn(async () => opts?.stock ?? null),
       findByIds: jest.fn(async () => (opts?.stock ? [opts.stock] : [])),
       updateCardState: jest.fn(async () => ({})),
+      incrementQuantityAtomic: jest.fn(async () => ({})),
     } as unknown as StockRepository;
 
     const saleRepo = {
@@ -87,7 +89,7 @@ describe('PedidoService', () => {
       saleRepo,
       tagRepo,
     );
-    return { svc, pedidoRepo, reservaRepo, saleRepo };
+    return { svc, pedidoRepo, reservaRepo, saleRepo, stockRepo };
   }
 
   it('valida entrega en tienda vs envío', async () => {
@@ -169,9 +171,10 @@ describe('PedidoService', () => {
   });
 
   it('pagar snapshot y marca vendida', async () => {
-    const { svc, saleRepo } = makeService({
+    const { svc, saleRepo, stockRepo } = makeService({
       reservas: [
         {
+          _id: 'res-u',
           stock_id: STOCK_ID,
           precio: 15000,
           currency: 'COP',
@@ -188,6 +191,60 @@ describe('PedidoService', () => {
     expect(paid.status).toBe('pagado');
     expect(paid.lines).toHaveLength(1);
     expect(saleRepo.create).toHaveBeenCalled();
+    expect(stockRepo.updateCardState).toHaveBeenCalledWith(STOCK_ID, 'vendida');
+  });
+
+  it('pagar línea quantity crea Q sales y no marca vendida', async () => {
+    const { svc, saleRepo, stockRepo, reservaRepo } = makeService({
+      reservas: [
+        {
+          _id: 'res-q',
+          stock_id: STOCK_ID,
+          precio: 2000,
+          currency: 'COP',
+          quantity: 3,
+        },
+      ],
+      stock: {
+        _id: STOCK_ID,
+        card_id: 'da-bulk',
+        card_name: 'bulk',
+        product_kind: 'quantity',
+        quantity: 17,
+      },
+    });
+    const paid = await svc.pagar(PEDIDO_ID);
+    expect(paid.status).toBe('pagado');
+    expect(paid.lines).toHaveLength(1);
+    expect(paid.lines[0].quantity).toBe(3);
+    expect(saleRepo.create).toHaveBeenCalledTimes(3);
+    expect(stockRepo.updateCardState).not.toHaveBeenCalled();
+    expect(reservaRepo.deleteById).toHaveBeenCalledWith('res-q');
+  });
+
+  it('cancelar línea quantity restaura qty y no pone disponible', async () => {
+    const { svc, stockRepo, reservaRepo } = makeService({
+      reservas: [
+        {
+          _id: 'res-q',
+          stock_id: STOCK_ID,
+          precio: 2000,
+          currency: 'COP',
+          quantity: 4,
+        },
+      ],
+      stock: {
+        _id: STOCK_ID,
+        card_id: 'da-bulk',
+        product_kind: 'quantity',
+        quantity: 10,
+      },
+    });
+    const res = await svc.cancel(PEDIDO_ID);
+    expect(res.success).toBe(true);
+    expect(stockRepo.incrementQuantityAtomic).toHaveBeenCalledWith(STOCK_ID, 4);
+    expect(reservaRepo.deleteById).toHaveBeenCalledWith('res-q');
+    expect(stockRepo.updateCardState).not.toHaveBeenCalled();
   });
 
   it('reconstruye líneas desde ventas si falta snapshot', async () => {

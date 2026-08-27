@@ -48,6 +48,7 @@ describe('StoreWhatsAppReservationImportService', () => {
 
     const pvpRepository = {
       findByCardIds: jest.fn().mockResolvedValue(deps.pvps ?? []),
+      update: jest.fn().mockResolvedValue({}),
     } as unknown as PvpRepository;
 
     const pedidoService = {
@@ -62,7 +63,7 @@ describe('StoreWhatsAppReservationImportService', () => {
       pedidoService,
     );
 
-    return { svc, reservaRepository, stockRepository };
+    return { svc, reservaRepository, stockRepository, pvpRepository };
   }
 
   it('preview asigna stock disponible con PVP', async () => {
@@ -128,5 +129,76 @@ describe('StoreWhatsAppReservationImportService', () => {
       's1',
       'reserva',
     );
+  });
+
+  it('usa el Precio del mensaje de la tienda si no hay PVP en BD', async () => {
+    const storeMessage = [
+      'Hola, quiero reservar las siguientes cartas:',
+      '',
+      '- Test Card | ID: sv08-130 | Expansión: Set (#130) | Idioma: Inglés | Precio: $ 15.000 x1',
+      '',
+      'Total: $ 15.000',
+      'A nombre de: Cliente Test',
+    ].join('\n');
+    const { svc } = makeService({
+      stock: [
+        {
+          _id: 's1',
+          card_id: 'sv08-130',
+          language: 'en',
+          card_state: 'disponible',
+          image_url: 'https://img.example/sv08-130.png',
+        },
+      ],
+    });
+    const plan = await svc.preview('c1', storeMessage);
+    expect(plan.lines[0].matched).toBe(1);
+    expect(plan.lines[0].suggested_pvp_cop).toBe(15000);
+    expect(plan.lines[0].precio_cop_por_unidad).toEqual([15000]);
+    expect(plan.lines[0].image_url).toBe('https://img.example/sv08-130.png');
+  });
+
+  it('guarda PVP opcional al importar', async () => {
+    const { svc, pvpRepository } = makeService({
+      stock: [
+        {
+          _id: 's1',
+          card_id: 'sv08-130',
+          language: 'en',
+          card_state: 'disponible',
+        },
+      ],
+    });
+    const result = await svc.import('c1', sampleMessage, [
+      { index: 0, pvp_cop: 9000 },
+    ]);
+    expect(result.created).toHaveLength(1);
+    expect(result.created[0].precio).toBe(9000);
+    expect(result.pvp_saved).toBe(1);
+    expect(pvpRepository.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        card_id: 'sv08-130',
+        pvp: 9000,
+        currency: 'COP',
+      }),
+    );
+  });
+
+  it('devuelve image_url aunque no haya cupo de stock', async () => {
+    const { svc } = makeService({
+      stock: [
+        {
+          _id: 's1',
+          card_id: 'sv08-130',
+          language: 'en',
+          card_state: 'reserva',
+          image_url: 'https://img.example/reserved.png',
+        },
+      ],
+    });
+    const plan = await svc.preview('c1', sampleMessage);
+    expect(plan.lines[0].matched).toBe(0);
+    expect(plan.lines[0].issues).toContain('insufficient_stock');
+    expect(plan.lines[0].image_url).toBe('https://img.example/reserved.png');
   });
 });

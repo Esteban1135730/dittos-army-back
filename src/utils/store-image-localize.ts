@@ -35,6 +35,27 @@ export function isLocalhostImageUrl(url: string): boolean {
   return LOCALHOST_IMAGE_RE.test(url.trim());
 }
 
+/** CDN TCGdex a veces viene como base sin archivo (`.../neo2/53` → `.../53/low.png`). */
+export function normalizeTcgdexCdnImageUrl(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+  if (!/assets\.tcgdex\.net/i.test(trimmed)) return trimmed;
+  if (/\.(png|jpg|jpeg|webp|gif)(\?|$)/i.test(trimmed)) return trimmed;
+  return `${trimmed.replace(/\/+$/, '')}/low.png`;
+}
+
+/** Imagen usable en stock del panel: http(s) público, no localhost. CardTrader sí vale como fallback. */
+export function isUsableStockImageUrl(url: string): boolean {
+  const trimmed = url.trim();
+  if (!trimmed || isLocalhostImageUrl(trimmed)) return false;
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
 export function isPublicRemoteImageUrl(url: string): boolean {
   const trimmed = url.trim();
   if (!trimmed || isLocalhostImageUrl(trimmed)) return false;

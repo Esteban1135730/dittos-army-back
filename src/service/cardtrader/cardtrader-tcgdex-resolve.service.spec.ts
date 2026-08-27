@@ -179,6 +179,32 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(noBlueprint.tcgdex_card_id).toBe('M2a-205');
   });
 
+  it('resuelve Ancient Mew Miscellaneous Promos #011 → miscp-001', async () => {
+    const byName = await service.resolveTcgdexCardId({
+      expansionName: 'Miscellaneous Promos',
+      collectorNumber: '011',
+      language: 'en',
+    });
+    expect(byName.tcgdex_set_id).toBe('miscp');
+    expect(byName.tcgdex_card_id).toBe('miscp-001');
+    expect(byName.error).toBeNull();
+
+    const byBlueprint = await service.resolveTcgdexCardId({
+      expansionName: 'Miscellaneous Promos',
+      collectorNumber: '011',
+      language: 'en',
+      blueprint_id: 152261,
+    });
+    expect(byBlueprint.tcgdex_card_id).toBe('miscp-001');
+
+    const otherPromo = await service.resolveTcgdexCardId({
+      expansionName: 'Miscellaneous Promos',
+      collectorNumber: '001',
+      language: 'en',
+    });
+    expect(otherPromo.tcgdex_card_id).not.toBe('miscp-001');
+  });
+
   it('devuelve error si expansión no está homologada', async () => {
     const result = await service.resolveTcgdexCardId({
       expansionName: 'Expansion Inventada XYZ',

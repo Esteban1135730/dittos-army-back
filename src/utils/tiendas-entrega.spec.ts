@@ -6,7 +6,7 @@ import {
 } from './tiendas-entrega';
 
 describe('tiendas-entrega', () => {
-  it('expone 7 ids estables', () => {
+  it('expone 8 ids estables', () => {
     expect(TIENDAS_ENTREGA.map((t) => t.id)).toEqual([
       'hidden-tcg-store',
       'draco-hobby-center',
@@ -15,6 +15,7 @@ describe('tiendas-entrega', () => {
       'play4cards',
       'tokyo-hobby-nations',
       'valhalla',
+      'real-burgers',
     ]);
   });
 
@@ -22,6 +23,7 @@ describe('tiendas-entrega', () => {
     expect(isTiendaEntregaId('valhalla')).toBe(true);
     expect(isTiendaEntregaId('no-existe')).toBe(false);
     expect(getTiendaEntrega('hidden-tcg-store')?.address).toContain('52');
+    expect(getTiendaEntrega('real-burgers')?.address).toContain('19A');
     expect(getTiendaEntrega('x')).toBeUndefined();
   });
 
@@ -44,6 +46,8 @@ describe('tiendas-entrega', () => {
     );
     expect(matchTiendaEntregaFromLegacy('play4cards')?.id).toBe('play4cards');
     expect(matchTiendaEntregaFromLegacy('LX Store')?.id).toBe('lx-store');
+    expect(matchTiendaEntregaFromLegacy('Real Burgers')?.id).toBe('real-burgers');
+    expect(matchTiendaEntregaFromLegacy('real burguers')?.id).toBe('real-burgers');
   });
 
   it('no inventa tienda si el texto es una dirección de envío', () => {

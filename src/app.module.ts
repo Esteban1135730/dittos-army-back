@@ -37,6 +37,7 @@ import { OpenedSealedStockService } from './service/opened-sealed-stock.service'
 import { PvpCardRowsService } from './service/pvp-card-rows.service';
 import { IncomingReservationService } from './service/incoming-reservation.service';
 import { StoreWhatsAppReservationImportService } from './service/store-whatsapp-reservation-import.service';
+import { StoreWhatsAppIncomingImportService } from './service/store-whatsapp-incoming-import.service';
 import { StockController } from './controller/stock.controller';
 import { PvpController } from './controller/pvp.controller';
 import { CardController } from './controller/card.controller';
@@ -76,6 +77,7 @@ import { CardTraderController } from './controller/cardtrader.controller';
 import { CardtraderTransitLotController } from './controller/cardtrader-transit-lot.controller';
 import { CardTraderService } from './service/cardtrader/cardtrader.service';
 import { CardTraderTcgdexResolveService } from './service/cardtrader/cardtrader-tcgdex-resolve.service';
+import { CardTraderQuoteResolveService } from './service/cardtrader/cardtrader-quote-resolve.service';
 import { CardtraderTransitLotService } from './service/cardtrader/cardtrader-transit-lot.service';
 import { StockScanService } from './service/stock-scan.service';
 import { BulkProductService } from './service/bulk-product.service';
@@ -140,6 +142,12 @@ import {
   CardtraderReceiptLineSchema,
 } from './schema/cardtrader-receipt-line.schema';
 import { Pedido, PedidoSchema } from './schema/pedido.schema';
+import {
+  CardtraderQuoteSession,
+  CardtraderQuoteSessionSchema,
+} from './schema/cardtrader-quote-session.schema';
+import { CardtraderQuoteSessionRepository } from './repository/cardtrader-quote-session.repository';
+import { CardTraderQuoteSessionService } from './service/cardtrader/cardtrader-quote-session.service';
 import { PedidoRepository } from './repository/pedido.repository';
 import { PedidoService } from './service/pedido.service';
 import { PedidoController } from './controller/pedido.controller';
@@ -181,6 +189,10 @@ const MONGOOSE_FEATURE_MODELS = [
     schema: CardtraderReceiptLineSchema,
   },
   { name: Pedido.name, schema: PedidoSchema },
+  {
+    name: CardtraderQuoteSession.name,
+    schema: CardtraderQuoteSessionSchema,
+  },
 ];
 
 @Module({
@@ -214,6 +226,7 @@ const MONGOOSE_FEATURE_MODELS = [
     PvpCardRowsService,
     IncomingReservationService,
     StoreWhatsAppReservationImportService,
+    StoreWhatsAppIncomingImportService,
     StockRepository,
     CardStockTagRepository,
     PvpRepository,
@@ -229,6 +242,7 @@ const MONGOOSE_FEATURE_MODELS = [
     IncomingShipRoundItemRepository,
     CardTraderService,
     CardTraderTcgdexResolveService,
+    CardTraderQuoteResolveService,
     CardtraderTransitLotService,
     StockScanService,
     BulkProductService,
@@ -249,6 +263,8 @@ const MONGOOSE_FEATURE_MODELS = [
     CardtraderReceiptLineRepository,
     PedidoRepository,
     PedidoService,
+    CardtraderQuoteSessionRepository,
+    CardTraderQuoteSessionService,
   ],
   imports: [
     MongooseModule.forRootAsync({

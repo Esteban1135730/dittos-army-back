@@ -208,6 +208,82 @@ export function stripBlueprintCollisionLocalId(localId: string): string | null {
   return stripped || null;
 }
 
+type KnownCardTraderPrint = {
+  tcgdex_card_id: string;
+  tcgdex_set_id: string;
+  locale: string;
+  blueprintId?: number;
+  expansionId?: number;
+  expansionName?: string;
+  collectorNumbers: string[];
+};
+
+/**
+ * Prints whose CardTrader collector/expansion do not match the TCGdex localId
+ * (CT "Miscellaneous Promos" is a dump; Ancient Mew #011 = miscp-001).
+ */
+const KNOWN_CARDTRADER_PRINTS: KnownCardTraderPrint[] = [
+  {
+    tcgdex_card_id: 'miscp-001',
+    tcgdex_set_id: 'miscp',
+    locale: 'en',
+    blueprintId: 152261,
+    expansionId: 1470,
+    expansionName: 'Miscellaneous Promos',
+    collectorNumbers: ['011', '11'],
+  },
+];
+
+function collectorKey(raw: string | null | undefined): string {
+  const normalized = normalizeCollectorNumberForTcgdex(raw);
+  if (!normalized) return '';
+  if (/^\d+$/.test(normalized)) {
+    return String(Number(normalized));
+  }
+  return normalized.toLowerCase();
+}
+
+/** Override puntual CardTrader → id TCGdex real (no remapear el set entero). */
+export function resolveKnownCardTraderPrint(args: {
+  expansionName?: string;
+  expansionId?: number;
+  collectorNumber?: string;
+  blueprint_id?: number;
+}): { tcgdex_card_id: string; tcgdex_set_id: string; locale: string } | null {
+  const collector = collectorKey(args.collectorNumber);
+  const expansionKey = normExpansionKey(expansionLabel(args.expansionName));
+  const blueprintId =
+    args.blueprint_id != null && Number.isInteger(args.blueprint_id)
+      ? args.blueprint_id
+      : null;
+
+  for (const print of KNOWN_CARDTRADER_PRINTS) {
+    if (blueprintId != null && print.blueprintId === blueprintId) {
+      return {
+        tcgdex_card_id: print.tcgdex_card_id,
+        tcgdex_set_id: print.tcgdex_set_id,
+        locale: print.locale,
+      };
+    }
+    const collectorHit = print.collectorNumbers.some(
+      (n) => collectorKey(n) === collector && collector !== '',
+    );
+    if (!collectorHit) continue;
+    const expansionHit =
+      (print.expansionId != null && print.expansionId === args.expansionId) ||
+      (print.expansionName != null &&
+        expansionKey === normExpansionKey(print.expansionName));
+    if (expansionHit) {
+      return {
+        tcgdex_card_id: print.tcgdex_card_id,
+        tcgdex_set_id: print.tcgdex_set_id,
+        locale: print.locale,
+      };
+    }
+  }
+  return null;
+}
+
 /** swsh11 + TG23 → swsh11.5tg (catálogo local). */
 export function remapSetIdForTrainerGallery(
   setId: string,
