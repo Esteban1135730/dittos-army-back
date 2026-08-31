@@ -1,5 +1,6 @@
 import { HttpException, ServiceUnavailableException } from '@nestjs/common';
 import { CardTraderService } from './cardtrader.service';
+import { runWithOwnerAsync } from '../../owner/owner-context';
 
 describe('CardTraderService', () => {
   let service: CardTraderService;
@@ -13,6 +14,7 @@ describe('CardTraderService', () => {
 
   afterEach(() => {
     delete process.env.CARDTRADER_API_TOKEN;
+    delete process.env.CARDTRADER_API_TOKEN_ESTEBAN;
     fetchSpy.mockRestore();
   });
 
@@ -38,6 +40,20 @@ describe('CardTraderService', () => {
       Authorization: 'Bearer test-token',
     });
     expect(String(fetchSpy.mock.calls[0][0])).toContain('/cart');
+  });
+
+  it('getCart usa token de Esteban con X-Owner esteban', async () => {
+    process.env.CARDTRADER_API_TOKEN_ESTEBAN = 'esteban-token';
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => '{"id": 1}',
+    });
+    await runWithOwnerAsync('esteban', () => service.getCart());
+    const init = fetchSpy.mock.calls[0][1] as RequestInit;
+    expect(init.headers).toMatchObject({
+      Authorization: 'Bearer esteban-token',
+    });
   });
 
   it('429 upstream se mapea a HttpException 429', async () => {
