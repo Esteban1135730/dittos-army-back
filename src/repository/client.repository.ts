@@ -39,6 +39,17 @@ export class ClientRepository {
     return this.clientModel.findById(id).exec();
   }
 
+  /** Una sola query por muchos `_id` (evita N× findById). */
+  async findByIds(ids: string[]): Promise<Client[]> {
+    const unique = [
+      ...new Set(
+        ids.map((id) => String(id ?? '').trim()).filter((id) => id.length > 0),
+      ),
+    ];
+    if (unique.length === 0) return [];
+    return this.clientModel.find({ _id: { $in: unique } }).exec();
+  }
+
   async update(id: string, dto: ClientDto): Promise<Client | null> {
     return this.clientModel
       .findByIdAndUpdate(

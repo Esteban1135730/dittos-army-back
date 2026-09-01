@@ -1,6 +1,7 @@
 import {
   TIENDAS_ENTREGA,
   getTiendaEntrega,
+  isCiudadBogota,
   isTiendaEntregaId,
   matchTiendaEntregaFromLegacy,
 } from './tiendas-entrega';
@@ -23,6 +24,7 @@ describe('tiendas-entrega', () => {
     expect(isTiendaEntregaId('valhalla')).toBe(true);
     expect(isTiendaEntregaId('no-existe')).toBe(false);
     expect(getTiendaEntrega('hidden-tcg-store')?.address).toContain('52');
+    expect(getTiendaEntrega('lx-store')?.address).toContain('47a');
     expect(getTiendaEntrega('real-burgers')?.address).toContain('19A');
     expect(getTiendaEntrega('x')).toBeUndefined();
   });
@@ -54,5 +56,25 @@ describe('tiendas-entrega', () => {
     expect(matchTiendaEntregaFromLegacy('Calle 100 #15-20 apto 301')).toBeNull();
     expect(matchTiendaEntregaFromLegacy('')).toBeNull();
     expect(matchTiendaEntregaFromLegacy(undefined)).toBeNull();
+  });
+
+  it('cada ítem tiene lat/lng finitos dentro del bbox de Bogotá', () => {
+    expect(TIENDAS_ENTREGA).toHaveLength(8);
+    for (const t of TIENDAS_ENTREGA) {
+      expect(Number.isFinite(t.lat)).toBe(true);
+      expect(Number.isFinite(t.lng)).toBe(true);
+      expect(t.lat).toBeGreaterThanOrEqual(4.4);
+      expect(t.lat).toBeLessThanOrEqual(4.9);
+      expect(t.lng).toBeGreaterThanOrEqual(-74.3);
+      expect(t.lng).toBeLessThanOrEqual(-73.9);
+    }
+  });
+
+  it('isCiudadBogota reconoce variantes y rechaza otras ciudades', () => {
+    expect(isCiudadBogota('Bogotá')).toBe(true);
+    expect(isCiudadBogota('bogota')).toBe(true);
+    expect(isCiudadBogota('BOGOTÁ D.C.')).toBe(true);
+    expect(isCiudadBogota('Medellín')).toBe(false);
+    expect(isCiudadBogota('')).toBe(false);
   });
 });

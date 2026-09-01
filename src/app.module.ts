@@ -150,6 +150,7 @@ import { CardtraderQuoteSessionRepository } from './repository/cardtrader-quote-
 import { CardTraderQuoteSessionService } from './service/cardtrader/cardtrader-quote-session.service';
 import { PedidoRepository } from './repository/pedido.repository';
 import { PedidoService } from './service/pedido.service';
+import { EnvioGeocodeService } from './service/envio-geocode.service';
 import { PedidoController } from './controller/pedido.controller';
 
 const MONGOOSE_FEATURE_MODELS = [
@@ -263,6 +264,7 @@ const MONGOOSE_FEATURE_MODELS = [
     CardtraderReceiptLineRepository,
     PedidoRepository,
     PedidoService,
+    EnvioGeocodeService,
     CardtraderQuoteSessionRepository,
     CardTraderQuoteSessionService,
   ],

@@ -6,8 +6,11 @@ import {
 } from '@nestjs/common';
 import { isValidObjectId } from 'mongoose';
 import {
+  PedidoCalendarioItemDto,
+  PedidoCalendarioResponseDto,
   PedidoCreateDto,
   PedidoLineDto,
+  PedidoMapaDto,
   PedidoPatchDto,
   PedidoResponseDto,
 } from 'src/Dto/pedido.dto';
@@ -29,8 +32,12 @@ import { isQuantityKind } from 'src/constants/bulk-product';
 import {
   TIENDAS_ENTREGA,
   getTiendaEntrega,
+  isCiudadBogota,
   isTiendaEntregaId,
 } from 'src/utils/tiendas-entrega';
+
+const CALENDARIO_MAX_DAYS = 62;
+const CALENDARIO_PENDIENTE = new Set(['reservado', 'pagado']);
 
 const ESTADO_VENDIDA = 'vendida';
 const ESTADO_DISPONIBLE = 'disponible';
@@ -68,7 +75,108 @@ export class PedidoService {
       id: t.id,
       name: t.name,
       address: t.address,
+      lat: t.lat,
+      lng: t.lng,
     }));
+  }
+
+  async listCalendario(
+    fromRaw?: string,
+    toRaw?: string,
+  ): Promise<PedidoCalendarioResponseDto> {
+    const fromStr = fromRaw?.trim() ?? '';
+    const toStr = toRaw?.trim() ?? '';
+    if (!fromStr || !toStr) {
+      throw new BadRequestException('from y to son requeridos');
+    }
+    const fromDay = this.parseFechaDia(fromStr, true) as Date;
+    const toDay = this.parseFechaDia(toStr, true) as Date;
+    if (fromDay.getTime() > toDay.getTime()) {
+      throw new BadRequestException('from no puede ser posterior a to');
+    }
+    const diffDays = Math.round(
+      (toDay.getTime() - fromDay.getTime()) / 86400000,
+    );
+    if (diffDays > CALENDARIO_MAX_DAYS) {
+      throw new BadRequestException('el rango no puede superar 62 días');
+    }
+
+    const from = new Date(
+      Date.UTC(
+        fromDay.getUTCFullYear(),
+        fromDay.getUTCMonth(),
+        fromDay.getUTCDate(),
+        0,
+        0,
+        0,
+        0,
+      ),
+    );
+    const to = new Date(
+      Date.UTC(
+        toDay.getUTCFullYear(),
+        toDay.getUTCMonth(),
+        toDay.getUTCDate(),
+        23,
+        59,
+        59,
+        999,
+      ),
+    );
+
+    const pedidos = await this.pedidoRepository.findPendientesByFechaRange(
+      from,
+      to,
+    );
+    const inRange = pedidos.filter((p) => {
+      if (!CALENDARIO_PENDIENTE.has(p.status)) return false;
+      const t = p.fecha_tentativa_entrega
+        ? new Date(p.fecha_tentativa_entrega).getTime()
+        : NaN;
+      return Number.isFinite(t) && t >= from.getTime() && t <= to.getTime();
+    });
+
+    const clientIds = [...new Set(inRange.map((p) => p.client_id))];
+    const clients = await this.clientRepository.findByIds(clientIds);
+    const nameById = new Map<string, string>();
+    for (const c of clients) {
+      const id = String((c as { _id?: unknown })._id ?? '');
+      if (id) nameById.set(id, c.nombre?.trim() || 'Cliente');
+    }
+
+    const today = this.todayBogotaYmd();
+    const items: PedidoCalendarioItemDto[] = inRange.map((p) => {
+      const fecha = this.formatFechaDia(p.fecha_tentativa_entrega) ?? '';
+      const item: PedidoCalendarioItemDto = {
+        id: String(p._id),
+        client_id: p.client_id,
+        client_name: nameById.get(p.client_id) || 'Cliente',
+        status: p.status as 'reservado' | 'pagado',
+        entrega_en_tienda: p.entrega_en_tienda,
+        fecha_tentativa_entrega: fecha,
+        overdue: this.isOverdue(fecha, today),
+        mapa: this.mapaFromPedido(p),
+      };
+      if (p.store_id) item.store_id = p.store_id;
+      if (p.store_name) item.store_name = p.store_name;
+      if (p.store_address) item.store_address = p.store_address;
+      if (p.ciudad) item.ciudad = p.ciudad;
+      if (p.direccion_o_punto) item.direccion_o_punto = p.direccion_o_punto;
+      if (p.notas_entrega) item.notas_entrega = p.notas_entrega;
+      return item;
+    });
+
+    items.sort((a, b) => {
+      const byFecha = a.fecha_tentativa_entrega.localeCompare(
+        b.fecha_tentativa_entrega,
+      );
+      if (byFecha !== 0) return byFecha;
+      const aKey = a.store_name ?? a.ciudad ?? '';
+      const bKey = b.store_name ?? b.ciudad ?? '';
+      return aKey.localeCompare(bKey, 'es');
+    });
+
+    return { from: fromStr, to: toStr, today, items };
   }
 
   async create(dto: PedidoCreateDto): Promise<PedidoResponseDto> {
@@ -115,9 +223,9 @@ export class PedidoService {
 
   async patch(id: string, dto: PedidoPatchDto): Promise<PedidoResponseDto> {
     const pedido = await this.requirePedido(id);
-    if (pedido.status !== 'reservado') {
+    if (pedido.status !== 'reservado' && pedido.status !== 'pagado') {
       throw new ConflictException(
-        'Solo se puede editar entrega en un pedido reservado',
+        'Solo se puede editar entrega en un pedido reservado o pagado',
       );
     }
 
@@ -577,6 +685,46 @@ export class PedidoService {
         ? { quantity: qty }
         : {}),
     };
+  }
+
+  private mapaFromPedido(pedido: PedidoDocument): PedidoMapaDto {
+    if (pedido.entrega_en_tienda) {
+      const tienda = getTiendaEntrega(pedido.store_id);
+      if (
+        tienda &&
+        Number.isFinite(tienda.lat) &&
+        Number.isFinite(tienda.lng)
+      ) {
+        return {
+          kind: 'tienda',
+          store_id: tienda.id,
+          lat: tienda.lat,
+          lng: tienda.lng,
+        };
+      }
+    }
+    const direccion = pedido.direccion_o_punto?.trim() ?? '';
+    if (isCiudadBogota(pedido.ciudad) && direccion.length > 0) {
+      return { kind: 'domicilio_bogota' };
+    }
+    if (!direccion) {
+      return { kind: 'omitido', reason: 'sin_direccion' };
+    }
+    return { kind: 'omitido', reason: 'fuera_bogota' };
+  }
+
+  /** Día civil YYYY-MM-DD en America/Bogota (en-CA = ISO date). */
+  private todayBogotaYmd(now: Date = new Date()): string {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Bogota',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(now);
+  }
+
+  private isOverdue(fechaYmd: string, todayYmd: string): boolean {
+    return Boolean(fechaYmd) && fechaYmd < todayYmd;
   }
 
   private formatFechaDia(value?: Date): string | null {

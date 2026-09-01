@@ -53,10 +53,14 @@ describe('PedidoService', () => {
         makePedido({ ...(opts?.pedido ?? makePedido()), ...data }),
       ),
       deleteById: jest.fn(async () => true),
+      findPendientesByFechaRange: jest.fn(async () => [] as PedidoDocument[]),
     } as unknown as PedidoRepository;
 
     const clientRepo = {
       findById: jest.fn(async () => ({ _id: CLIENT_ID, nombre: 'Ana' })),
+      findByIds: jest.fn(async (ids: string[]) =>
+        ids.map((id) => ({ _id: id, nombre: 'Ana' })),
+      ),
     } as unknown as ClientRepository;
 
     const reservaRepo = {
@@ -89,7 +93,7 @@ describe('PedidoService', () => {
       saleRepo,
       tagRepo,
     );
-    return { svc, pedidoRepo, reservaRepo, saleRepo, stockRepo };
+    return { svc, pedidoRepo, reservaRepo, saleRepo, stockRepo, clientRepo };
   }
 
   it('valida entrega en tienda vs envío', async () => {
@@ -290,5 +294,222 @@ describe('PedidoService', () => {
         fecha_tentativa_entrega: '2026-08-20',
       }),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  describe('listCalendario', () => {
+    const from = '2026-08-01';
+    const to = '2026-08-31';
+
+    it('sin from/to → 400', async () => {
+      const { svc } = makeService();
+      await expect(svc.listCalendario()).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      await expect(svc.listCalendario(from)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      await expect(svc.listCalendario(undefined, to)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+    });
+
+    it('from > to → 400; rango de 63 días → 400', async () => {
+      const { svc } = makeService();
+      await expect(svc.listCalendario('2026-08-31', '2026-08-01')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      await expect(
+        svc.listCalendario('2026-01-01', '2026-03-05'),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('solo reservado/pagado en el rango; excluye entregado y fuera de rango', async () => {
+      const inRangeReservado = makePedido({
+        _id: 'p-res',
+        status: 'reservado',
+        fecha_tentativa_entrega: new Date(Date.UTC(2026, 7, 10)),
+      });
+      const inRangePagado = makePedido({
+        _id: 'p-pag',
+        status: 'pagado',
+        fecha_tentativa_entrega: new Date(Date.UTC(2026, 7, 12)),
+      });
+      const entregado = makePedido({
+        _id: 'p-ent',
+        status: 'entregado',
+        fecha_tentativa_entrega: new Date(Date.UTC(2026, 7, 11)),
+      });
+      const fuera = makePedido({
+        _id: 'p-out',
+        status: 'reservado',
+        fecha_tentativa_entrega: new Date(Date.UTC(2026, 6, 1)),
+      });
+      const { svc, pedidoRepo } = makeService();
+      (pedidoRepo.findPendientesByFechaRange as jest.Mock).mockResolvedValue([
+        inRangeReservado,
+        inRangePagado,
+        entregado,
+        fuera,
+      ]);
+
+      const res = await svc.listCalendario(from, to);
+      expect(res.items.map((i) => i.id).sort()).toEqual(['p-pag', 'p-res']);
+      expect(res.items.every((i) => i.status === 'reservado' || i.status === 'pagado')).toBe(
+        true,
+      );
+      expect(res.items.some((i) => 'lines' in i)).toBe(false);
+    });
+
+    it('overdue true si fecha < today Bogotá; false si es hoy o futuro', async () => {
+      const today = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Bogota',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(new Date());
+      const [ty, tm, td] = today.split('-').map(Number);
+      const todayUtc = new Date(Date.UTC(ty, tm - 1, td));
+      const pastUtc = new Date(Date.UTC(ty, tm - 1, td - 2));
+      const futureUtc = new Date(Date.UTC(ty, tm - 1, td + 3));
+
+      const pastPedido = makePedido({
+        _id: 'p-past',
+        fecha_tentativa_entrega: pastUtc,
+      });
+      const todayPedido = makePedido({
+        _id: 'p-today',
+        fecha_tentativa_entrega: todayUtc,
+      });
+      const futurePedido = makePedido({
+        _id: 'p-fut',
+        fecha_tentativa_entrega: futureUtc,
+      });
+      const { svc, pedidoRepo } = makeService();
+      (pedidoRepo.findPendientesByFechaRange as jest.Mock).mockResolvedValue([
+        pastPedido,
+        todayPedido,
+        futurePedido,
+      ]);
+
+      const rangeFrom = new Date(Date.UTC(ty, tm - 1, td - 5)).toISOString().slice(0, 10);
+      const rangeTo = new Date(Date.UTC(ty, tm - 1, td + 5)).toISOString().slice(0, 10);
+      const res = await svc.listCalendario(rangeFrom, rangeTo);
+      expect(res.today).toBe(today);
+      expect(res.items.find((i) => i.id === 'p-past')?.overdue).toBe(true);
+      expect(res.items.find((i) => i.id === 'p-today')?.overdue).toBe(false);
+      expect(res.items.find((i) => i.id === 'p-fut')?.overdue).toBe(false);
+    });
+
+    it('item tienda incluye mapa.kind tienda y coords del catálogo', async () => {
+      const { svc, pedidoRepo } = makeService();
+      (pedidoRepo.findPendientesByFechaRange as jest.Mock).mockResolvedValue([
+        makePedido({
+          entrega_en_tienda: true,
+          store_id: 'valhalla',
+          store_name: 'Valhalla',
+          fecha_tentativa_entrega: new Date(Date.UTC(2026, 7, 20)),
+        }),
+      ]);
+      const res = await svc.listCalendario(from, to);
+      expect(res.items).toHaveLength(1);
+      const mapa = res.items[0].mapa;
+      expect(mapa.kind).toBe('tienda');
+      if (mapa.kind === 'tienda') {
+        expect(mapa.store_id).toBe('valhalla');
+        expect(mapa.lat).toBe(4.7318253);
+        expect(mapa.lng).toBe(-74.0420361);
+      }
+    });
+
+    it('ciudad Bogotá / bogota / BOGOTÁ D.C. → domicilio_bogota; Medellín → omitido/fuera_bogota', async () => {
+      const mkShip = (
+        id: string,
+        ciudad: string,
+      ): PedidoDocument =>
+        makePedido({
+          _id: id,
+          entrega_en_tienda: false,
+          store_id: undefined,
+          store_name: undefined,
+          store_address: undefined,
+          ciudad,
+          direccion_o_punto: 'Calle 100 #15-20',
+          fecha_tentativa_entrega: new Date(Date.UTC(2026, 7, 15)),
+        });
+      const { svc, pedidoRepo } = makeService();
+      (pedidoRepo.findPendientesByFechaRange as jest.Mock).mockResolvedValue([
+        mkShip('p-bog1', 'Bogotá'),
+        mkShip('p-bog2', 'bogota'),
+        mkShip('p-bog3', 'BOGOTÁ D.C.'),
+        mkShip('p-med', 'Medellín'),
+      ]);
+      const res = await svc.listCalendario(from, to);
+      const byId = Object.fromEntries(res.items.map((i) => [i.id, i.mapa]));
+      expect(byId['p-bog1']).toEqual({ kind: 'domicilio_bogota' });
+      expect(byId['p-bog2']).toEqual({ kind: 'domicilio_bogota' });
+      expect(byId['p-bog3']).toEqual({ kind: 'domicilio_bogota' });
+      expect(byId['p-med']).toEqual({
+        kind: 'omitido',
+        reason: 'fuera_bogota',
+      });
+    });
+  });
+
+  it('PATCH pagado con nueva fecha → 200 y status sigue pagado', async () => {
+    const { svc, pedidoRepo } = makeService({
+      pedido: makePedido({
+        status: 'pagado',
+        fecha_tentativa_entrega: new Date(Date.UTC(2026, 7, 20)),
+      }),
+    });
+    const res = await svc.patch(PEDIDO_ID, {
+      fecha_tentativa_entrega: '2026-08-25',
+    });
+    expect(res.status).toBe('pagado');
+    expect(res.fecha_tentativa_entrega).toBe('2026-08-25');
+    const payload = (pedidoRepo.update as jest.Mock).mock.calls[0][1] as Record<
+      string,
+      unknown
+    >;
+    expect(payload.status).toBeUndefined();
+    expect(payload.paid_at).toBeUndefined();
+    expect(payload.lines_snapshot).toBeUndefined();
+  });
+
+  it('PATCH entregado → 409', async () => {
+    const { svc } = makeService({
+      pedido: makePedido({ status: 'entregado' }),
+    });
+    await expect(
+      svc.patch(PEDIDO_ID, { fecha_tentativa_entrega: '2026-08-25' }),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('PATCH reservado sigue funcionando', async () => {
+    const { svc } = makeService();
+    const res = await svc.patch(PEDIDO_ID, {
+      fecha_tentativa_entrega: '2026-08-22',
+    });
+    expect(res.status).toBe('reservado');
+    expect(res.fecha_tentativa_entrega).toBe('2026-08-22');
+  });
+
+  it('listTiendas incluye lat/lng para los 8 ids', () => {
+    const { svc } = makeService();
+    const tiendas = svc.listTiendas();
+    expect(tiendas.map((t) => t.id)).toEqual([
+      'hidden-tcg-store',
+      'draco-hobby-center',
+      'unlimited-hobby-center',
+      'lx-store',
+      'play4cards',
+      'tokyo-hobby-nations',
+      'valhalla',
+      'real-burgers',
+    ]);
+    for (const t of tiendas) {
+      expect(Number.isFinite(t.lat)).toBe(true);
+      expect(Number.isFinite(t.lng)).toBe(true);
+    }
   });
 });

@@ -56,7 +56,7 @@ Editar entrega y fecha: solo en `reservado`.
 | `hidden-tcg-store` | Hidden TCG Store | Cl. 52 #24-18, Bogotá |
 | `draco-hobby-center` | Draco Hobby Center | Cra. 16 #76-27 Piso 2, Bogotá |
 | `unlimited-hobby-center` | Unlimited Hobby Center | Cra. 13 #46-64 Piso 2, Chapinero, Bogotá |
-| `lx-store` | LX Store | Cra. 99a #66a-85, Bogotá *(por confirmar)* |
+| `lx-store` | LX Store | Cra. 47a #98-47, Barrios Unidos, Bogotá |
 | `play4cards` | Play4Cards | Cra. 62 #99-87, Barrio Los Andes, Bogotá *(por confirmar)* |
 | `tokyo-hobby-nations` | Tokyo Hobby Nations | Cl. 53 #70-18, Bogotá |
 | `valhalla` | Valhalla | Cl. 150 #16-56 local 2074, CC Cedritos, Bogotá |

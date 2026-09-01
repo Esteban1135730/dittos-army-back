@@ -77,6 +77,19 @@ export class PedidoRepository {
       .exec();
   }
 
+  async findPendientesByFechaRange(
+    from: Date,
+    to: Date,
+  ): Promise<PedidoDocument[]> {
+    return this.pedidoModel
+      .find({
+        status: { $in: OPEN_STATUSES },
+        fecha_tentativa_entrega: { $gte: from, $lte: to },
+      })
+      .sort({ fecha_tentativa_entrega: 1, store_name: 1, ciudad: 1 })
+      .exec();
+  }
+
   async update(
     id: string,
     data: PedidoUpdateFields,

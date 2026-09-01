@@ -85,3 +85,4 @@ export class Pedido {
 export const PedidoSchema = SchemaFactory.createForClass(Pedido);
 PedidoSchema.index({ client_id: 1, status: 1 });
 PedidoSchema.index({ client_id: 1, created_at: -1 });
+PedidoSchema.index({ status: 1, fecha_tentativa_entrega: 1 });
