@@ -53,6 +53,8 @@ const ESTEBAN_FEATURES: FeatureKey[] = [
   'venta-asistida-qr',
   'propiedad',
   'clientes',
+  'cotizar',
+  'cardtrader',
 ];
 
 export const OWNERS_CONFIG: OwnersConfig = {

@@ -19,9 +19,9 @@ describe('owners.config', () => {
     expect(getOwnerDefinition('esteban').stockQrPrefix).toBe('ESTEBAN-STOCK:');
   });
 
-  it('ACL: Esteban sin cotizar/cardtrader/incoming/export-tienda', () => {
-    expect(isFeatureAllowed('esteban', 'cotizar')).toBe(false);
-    expect(isFeatureAllowed('esteban', 'cardtrader')).toBe(false);
+  it('ACL: Esteban con cotizar/cardtrader; sin incoming/export-tienda', () => {
+    expect(isFeatureAllowed('esteban', 'cotizar')).toBe(true);
+    expect(isFeatureAllowed('esteban', 'cardtrader')).toBe(true);
     expect(isFeatureAllowed('esteban', 'incoming')).toBe(false);
     expect(isFeatureAllowed('esteban', 'export-tienda')).toBe(false);
     expect(isFeatureAllowed('esteban', 'stock')).toBe(true);

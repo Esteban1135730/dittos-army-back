@@ -4,6 +4,8 @@ import {
   Injectable,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { getCurrentOwner } from 'src/owner/owner-context';
+import type { OwnerKey } from 'src/config/owners.config';
 
 const DEFAULT_BASE = 'https://api.cardtrader.com/api/v2';
 const REQUEST_TIMEOUT_MS = 25_000;
@@ -42,11 +44,19 @@ export class CardTraderService {
     ).replace(/\/$/, '');
   }
 
+  private tokenEnvKeyForOwner(owner: OwnerKey): string {
+    return owner === 'esteban'
+      ? 'CARDTRADER_API_TOKEN_ESTEBAN'
+      : 'CARDTRADER_API_TOKEN';
+  }
+
   private getToken(): string {
-    const t = process.env.CARDTRADER_API_TOKEN;
+    const owner = getCurrentOwner();
+    const envKey = this.tokenEnvKeyForOwner(owner);
+    const t = process.env[envKey];
     if (!t?.trim()) {
       throw new ServiceUnavailableException(
-        'CardTrader no está configurado: falta CARDTRADER_API_TOKEN en el servidor.',
+        `CardTrader no está configurado: falta ${envKey} en el servidor.`,
       );
     }
     return t.trim();
