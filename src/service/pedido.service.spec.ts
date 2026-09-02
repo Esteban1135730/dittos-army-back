@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { PedidoService } from './pedido.service';
 import { PedidoRepository } from '../repository/pedido.repository';
+import { PedidoAbonoRepository } from '../repository/pedido-abono.repository';
 import { ClientRepository } from '../repository/client.repository';
 import { ReservaRepository } from '../repository/reserva.repository';
 import { StockRepository } from '../repository/stock.repository';
@@ -65,6 +66,7 @@ describe('PedidoService', () => {
 
     const reservaRepo = {
       findByPedidoId: jest.fn(async () => opts?.reservas ?? []),
+      attachOrphansToPedido: jest.fn(async () => 0),
       deleteByStockId: jest.fn(async () => true),
       deleteById: jest.fn(async () => true),
     } as unknown as ReservaRepository;
@@ -85,6 +87,10 @@ describe('PedidoService', () => {
       findMapByCardIds: jest.fn(async () => new Map()),
     } as unknown as CardStockTagRepository;
 
+    const pedidoAbonoRepo = {
+      deleteByPedidoId: jest.fn(async () => 0),
+    } as unknown as PedidoAbonoRepository;
+
     const svc = new PedidoService(
       pedidoRepo,
       clientRepo,
@@ -92,8 +98,9 @@ describe('PedidoService', () => {
       stockRepo,
       saleRepo,
       tagRepo,
+      pedidoAbonoRepo,
     );
-    return { svc, pedidoRepo, reservaRepo, saleRepo, stockRepo, clientRepo };
+    return { svc, pedidoRepo, reservaRepo, saleRepo, stockRepo, clientRepo, pedidoAbonoRepo };
   }
 
   it('valida entrega en tienda vs envío', async () => {
@@ -137,6 +144,66 @@ describe('PedidoService', () => {
         fecha_tentativa_entrega: '2026-08-20',
       }),
     ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('al crear un pedido reserva adjunta reservas sueltas del cliente', async () => {
+    const { svc, reservaRepo } = makeService();
+    await svc.create({
+      client_id: CLIENT_ID,
+      entrega_en_tienda: true,
+      store_id: 'valhalla',
+      fecha_tentativa_entrega: '2026-08-20',
+    });
+    expect(reservaRepo.attachOrphansToPedido).toHaveBeenCalledWith(
+      CLIENT_ID,
+      PEDIDO_ID,
+    );
+  });
+
+  it('pagar adjunta huérfanas antes de resolver líneas', async () => {
+    const { svc, reservaRepo } = makeService({
+      reservas: [
+        {
+          _id: 'res-u',
+          stock_id: STOCK_ID,
+          precio: 15000,
+          currency: 'COP',
+        },
+      ],
+      stock: {
+        _id: STOCK_ID,
+        card_id: 'sv1-1',
+        card_name: 'Pikachu',
+      },
+    });
+    await svc.pagar(PEDIDO_ID);
+    expect(reservaRepo.attachOrphansToPedido).toHaveBeenCalledWith(
+      CLIENT_ID,
+      PEDIDO_ID,
+    );
+    expect(reservaRepo.findByPedidoId).toHaveBeenCalledWith(PEDIDO_ID);
+    const attachOrder = (reservaRepo.attachOrphansToPedido as jest.Mock).mock
+      .invocationCallOrder[0];
+    const findOrder = (reservaRepo.findByPedidoId as jest.Mock).mock
+      .invocationCallOrder[0];
+    expect(attachOrder).toBeLessThan(findOrder);
+  });
+
+  it('listByClient adjunta huérfanas al pedido reservado', async () => {
+    const { svc, reservaRepo } = makeService();
+    await svc.listByClient(CLIENT_ID);
+    expect(reservaRepo.attachOrphansToPedido).toHaveBeenCalledWith(
+      CLIENT_ID,
+      PEDIDO_ID,
+    );
+  });
+
+  it('getById de pagado no adjunta huérfanas', async () => {
+    const { svc, reservaRepo } = makeService({
+      pedido: makePedido({ status: 'pagado', lines_snapshot: [] }),
+    });
+    await svc.getById(PEDIDO_ID);
+    expect(reservaRepo.attachOrphansToPedido).not.toHaveBeenCalled();
   });
 
   it('reservar sin pedido reservado → 409', async () => {

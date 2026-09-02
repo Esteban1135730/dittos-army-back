@@ -9,7 +9,10 @@ import {
   normExpansionKey,
   normalizeMangledAsiaSetId,
   remapSetIdForTrainerGallery,
+  remapSetIdForGalarianGallery,
+  remapSetIdForGallerySubset,
   trainerGallerySetIdAliases,
+  galarianGallerySetIdAliases,
   resolveSetFromLocaleAliases,
   resolveSetFromLocaleMap,
   catalogLocaleForLanguage,
@@ -88,6 +91,18 @@ describe('tcgdex-set-resolve', () => {
     );
     expect(buildTcgdexCardIdLookupCandidates('swsh11-TG23', 'it')).toEqual(
       expect.arrayContaining(['swsh11.5tg-TG23', 'swsh11tg-TG23', 'swsh11-TG23']),
+    );
+  });
+
+  it('remapea Galarian Gallery Crown Zenith al subset swsh12.5gg', () => {
+    expect(remapSetIdForGalarianGallery('swsh12.5', 'GG64')).toBe('swsh12.5gg');
+    expect(remapSetIdForGalarianGallery('swsh12.5', '043')).toBe('swsh12.5');
+    expect(remapSetIdForGallerySubset('swsh12.5', 'GG64')).toBe('swsh12.5gg');
+    expect(galarianGallerySetIdAliases('swsh12.5gg')).toEqual(
+      expect.arrayContaining(['swsh12.5gg', 'swsh12.5']),
+    );
+    expect(buildTcgdexCardIdLookupCandidates('swsh12.5-GG64', 'it')).toEqual(
+      expect.arrayContaining(['swsh12.5gg-GG64', 'swsh12.5-GG64']),
     );
   });
 

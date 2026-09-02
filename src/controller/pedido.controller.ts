@@ -12,6 +12,7 @@ import {
 import { PedidoCreateDto, PedidoPatchDto } from 'src/Dto/pedido.dto';
 import { RequireFeature } from 'src/owner/feature-acl.guard';
 import { EnvioGeocodeService } from 'src/service/envio-geocode.service';
+import { PedidoAbonoService } from 'src/service/pedido-abono.service';
 import { PedidoService } from 'src/service/pedido.service';
 
 @Controller('pedido')
@@ -20,6 +21,7 @@ export class PedidoController {
   constructor(
     private readonly pedidoService: PedidoService,
     private readonly envioGeocode: EnvioGeocodeService,
+    private readonly pedidoAbonoService: PedidoAbonoService,
   ) {}
 
   @Get('tiendas')
@@ -47,6 +49,24 @@ export class PedidoController {
       return { ok: false as const, lat: null, lng: null };
     }
     return { ok: true as const, lat: point.lat, lng: point.lng };
+  }
+
+  @Get(':id/abonos')
+  listAbonos(@Param('id') id: string) {
+    return this.pedidoAbonoService.listAbonos(id);
+  }
+
+  @Post(':id/abonos')
+  createAbono(
+    @Param('id') id: string,
+    @Body() body: { amount_cop?: number },
+  ) {
+    return this.pedidoAbonoService.addAbono(id, body?.amount_cop);
+  }
+
+  @Delete(':id/abonos/:abonoId')
+  deleteAbono(@Param('id') id: string, @Param('abonoId') abonoId: string) {
+    return this.pedidoAbonoService.deleteAbono(id, abonoId);
   }
 
   @Get(':id')

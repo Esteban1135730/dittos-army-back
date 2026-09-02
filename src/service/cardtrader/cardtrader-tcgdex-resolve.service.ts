@@ -7,7 +7,7 @@ import {
   catalogLocaleForLanguage,
   adjustSetIdForCatalog,
   normalizeMangledAsiaSetId,
-  remapSetIdForTrainerGallery,
+  remapSetIdForGallerySubset,
   resolveKnownCardTraderPrint,
   tcgdexLocalIdWithBlueprintCollision,
   resolveSetFromLocaleAliases,
@@ -189,7 +189,7 @@ export class CardTraderTcgdexResolveService {
       };
     }
 
-    const tcgdex_set_id = remapSetIdForTrainerGallery(set.tcgdex_set_id, localId);
+    const tcgdex_set_id = remapSetIdForGallerySubset(set.tcgdex_set_id, localId);
     const collisionLocalId = tcgdexLocalIdWithBlueprintCollision(
       localId,
       args.blueprint_id,

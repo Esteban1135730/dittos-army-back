@@ -25,6 +25,17 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(regular.tcgdex_card_id).toBe('swsh11-75');
   });
 
+  it('resuelve Crown Zenith #GG64 → swsh12.5gg-GG64', async () => {
+    const hit = await service.resolveTcgdexCardId({
+      expansionName: 'Crown Zenith',
+      collectorNumber: 'GG64',
+      language: 'it',
+    });
+    expect(hit.tcgdex_set_id).toBe('swsh12.5gg');
+    expect(hit.tcgdex_card_id).toBe('swsh12.5gg-GG64');
+    expect(hit.error).toBeNull();
+  });
+
   it('resuelve EX Dragon Frontiers (it) #047 → ex15-47', async () => {
     const byName = await service.resolveTcgdexCardId({
       expansionName: 'EX Dragon Frontiers',

@@ -16,17 +16,23 @@ import { ReservaRepository } from 'src/repository/reserva.repository';
 import { StockRepository } from 'src/repository/stock.repository';
 import { ReservaDto } from 'src/Dto/reserva.dto';
 import { IncomingReservationService } from 'src/service/incoming-reservation.service';
+import { IncomingReservationAbonoService } from 'src/service/incoming-reservation-abono.service';
 import { PedidoService } from 'src/service/pedido.service';
 import { StoreWhatsAppReservationImportService } from 'src/service/store-whatsapp-reservation-import.service';
 import { StoreWhatsAppIncomingImportService } from 'src/service/store-whatsapp-incoming-import.service';
 import { isQuantityKind } from 'src/constants/bulk-product';
 import type { Stock } from 'src/schema/stock.schema';
+import { isValidObjectId } from 'mongoose';
 
 function reservaQty(quantity: number | undefined): number {
   if (typeof quantity === 'number' && Number.isInteger(quantity) && quantity >= 1) {
     return quantity;
   }
   return 1;
+}
+
+function existingPedidoTrimmed(reserva: { pedido_id?: string }): string {
+  return reserva.pedido_id?.trim() ?? '';
 }
 
 const ESTADO_RESERVA = 'reserva';
@@ -38,6 +44,7 @@ export class ReservaController {
     private readonly reservaRepository: ReservaRepository,
     private readonly stockRepository: StockRepository,
     private readonly incomingReservationService: IncomingReservationService,
+    private readonly incomingReservationAbonoService: IncomingReservationAbonoService,
     private readonly storeWhatsAppImportService: StoreWhatsAppReservationImportService,
     private readonly storeWhatsAppIncomingImportService: StoreWhatsAppIncomingImportService,
     private readonly pedidoService: PedidoService,
@@ -164,6 +171,43 @@ export class ReservaController {
     );
   }
 
+  @Get('incoming/client/:clientId/abonos')
+  async listIncomingAbonos(@Param('clientId') clientId: string) {
+    const id = clientId?.trim();
+    if (!id || !isValidObjectId(id)) {
+      throw new BadRequestException('clientId inválido');
+    }
+    return this.incomingReservationAbonoService.listAbonos(id);
+  }
+
+  @Post('incoming/client/:clientId/abonos')
+  async createIncomingAbono(
+    @Param('clientId') clientId: string,
+    @Body() body: { amount_cop?: number },
+  ) {
+    const id = clientId?.trim();
+    if (!id || !isValidObjectId(id)) {
+      throw new BadRequestException('clientId inválido');
+    }
+    return this.incomingReservationAbonoService.addAbono(id, body?.amount_cop);
+  }
+
+  @Delete('incoming/client/:clientId/abonos/:abonoId')
+  async deleteIncomingAbono(
+    @Param('clientId') clientId: string,
+    @Param('abonoId') abonoId: string,
+  ): Promise<{ success: boolean }> {
+    const cid = clientId?.trim();
+    const aid = abonoId?.trim();
+    if (!cid || !isValidObjectId(cid)) {
+      throw new BadRequestException('clientId inválido');
+    }
+    if (!aid || !isValidObjectId(aid)) {
+      throw new BadRequestException('abonoId inválido');
+    }
+    return this.incomingReservationAbonoService.deleteAbono(cid, aid);
+  }
+
   @Patch('incoming/:id')
   async patchReservaIncoming(
     @Param('id') id: string,
@@ -280,6 +324,9 @@ export class ReservaController {
     }
     if (existing) {
       const id = String((existing as { _id?: unknown })._id ?? '');
+      if (id && !existingPedidoTrimmed(existing)) {
+        await this.reservaRepository.setPedidoId(id, pedidoId);
+      }
       const updated = await this.reservaRepository.addQuantity(id, qty);
       return updated ?? existing;
     }

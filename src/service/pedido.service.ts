@@ -16,6 +16,7 @@ import {
 } from 'src/Dto/pedido.dto';
 import { ClientRepository } from 'src/repository/client.repository';
 import { PedidoRepository } from 'src/repository/pedido.repository';
+import { PedidoAbonoRepository } from 'src/repository/pedido-abono.repository';
 import { ReservaRepository } from 'src/repository/reserva.repository';
 import { SaleRepository } from 'src/repository/sale.repository';
 import { StockRepository } from 'src/repository/stock.repository';
@@ -68,6 +69,7 @@ export class PedidoService {
     private readonly stockRepository: StockRepository,
     private readonly saleRepository: SaleRepository,
     private readonly cardStockTagRepository: CardStockTagRepository,
+    private readonly pedidoAbonoRepository: PedidoAbonoRepository,
   ) {}
 
   listTiendas() {
@@ -203,6 +205,7 @@ export class PedidoService {
       ...entrega,
       fecha_tentativa_entrega: fecha,
     });
+    await this.attachOrphansToPedido(clientId, String(created._id));
     return this.toResponse(created);
   }
 
@@ -212,12 +215,23 @@ export class PedidoService {
     if (!client) {
       throw new NotFoundException('Cliente no encontrado');
     }
+    const reservado =
+      await this.pedidoRepository.findReservadoByClientId(id);
+    if (reservado) {
+      await this.attachOrphansToPedido(id, String(reservado._id));
+    }
     const pedidos = await this.pedidoRepository.findByClientId(id);
     return Promise.all(pedidos.map((p) => this.toResponse(p)));
   }
 
   async getById(id: string): Promise<PedidoResponseDto> {
     const pedido = await this.requirePedido(id);
+    if (pedido.status === 'reservado') {
+      await this.attachOrphansToPedido(
+        pedido.client_id,
+        String(pedido._id),
+      );
+    }
     return this.toResponse(pedido);
   }
 
@@ -273,9 +287,9 @@ export class PedidoService {
     if (pedido.status !== 'reservado') {
       throw new ConflictException('Solo se puede cancelar un pedido reservado');
     }
-    const reservas = await this.reservaRepository.findByPedidoId(
-      String(pedido._id),
-    );
+    const pedidoId = String(pedido._id);
+    await this.attachOrphansToPedido(pedido.client_id, pedidoId);
+    const reservas = await this.reservaRepository.findByPedidoId(pedidoId);
     for (const reserva of reservas) {
       const stock = await this.stockRepository.findById(reserva.stock_id);
       const reservaId = String((reserva as { _id?: unknown })._id ?? '');
@@ -299,6 +313,7 @@ export class PedidoService {
       );
     }
     await this.pedidoRepository.deleteById(String(pedido._id));
+    await this.pedidoAbonoRepository.deleteByPedidoId(pedidoId);
     return { success: true };
   }
 
@@ -307,9 +322,9 @@ export class PedidoService {
     if (pedido.status !== 'reservado') {
       throw new ConflictException('Solo se puede pagar un pedido reservado');
     }
-    const reservas = await this.reservaRepository.findByPedidoId(
-      String(pedido._id),
-    );
+    const pedidoId = String(pedido._id);
+    await this.attachOrphansToPedido(pedido.client_id, pedidoId);
+    const reservas = await this.reservaRepository.findByPedidoId(pedidoId);
     if (!reservas.length) {
       throw new BadRequestException('El pedido no tiene líneas');
     }
@@ -400,13 +415,22 @@ export class PedidoService {
           'Crea o reabre un pedido reservado',
         );
       }
+      await this.attachOrphansToPedido(cid, String(pedido._id));
       return pedido;
     }
     const open = await this.pedidoRepository.findReservadoByClientId(cid);
     if (!open) {
       throw new ConflictException('Crea o reabre un pedido reservado');
     }
+    await this.attachOrphansToPedido(cid, String(open._id));
     return open;
+  }
+
+  private async attachOrphansToPedido(
+    clientId: string,
+    pedidoId: string,
+  ): Promise<void> {
+    await this.reservaRepository.attachOrphansToPedido(clientId, pedidoId);
   }
 
   async assertReservaLineMutable(reserva: Reserva & { pedido_id?: string }) {

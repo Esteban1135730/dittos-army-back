@@ -4,6 +4,15 @@ import { OwnerModelsService } from '../owner/owner-models.service';
 import { Model } from 'mongoose';
 import { ReservaDto } from 'src/Dto/reserva.dto';
 
+/** Reservas de stock que nunca se ligaron a un Pedido (legado o materializadas desde incoming). */
+export const RESERVA_ORPHAN_PEDIDO_QUERY = {
+  $or: [
+    { pedido_id: { $exists: false } },
+    { pedido_id: null },
+    { pedido_id: '' },
+  ],
+};
+
 @Injectable()
 export class ReservaRepository {
   constructor(private readonly ownerModels: OwnerModelsService) {}
@@ -37,6 +46,32 @@ export class ReservaRepository {
     return this.reservaModel
       .find({ pedido_id: pedidoId })
       .sort({ created_at: -1 })
+      .exec();
+  }
+
+  /** Liga reservas sin `pedido_id` del cliente al pedido reservado. */
+  async attachOrphansToPedido(
+    clientId: string,
+    pedidoId: string,
+  ): Promise<number> {
+    if (!clientId?.trim() || !pedidoId?.trim()) return 0;
+    const result = await this.reservaModel
+      .updateMany(
+        { client_id: clientId, ...RESERVA_ORPHAN_PEDIDO_QUERY },
+        { $set: { pedido_id: pedidoId, updated_at: new Date() } },
+      )
+      .exec();
+    return result.modifiedCount ?? 0;
+  }
+
+  async setPedidoId(id: string, pedidoId: string): Promise<Reserva | null> {
+    if (!id?.trim() || !pedidoId?.trim()) return null;
+    return this.reservaModel
+      .findByIdAndUpdate(
+        id,
+        { $set: { pedido_id: pedidoId, updated_at: new Date() } },
+        { new: true },
+      )
       .exec();
   }
 

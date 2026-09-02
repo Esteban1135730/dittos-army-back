@@ -10,6 +10,7 @@ import { CardtraderTransitLotRepository } from '../repository/cardtrader-transit
 import { ReservaRepository } from '../repository/reserva.repository';
 import { StockRepository } from '../repository/stock.repository';
 import { PvpRepository } from '../repository/pvp.repository';
+import { PedidoRepository } from '../repository/pedido.repository';
 import {
   effectiveOperationalRarezaFromStock,
   groupPvpsByCardId,
@@ -57,6 +58,7 @@ export class IncomingReservationService {
     private readonly reservaRepository: ReservaRepository,
     private readonly stockRepository: StockRepository,
     private readonly pvpRepository: PvpRepository,
+    private readonly pedidoRepository: PedidoRepository,
   ) {}
 
   /**
@@ -74,6 +76,7 @@ export class IncomingReservationService {
     ];
     const pvps = await this.pvpRepository.findByCardIds(cardIds);
     const pvpMap = groupPvpsByCardId(pvps as any);
+    const pedidoIdByClient = new Map<string, string | null>();
 
     for (let i = 0; i < createdStocks.length; i++) {
       const stockDoc = createdStocks[i];
@@ -94,14 +97,32 @@ export class IncomingReservationService {
         precioCop = precioToCop(resolved.pvp, resolved.pvp_currency);
       }
 
+      const pedidoId = await this.reservadoPedidoIdForClient(
+        slot.client_id,
+        pedidoIdByClient,
+      );
       await this.reservaRepository.create({
         client_id: slot.client_id,
         stock_id: stockId,
         precio: precioCop,
         currency,
+        ...(pedidoId ? { pedido_id: pedidoId } : {}),
       });
       await this.stockRepository.updateCardState(stockId, 'reserva');
     }
+  }
+
+  private async reservadoPedidoIdForClient(
+    clientId: string,
+    cache: Map<string, string | null>,
+  ): Promise<string | undefined> {
+    if (cache.has(clientId)) {
+      return cache.get(clientId) ?? undefined;
+    }
+    const open = await this.pedidoRepository.findReservadoByClientId(clientId);
+    const id = open ? String(open._id) : null;
+    cache.set(clientId, id);
+    return id ?? undefined;
   }
 
   async addQuantity(
@@ -272,6 +293,7 @@ export class IncomingReservationService {
       remaining_quantity?: number;
       language?: string;
       precio_cop?: number | null;
+      unit_cost_cop?: number | null;
     }>
   > {
     const rows = await this.reservaIncomingRepo.findAll(clientId);
@@ -297,6 +319,10 @@ export class IncomingReservationService {
         remaining_quantity: tl?.remaining_quantity,
         language: tl?.language,
         precio_cop: r.precio_cop ?? null,
+        unit_cost_cop:
+          typeof tl?.unit_cost_cop === 'number' && Number.isFinite(tl.unit_cost_cop)
+            ? tl.unit_cost_cop
+            : null,
       };
     });
   }

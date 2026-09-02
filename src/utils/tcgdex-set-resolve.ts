@@ -181,6 +181,15 @@ export function isTrainerGalleryLocalId(localId: string | null | undefined): boo
   return /^TG\d+/i.test(String(localId ?? '').trim());
 }
 
+/** CardTrader lista Galarian Gallery bajo Crown Zenith (#GG64). */
+const SWSH_GALARIAN_GALLERY_BY_PARENT: Record<string, string> = {
+  'swsh12.5': 'swsh12.5gg',
+};
+
+export function isGalarianGalleryLocalId(localId: string | null | undefined): boolean {
+  return /^GG\d+/i.test(String(localId ?? '').trim());
+}
+
 /** Sufijo de colisión CardTrader: `{localId}_{blueprintId}` (p. ej. M2a-205_360075). */
 const BLUEPRINT_COLLISION_SUFFIX = /_(\d{5,})$/;
 
@@ -294,6 +303,27 @@ export function remapSetIdForTrainerGallery(
   return SWSH_TRAINER_GALLERY_BY_PARENT[lower] ?? setId;
 }
 
+/** swsh12.5 + GG64 → swsh12.5gg (Crown Zenith Galarian Gallery). */
+export function remapSetIdForGalarianGallery(
+  setId: string,
+  localId: string | null | undefined,
+): string {
+  if (!isGalarianGalleryLocalId(localId)) return setId;
+  const lower = setId.trim().toLowerCase();
+  return SWSH_GALARIAN_GALLERY_BY_PARENT[lower] ?? setId;
+}
+
+/** Subset TG/GG de un set padre SWSH (orden: TG primero, luego GG). */
+export function remapSetIdForGallerySubset(
+  setId: string,
+  localId: string | null | undefined,
+): string {
+  return remapSetIdForGalarianGallery(
+    remapSetIdForTrainerGallery(setId, localId),
+    localId,
+  );
+}
+
 /** Local `swsh11.5tg` vs producción `swsh11tg`, más el padre `swsh11`. */
 export function trainerGallerySetIdAliases(setId: string): string[] {
   const trimmed = setId.trim();
@@ -325,6 +355,28 @@ export function trainerGallerySetIdAliases(setId: string): string[] {
     push(gallery);
     push(gallery.replace('.5tg', 'tg'));
   }
+  return aliases;
+}
+
+/** Local `swsh12.5gg` y el padre `swsh12.5`. */
+export function galarianGallerySetIdAliases(setId: string): string[] {
+  const trimmed = setId.trim();
+  if (!trimmed) return [];
+  const lower = trimmed.toLowerCase();
+  const aliases = [trimmed];
+  const push = (id: string) => {
+    if (id && !aliases.some((x) => x.toLowerCase() === id.toLowerCase())) {
+      aliases.push(id);
+    }
+  };
+
+  if (/^swsh12\.5gg$/i.test(lower)) {
+    push('swsh12.5gg');
+    push('swsh12.5');
+    return aliases;
+  }
+  const gallery = SWSH_GALARIAN_GALLERY_BY_PARENT[lower];
+  if (gallery) push(gallery);
   return aliases;
 }
 
@@ -385,7 +437,7 @@ export function buildTcgdexCardIdLookupCandidates(
   const rawSetId = trimmed.slice(0, dash);
   const localId = trimmed.slice(dash + 1);
   const setId = normalizeMangledAsiaSetId(rawSetId);
-  const remappedSetId = remapSetIdForTrainerGallery(setId, localId);
+  const remappedSetId = remapSetIdForGallerySubset(setId, localId);
   const strippedLocalId = stripBlueprintCollisionLocalId(localId);
   const ordered: string[] = [];
   const push = (id: string) => {
@@ -403,6 +455,8 @@ export function buildTcgdexCardIdLookupCandidates(
     remappedSetId,
     ...trainerGallerySetIdAliases(remappedSetId),
     ...trainerGallerySetIdAliases(setId),
+    ...galarianGallerySetIdAliases(remappedSetId),
+    ...galarianGallerySetIdAliases(setId),
     rawSetId,
   ];
 

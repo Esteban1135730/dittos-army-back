@@ -3,6 +3,7 @@ import { ReservaController } from './reserva.controller';
 import { ReservaRepository } from 'src/repository/reserva.repository';
 import { StockRepository } from 'src/repository/stock.repository';
 import { IncomingReservationService } from 'src/service/incoming-reservation.service';
+import { IncomingReservationAbonoService } from 'src/service/incoming-reservation-abono.service';
 import { StoreWhatsAppReservationImportService } from 'src/service/store-whatsapp-reservation-import.service';
 import { StoreWhatsAppIncomingImportService } from 'src/service/store-whatsapp-incoming-import.service';
 import { PedidoService } from 'src/service/pedido.service';
@@ -18,6 +19,7 @@ describe('ReservaController quantity products', () => {
     findByStockId: jest.Mock;
     findByClientAndStockId: jest.Mock;
     addQuantity: jest.Mock;
+    setPedidoId: jest.Mock;
     deleteById: jest.Mock;
     deleteByStockId: jest.Mock;
     findByClientId: jest.Mock;
@@ -40,6 +42,7 @@ describe('ReservaController quantity products', () => {
       findByStockId: jest.fn(),
       findByClientAndStockId: jest.fn().mockResolvedValue(null),
       addQuantity: jest.fn(),
+      setPedidoId: jest.fn(),
       deleteById: jest.fn().mockResolvedValue(true),
       deleteByStockId: jest.fn().mockResolvedValue(true),
       findByClientId: jest.fn(),
@@ -65,6 +68,7 @@ describe('ReservaController quantity products', () => {
         { provide: ReservaRepository, useValue: reservaRepository },
         { provide: StockRepository, useValue: stockRepository },
         { provide: IncomingReservationService, useValue: {} },
+        { provide: IncomingReservationAbonoService, useValue: {} },
         { provide: StoreWhatsAppReservationImportService, useValue: {} },
         { provide: StoreWhatsAppIncomingImportService, useValue: {} },
         { provide: PedidoService, useValue: pedidoService },
@@ -158,6 +162,49 @@ describe('ReservaController quantity products', () => {
 
     expect(reservaRepository.create).not.toHaveBeenCalled();
     expect(reservaRepository.addQuantity).toHaveBeenCalledWith('res1', 2);
+    expect((res as { quantity?: number }).quantity).toBe(4);
+  });
+
+  it('si hay reserva bulk huérfana del mismo cliente, la liga al pedido y suma', async () => {
+    stockRepository.findById.mockResolvedValue({
+      _id: stockId,
+      card_id: 'da-bulk',
+      card_state: 'disponible',
+      product_kind: 'quantity',
+      quantity: 10,
+    });
+    stockRepository.decrementQuantityAtomic.mockResolvedValue({
+      quantity: 8,
+      product_kind: 'quantity',
+    });
+    reservaRepository.findByClientAndStockId.mockResolvedValue({
+      _id: 'res-orphan',
+      client_id: clientId,
+      stock_id: stockId,
+      quantity: 2,
+    });
+    reservaRepository.setPedidoId.mockResolvedValue({
+      _id: 'res-orphan',
+      pedido_id: pedidoId,
+    });
+    reservaRepository.addQuantity.mockResolvedValue({
+      _id: 'res-orphan',
+      quantity: 4,
+      pedido_id: pedidoId,
+    });
+
+    const res = await controller.create({
+      client_id: clientId,
+      stock_id: stockId,
+      precio: 2000,
+      quantity: 2,
+    });
+
+    expect(reservaRepository.setPedidoId).toHaveBeenCalledWith(
+      'res-orphan',
+      pedidoId,
+    );
+    expect(reservaRepository.create).not.toHaveBeenCalled();
     expect((res as { quantity?: number }).quantity).toBe(4);
   });
 

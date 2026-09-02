@@ -19,12 +19,17 @@ import {
   ReservaIncoming,
   ReservaIncomingSchema,
 } from './schema/reserva-incoming.schema';
+import {
+  ReservaIncomingAbono,
+  ReservaIncomingAbonoSchema,
+} from './schema/reserva-incoming-abono.schema';
 import { PvpRepository } from './repository/pvp.repository';
 import { Sale, SaleSchema } from './schema/sale.schema';
 import { SaleRepository } from './repository/sale.repository';
 import { ClientRepository } from './repository/client.repository';
 import { ReservaRepository } from './repository/reserva.repository';
 import { ReservaIncomingRepository } from './repository/reserva-incoming.repository';
+import { ReservaIncomingAbonoRepository } from './repository/reserva-incoming-abono.repository';
 import { IncomingBatchRepository } from './repository/incoming-batch.repository';
 import { IncomingBatchItemRepository } from './repository/incoming-batch-item.repository';
 import { IncomingRoundRepository } from './repository/incoming-round.repository';
@@ -36,6 +41,7 @@ import { StoreInventoryService } from './service/store-inventory.service';
 import { OpenedSealedStockService } from './service/opened-sealed-stock.service';
 import { PvpCardRowsService } from './service/pvp-card-rows.service';
 import { IncomingReservationService } from './service/incoming-reservation.service';
+import { IncomingReservationAbonoService } from './service/incoming-reservation-abono.service';
 import { StoreWhatsAppReservationImportService } from './service/store-whatsapp-reservation-import.service';
 import { StoreWhatsAppIncomingImportService } from './service/store-whatsapp-incoming-import.service';
 import { StockController } from './controller/stock.controller';
@@ -143,13 +149,19 @@ import {
 } from './schema/cardtrader-receipt-line.schema';
 import { Pedido, PedidoSchema } from './schema/pedido.schema';
 import {
+  PedidoAbono,
+  PedidoAbonoSchema,
+} from './schema/pedido-abono.schema';
+import {
   CardtraderQuoteSession,
   CardtraderQuoteSessionSchema,
 } from './schema/cardtrader-quote-session.schema';
 import { CardtraderQuoteSessionRepository } from './repository/cardtrader-quote-session.repository';
 import { CardTraderQuoteSessionService } from './service/cardtrader/cardtrader-quote-session.service';
 import { PedidoRepository } from './repository/pedido.repository';
+import { PedidoAbonoRepository } from './repository/pedido-abono.repository';
 import { PedidoService } from './service/pedido.service';
+import { PedidoAbonoService } from './service/pedido-abono.service';
 import { EnvioGeocodeService } from './service/envio-geocode.service';
 import { PedidoController } from './controller/pedido.controller';
 
@@ -161,6 +173,7 @@ const MONGOOSE_FEATURE_MODELS = [
   { name: Client.name, schema: ClientSchema },
   { name: Reserva.name, schema: ReservaSchema },
   { name: ReservaIncoming.name, schema: ReservaIncomingSchema },
+  { name: ReservaIncomingAbono.name, schema: ReservaIncomingAbonoSchema },
   { name: IncomingBatch.name, schema: IncomingBatchSchema },
   { name: IncomingBatchItem.name, schema: IncomingBatchItemSchema },
   { name: IncomingRound.name, schema: IncomingRoundSchema },
@@ -190,6 +203,7 @@ const MONGOOSE_FEATURE_MODELS = [
     schema: CardtraderReceiptLineSchema,
   },
   { name: Pedido.name, schema: PedidoSchema },
+  { name: PedidoAbono.name, schema: PedidoAbonoSchema },
   {
     name: CardtraderQuoteSession.name,
     schema: CardtraderQuoteSessionSchema,
@@ -226,6 +240,7 @@ const MONGOOSE_FEATURE_MODELS = [
     OpenedSealedStockService,
     PvpCardRowsService,
     IncomingReservationService,
+    IncomingReservationAbonoService,
     StoreWhatsAppReservationImportService,
     StoreWhatsAppIncomingImportService,
     StockRepository,
@@ -235,6 +250,7 @@ const MONGOOSE_FEATURE_MODELS = [
     ClientRepository,
     ReservaRepository,
     ReservaIncomingRepository,
+    ReservaIncomingAbonoRepository,
     IncomingBatchRepository,
     IncomingBatchItemRepository,
     IncomingRoundRepository,
@@ -263,7 +279,9 @@ const MONGOOSE_FEATURE_MODELS = [
     CardtraderReceiptSessionRepository,
     CardtraderReceiptLineRepository,
     PedidoRepository,
+    PedidoAbonoRepository,
     PedidoService,
+    PedidoAbonoService,
     EnvioGeocodeService,
     CardtraderQuoteSessionRepository,
     CardTraderQuoteSessionService,
