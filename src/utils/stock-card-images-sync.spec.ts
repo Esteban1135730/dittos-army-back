@@ -7,6 +7,8 @@ import {
   pickDownloadUrl,
   publicCardImagesPath,
   rewriteImageUrlIfLocalhostOrEmpty,
+  rewriteImageUrlToCloudIfLocalCache,
+  shouldCacheLocalImage,
 } from './stock-card-images-sync';
 
 describe('stock-card-images-sync helpers', () => {
@@ -32,7 +34,7 @@ describe('stock-card-images-sync helpers', () => {
       ).toBe(true);
     });
 
-    it('excluye vendida, da-bulk y quantity sin stock', () => {
+    it('excluye vendida, SKUs sintéticos y quantity sin stock', () => {
       expect(
         isActiveStockForImageCache({
           card_id: 'swsh3-136',
@@ -42,6 +44,30 @@ describe('stock-card-images-sync helpers', () => {
       expect(
         isActiveStockForImageCache({
           card_id: 'da-bulk',
+          card_state: 'disponible',
+          product_kind: 'quantity',
+          quantity: 99,
+        }),
+      ).toBe(false);
+      expect(
+        isActiveStockForImageCache({
+          card_id: 'da-envio',
+          card_state: 'disponible',
+          product_kind: 'quantity',
+          quantity: 99,
+        }),
+      ).toBe(false);
+      expect(
+        isActiveStockForImageCache({
+          card_id: 'da-domicilio',
+          card_state: 'disponible',
+          product_kind: 'quantity',
+          quantity: 99,
+        }),
+      ).toBe(false);
+      expect(
+        isActiveStockForImageCache({
+          card_id: 'da-proteccion-cartas',
           card_state: 'disponible',
           product_kind: 'quantity',
           quantity: 99,
@@ -95,6 +121,45 @@ describe('stock-card-images-sync helpers', () => {
         rewriteImageUrlIfLocalhostOrEmpty(
           'https://assets.tcgdex.net/en/swsh3/136/low.png',
           'swsh3/swsh3-136.png',
+        ),
+      ).toBeUndefined();
+    });
+  });
+
+  describe('shouldCacheLocalImage', () => {
+    it('cachea solo si la nube no tiene URL pública', () => {
+      expect(
+        shouldCacheLocalImage('https://assets.tcgdex.net/en/sv04/236/low.png'),
+      ).toBe(false);
+      expect(shouldCacheLocalImage(undefined)).toBe(true);
+      expect(shouldCacheLocalImage('')).toBe(true);
+      expect(
+        shouldCacheLocalImage('http://localhost:3000/card-images/a.png'),
+      ).toBe(true);
+    });
+  });
+
+  describe('rewriteImageUrlToCloudIfLocalCache', () => {
+    const cloud = 'https://assets.tcgdex.net/en/sv04/236/low.png';
+
+    it('pasa vacío y /card-images al CDN', () => {
+      expect(rewriteImageUrlToCloudIfLocalCache('', cloud)).toBe(cloud);
+      expect(
+        rewriteImageUrlToCloudIfLocalCache('/card-images/sv04/sv04-236.png', cloud),
+      ).toBe(cloud);
+      expect(
+        rewriteImageUrlToCloudIfLocalCache(
+          'http://localhost:3000/card-images/sv04/sv04-236.png',
+          cloud,
+        ),
+      ).toBe(cloud);
+    });
+
+    it('no pisa CardTrader u otra URL pública', () => {
+      expect(
+        rewriteImageUrlToCloudIfLocalCache(
+          'https://www.cardtrader.com/uploads/blueprints/image.jpg',
+          cloud,
         ),
       ).toBeUndefined();
     });

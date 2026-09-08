@@ -3,7 +3,7 @@ import {
   Logger,
   OnApplicationBootstrap,
 } from '@nestjs/common';
-import { isBulkCardId } from '../../constants/bulk-product';
+import { isSyntheticQuantityCardId } from '../../constants/bulk-product';
 import { OWNERS_CONFIG, type OwnerKey } from '../../config/owners.config';
 import { runWithOwnerAsync } from '../../owner/owner-context';
 import { StockRepository } from '../../repository/stock.repository';
@@ -20,6 +20,7 @@ import {
   mapWithConcurrency,
   pickDownloadUrl,
   rewriteImageUrlIfLocalhostOrEmpty,
+  rewriteImageUrlToCloudIfLocalCache,
 } from '../../utils/stock-card-images-sync';
 import {
   inferSetIdFromCardId,
@@ -40,6 +41,8 @@ type EnsureLocalResult = {
   copied: boolean;
   downloaded: boolean;
   failed: boolean;
+  skippedCloud: boolean;
+  prunedCloud: boolean;
 };
 
 @Injectable()
@@ -69,6 +72,8 @@ export class StockCardImagesSyncService implements OnApplicationBootstrap {
       let downloaded = 0;
       let copied = 0;
       let failed = 0;
+      let skippedCloud = 0;
+      let prunedCloud = 0;
 
       await mapWithConcurrency(
         cardIds,
@@ -79,6 +84,8 @@ export class StockCardImagesSyncService implements OnApplicationBootstrap {
           if (result.copied) copied += 1;
           if (result.downloaded) downloaded += 1;
           if (result.failed) failed += 1;
+          if (result.skippedCloud) skippedCloud += 1;
+          if (result.prunedCloud) prunedCloud += 1;
           if (result.relative) {
             await this.rewriteLocalhostImageUrls(refs, result.relative);
           }
@@ -86,7 +93,7 @@ export class StockCardImagesSyncService implements OnApplicationBootstrap {
       );
 
       this.logger.log(
-        `Caché imágenes stock: scanned=${cardIds.length} downloaded=${downloaded} copied=${copied} pruned=${pruned} failed=${failed}`,
+        `Caché imágenes stock: scanned=${cardIds.length} downloaded=${downloaded} copied=${copied} skippedCloud=${skippedCloud} prunedCloud=${prunedCloud} prunedOrphans=${pruned} failed=${failed}`,
       );
     } catch (err) {
       this.logger.error(
@@ -98,7 +105,7 @@ export class StockCardImagesSyncService implements OnApplicationBootstrap {
   async pruneIfCardUnused(cardId: string): Promise<void> {
     try {
       const id = cardId?.trim();
-      if (!id || isBulkCardId(id)) return;
+      if (!id || isSyntheticQuantityCardId(id)) return;
       if (await this.cardIdIsActiveAnywhere(id)) return;
       this.localCardImages.deleteFilesForCardId(id);
     } catch (err) {
@@ -171,6 +178,51 @@ export class StockCardImagesSyncService implements OnApplicationBootstrap {
   ): Promise<EnsureLocalResult> {
     const language = refs.find((r) => r.language)?.language ?? 'en';
     const setId = inferSetIdFromCardId(cardId);
+    const none: EnsureLocalResult = {
+      copied: false,
+      downloaded: false,
+      failed: false,
+      skippedCloud: false,
+      prunedCloud: false,
+    };
+
+    let cloudUrl: string | undefined;
+    let cloudStatus: 'found' | 'missing' | 'error' = 'missing';
+    try {
+      const lookup = await this.tcgDexService.lookupProductionCardImage(
+        cardId,
+        language,
+      );
+      cloudStatus = lookup.status;
+      if (lookup.status === 'found') cloudUrl = lookup.url;
+    } catch (err) {
+      cloudStatus = 'error';
+      this.logger.warn(
+        `TCGdex nube falló para ${cardId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+
+    if (cloudStatus === 'error') {
+      this.logger.warn(
+        `TCGdex nube no consultable para ${cardId}; no se cachea (evitar bajar todo el stock)`,
+      );
+      return none;
+    }
+
+    if (cloudStatus === 'found') {
+      const hadLocal = Boolean(
+        this.localCardImages.findRelativePath(cardId, language, setId),
+      );
+      if (hadLocal) {
+        this.localCardImages.deleteFilesForCardId(cardId);
+      }
+      await this.rewriteLocalCacheUrlsToCloud(refs, cloudUrl);
+      return {
+        ...none,
+        skippedCloud: true,
+        prunedCloud: hadLocal,
+      };
+    }
 
     const existing = this.localCardImages.findRelativePath(
       cardId,
@@ -178,7 +230,7 @@ export class StockCardImagesSyncService implements OnApplicationBootstrap {
       setId,
     );
     if (existing) {
-      return { relative: existing, copied: false, downloaded: false, failed: false };
+      return { ...none, relative: existing };
     }
 
     const copied = this.localCardImages.copyFromLegacyIfPresent(
@@ -187,42 +239,38 @@ export class StockCardImagesSyncService implements OnApplicationBootstrap {
       setId,
     );
     if (copied) {
-      return { relative: copied, copied: true, downloaded: false, failed: false };
+      return { ...none, relative: copied, copied: true };
     }
 
     const stockUrl = refs.map((r) => pickDownloadUrl(r.image_url)).find(Boolean);
     if (stockUrl) {
       const saved = await this.downloadToCache(cardId, setId, stockUrl);
       if (saved) {
-        return { relative: saved, copied: false, downloaded: true, failed: false };
+        return { ...none, relative: saved, downloaded: true };
       }
     }
 
-    try {
-      const remote = await this.tcgDexService.getRemoteStoreCardImageUrl(
-        cardId,
-        language,
-      );
-      const remoteUrl = pickDownloadUrl(remote);
-      if (remoteUrl) {
-        const saved = await this.downloadToCache(cardId, setId, remoteUrl);
-        if (saved) {
-          return {
-            relative: saved,
-            copied: false,
-            downloaded: true,
-            failed: false,
-          };
-        }
-      }
-    } catch (err) {
-      this.logger.warn(
-        `TCGdex no devolvió imagen para ${cardId}: ${err instanceof Error ? err.message : String(err)}`,
-      );
-    }
+    this.logger.warn(`Sin imagen local para card_id=${cardId} (ausente en TCGdex nube)`);
+    return { ...none, failed: true };
+  }
 
-    this.logger.warn(`Sin imagen local para card_id=${cardId}`);
-    return { copied: false, downloaded: false, failed: true };
+  private async rewriteLocalCacheUrlsToCloud(
+    refs: StockImageRef[],
+    cloudUrl: string | undefined,
+  ): Promise<void> {
+    for (const ref of refs) {
+      const next = rewriteImageUrlToCloudIfLocalCache(ref.image_url, cloudUrl);
+      if (!next || next === ref.image_url.trim()) continue;
+      try {
+        await runWithOwnerAsync(ref.owner, () =>
+          this.stockRepository.updateById(ref.id, { image_url: next }),
+        );
+      } catch (err) {
+        this.logger.warn(
+          `No se pudo actualizar image_url de ${ref.id}: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    }
   }
 
   private async downloadToCache(

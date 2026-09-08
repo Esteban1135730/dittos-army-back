@@ -25,6 +25,9 @@ describe('StockCardImagesSyncService', () => {
       updateById: jest.fn().mockResolvedValue({}),
     };
     const tcgDexService = {
+      lookupProductionCardImage: jest
+        .fn()
+        .mockResolvedValue({ status: 'missing' }),
       getRemoteStoreCardImageUrl: jest.fn().mockResolvedValue(undefined),
     };
     const service = new StockCardImagesSyncService(
@@ -55,7 +58,7 @@ describe('StockCardImagesSyncService', () => {
     jest.useRealTimers();
   });
 
-  it('descarga cuando falta archivo y no re-descarga si ya existe', async () => {
+  it('descarga solo si TCGdex nube no tiene arte, y no re-descarga si ya existe', async () => {
     const { service, root, stockRepository, tcgDexService } = createHarness();
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
@@ -76,14 +79,66 @@ describe('StockCardImagesSyncService', () => {
     await service.syncInBackground();
     expect(existsSync(join(root, 'swsh3', 'swsh3-136.png'))).toBe(true);
     expect(fetchMock).toHaveBeenCalled();
+    expect(tcgDexService.lookupProductionCardImage).toHaveBeenCalled();
     const firstCalls = fetchMock.mock.calls.length;
 
     fetchMock.mockClear();
-    tcgDexService.getRemoteStoreCardImageUrl.mockClear();
+    tcgDexService.lookupProductionCardImage.mockClear();
     await service.syncInBackground();
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(tcgDexService.getRemoteStoreCardImageUrl).not.toHaveBeenCalled();
+    expect(tcgDexService.lookupProductionCardImage).toHaveBeenCalled();
     expect(firstCalls).toBeGreaterThan(0);
+  });
+
+  it('no cachea ni conserva archivo si TCGdex nube resuelve la imagen', async () => {
+    const { service, local, root, stockRepository, tcgDexService } =
+      createHarness();
+    local.saveBuffer('sv04/sv04-236.png', PNG);
+    tcgDexService.lookupProductionCardImage.mockResolvedValue({
+      status: 'found',
+      url: 'https://assets.tcgdex.net/en/sv04/236/low.png',
+    });
+    stockRepository.findAll.mockResolvedValue([
+      {
+        _id: '1',
+        card_id: 'sv04-236',
+        card_state: 'disponible',
+        image_url: '/card-images/sv04/sv04-236.png',
+      },
+    ]);
+
+    const fetchMock = jest.fn();
+    global.fetch = fetchMock as typeof fetch;
+
+    await service.syncInBackground();
+    expect(existsSync(join(root, 'sv04', 'sv04-236.png'))).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(stockRepository.updateById).toHaveBeenCalledWith('1', {
+      image_url: 'https://assets.tcgdex.net/en/sv04/236/low.png',
+    });
+  });
+
+  it('si TCGdex nube falla no descarga el stock entero', async () => {
+    const { service, local, root, stockRepository, tcgDexService } =
+      createHarness();
+    local.saveBuffer('sv04/sv04-236.png', PNG);
+    tcgDexService.lookupProductionCardImage.mockResolvedValue({
+      status: 'error',
+    });
+    stockRepository.findAll.mockResolvedValue([
+      {
+        _id: '1',
+        card_id: 'sv04-236',
+        card_state: 'disponible',
+        image_url: 'https://cdn.example/sv04-236.png',
+      },
+    ]);
+    const fetchMock = jest.fn();
+    global.fetch = fetchMock as typeof fetch;
+
+    await service.syncInBackground();
+    expect(existsSync(join(root, 'sv04', 'sv04-236.png'))).toBe(true);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('poda archivos cuyo card_id ya no está activo', async () => {

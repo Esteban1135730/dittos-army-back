@@ -9,7 +9,7 @@ import {
   writeFileSync,
 } from 'fs';
 import { basename, dirname, extname, join, relative } from 'path';
-import { isBulkCardId } from '../../constants/bulk-product';
+import { isSyntheticQuantityCardId } from '../../constants/bulk-product';
 import { isCardImagesMetaFile } from '../../utils/stock-card-images-sync';
 import { sanitizeRelativeAssetPath } from '../../utils/store-image-localize';
 
@@ -389,7 +389,7 @@ export class LocalCardImagesService implements OnModuleInit {
 
   deleteFilesForCardId(cardId: string): number {
     const id = cardId?.trim();
-    if (!id || isBulkCardId(id)) return 0;
+    if (!id || isSyntheticQuantityCardId(id)) return 0;
     const root = this.getImagesRoot();
     if (!existsSync(root)) return 0;
 

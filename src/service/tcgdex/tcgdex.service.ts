@@ -408,59 +408,95 @@ export class TCGDexService {
     cardId: string,
     locale?: string,
   ): Promise<string | undefined> {
-    if (!cardId || typeof cardId !== 'string') return undefined;
+    const lookup = await this.lookupProductionCardImage(cardId, locale);
+    return lookup.status === 'found' ? lookup.url : undefined;
+  }
+
+  /**
+   * Distingue carta con arte en **nube** vs 404 vs error de red.
+   * No usa el endpoint TCGdex local (`TCGDEX_PORT`).
+   */
+  async lookupProductionCardImage(
+    cardId: string,
+    locale?: string,
+  ): Promise<
+    | { status: 'found'; url: string }
+    | { status: 'missing' }
+    | { status: 'error' }
+  > {
+    if (!cardId || typeof cardId !== 'string') return { status: 'missing' };
     const id = cardId.trim();
-    if (!id) return undefined;
+    if (!id) return { status: 'missing' };
 
     const preferredLocale = this.normalizeLocale(locale);
     const candidates = buildTcgdexCardIdLookupCandidates(id, locale);
+    let sawError = false;
     for (const tryLocale of buildCardLocaleFallbackChain(preferredLocale)) {
       for (const candidateId of candidates) {
-        const image = await this.fetchRemoteStoreImageForLocale(
+        const hit = await this.fetchProductionImageStatus(
           candidateId,
           tryLocale,
         );
-        if (image) return image;
+        if (hit.status === 'found') return hit;
+        if (hit.status === 'error') sawError = true;
       }
     }
-    return undefined;
+    if (sawError) return { status: 'error' };
+    return { status: 'missing' };
+  }
+
+  private async fetchProductionImageStatus(
+    id: string,
+    normalizedLocale: TcgDexLocale,
+  ): Promise<
+    | { status: 'found'; url: string }
+    | { status: 'missing' }
+    | { status: 'error' }
+  > {
+    const cacheKey = `remote-store-img-status:${normalizedLocale}:${id}`;
+    const cached = this.getCached<
+      { status: 'found'; url: string } | { status: 'missing' }
+    >(cacheKey);
+    if (cached) return cached;
+
+    const url = `${TCGDEX_PRODUCTION_API_BASE}/${normalizedLocale}/cards/${encodeURIComponent(id)}`;
+    try {
+      const res = await fetch(url);
+      if (res.status === 404) {
+        return this.setCached(cacheKey, { status: 'missing' }, this.TTL_CARD_DETAIL_MS);
+      }
+      if (!res.ok) return { status: 'error' };
+      const raw = (await res.json()) as TCGdexCardApiResponse;
+      if (!raw || typeof raw !== 'object' || !raw.name) {
+        return this.setCached(cacheKey, { status: 'missing' }, this.TTL_CARD_DETAIL_MS);
+      }
+      const dto = mapCardFromApi(raw);
+      const candidate = dto.images?.small || dto.image || '';
+      if (!isPublicRemoteImageUrl(candidate)) {
+        return this.setCached(cacheKey, { status: 'missing' }, this.TTL_CARD_DETAIL_MS);
+      }
+      return this.setCached(
+        cacheKey,
+        { status: 'found', url: candidate },
+        this.TTL_CARD_DETAIL_MS,
+      );
+    } catch (err) {
+      console.warn('[TCGDexService] lookup TCGdex nube falló', {
+        cardId: id,
+        locale: normalizedLocale,
+        url,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return { status: 'error' };
+    }
   }
 
   private async fetchRemoteStoreImageForLocale(
     id: string,
     normalizedLocale: TcgDexLocale,
   ): Promise<string | undefined> {
-    const cacheKey = `remote-store-img:${normalizedLocale}:${id}`;
-    const cached = this.getCached<string | undefined>(cacheKey);
-    if (cached !== undefined) {
-      return cached || undefined;
-    }
-
-    const url = `${TCGDEX_PRODUCTION_API_BASE}/${normalizedLocale}/cards/${encodeURIComponent(id)}`;
-    try {
-      const res = await fetch(url);
-      if (!res.ok) {
-        return this.setCached(cacheKey, undefined, this.TTL_CARD_DETAIL_MS);
-      }
-      const raw = (await res.json()) as TCGdexCardApiResponse;
-      if (!raw || typeof raw !== 'object' || !raw.name) {
-        return this.setCached(cacheKey, undefined, this.TTL_CARD_DETAIL_MS);
-      }
-      const dto = mapCardFromApi(raw);
-      const candidate = dto.images?.small || dto.image || '';
-      if (!isPublicRemoteImageUrl(candidate)) {
-        return this.setCached(cacheKey, undefined, this.TTL_CARD_DETAIL_MS);
-      }
-      return this.setCached(cacheKey, candidate, this.TTL_CARD_DETAIL_MS);
-    } catch (err) {
-      console.warn('[TCGDexService] getRemoteStoreCardImageUrl falló', {
-        cardId: id,
-        locale: normalizedLocale,
-        url,
-        error: err instanceof Error ? err.message : String(err),
-      });
-      return this.setCached(cacheKey, undefined, this.TTL_CARD_DETAIL_MS);
-    }
+    const hit = await this.fetchProductionImageStatus(id, normalizedLocale);
+    return hit.status === 'found' ? hit.url : undefined;
   }
 
   /**

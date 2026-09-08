@@ -1,4 +1,7 @@
-import { isBulkCardId, isQuantityKind } from '../constants/bulk-product';
+import {
+  isQuantityKind,
+  isSyntheticQuantityCardId,
+} from '../constants/bulk-product';
 import {
   isLocalhostImageUrl,
   isUsableStockImageUrl,
@@ -39,7 +42,7 @@ export function isActiveStockForImageCache(
   stock: StockLikeForImageCache,
 ): boolean {
   const cardId = String(stock.card_id ?? '').trim();
-  if (!cardId || isBulkCardId(cardId)) return false;
+  if (!cardId || isSyntheticQuantityCardId(cardId)) return false;
   const state = String(stock.card_state ?? '').trim();
   if (!ACTIVE_IMAGE_CACHE_STATES.has(state)) return false;
   if (isQuantityKind(stock.product_kind)) {
@@ -79,6 +82,35 @@ export function rewriteImageUrlIfLocalhostOrEmpty(
   if (isLocalhostImageUrl(trimmed) && /\/card-images\//i.test(trimmed)) {
     return next;
   }
+  return undefined;
+}
+
+/** Solo cachear en disco si TCGdex nube no tiene arte público. */
+export function shouldCacheLocalImage(
+  tcgdexCloudImageUrl: string | null | undefined,
+): boolean {
+  return !pickDownloadUrl(tcgdexCloudImageUrl);
+}
+
+function isLocalCardImagesUrl(url: string): boolean {
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+  if (trimmed.startsWith('/card-images/')) return true;
+  return isLocalhostImageUrl(trimmed) && /\/card-images\//i.test(trimmed);
+}
+
+/**
+ * Si el stock apunta a caché local pero la carta sí está en TCGdex nube,
+ * volver al CDN. No pisa CardTrader u otra URL pública.
+ */
+export function rewriteImageUrlToCloudIfLocalCache(
+  current: string | null | undefined,
+  cloudImageUrl: string | null | undefined,
+): string | undefined {
+  const remote = pickDownloadUrl(cloudImageUrl);
+  if (!remote) return undefined;
+  const trimmed = String(current ?? '').trim();
+  if (!trimmed || isLocalCardImagesUrl(trimmed)) return remote;
   return undefined;
 }
 
