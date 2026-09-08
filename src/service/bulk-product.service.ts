@@ -63,7 +63,9 @@ export class BulkProductService {
         patch.image_url = BULK_IMAGE_URL;
       }
       const state = String((existing as any).card_state ?? '').trim();
-      if (!state || state === 'reserva') {
+      // SKU único quantity: debe quedar disponible (venta/reserva no marcan
+      // vendida mientras qty > 0). Restaura vendida/reserva/vacío sin tocar qty.
+      if (state !== 'disponible') {
         patch.card_state = 'disponible';
       }
       if (Object.keys(patch).length > 0) {

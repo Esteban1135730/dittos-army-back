@@ -37,6 +37,7 @@ import { IncomingRoundItemRepository } from './repository/incoming-round-item.re
 import { TCGDexService } from './service/tcgdex/tcgdex.service';
 import { SetNameHomologsService } from './service/tcgdex/set-name-homologs.service';
 import { LocalCardImagesService } from './service/tcgdex/local-card-images.service';
+import { StockCardImagesSyncService } from './service/tcgdex/stock-card-images-sync.service';
 import { StoreInventoryService } from './service/store-inventory.service';
 import { OpenedSealedStockService } from './service/opened-sealed-stock.service';
 import { PvpCardRowsService } from './service/pvp-card-rows.service';
@@ -235,6 +236,7 @@ const MONGOOSE_FEATURE_MODELS = [
     { provide: APP_GUARD, useClass: FeatureAclGuard },
     SetNameHomologsService,
     LocalCardImagesService,
+    StockCardImagesSyncService,
     TCGDexService,
     StoreInventoryService,
     OpenedSealedStockService,

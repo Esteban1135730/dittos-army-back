@@ -15,6 +15,7 @@ import { StockRepository } from 'src/repository/stock.repository';
 import { ReservaRepository } from 'src/repository/reserva.repository';
 import { SaleDocument } from 'src/schema/sale.schema';
 import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
+import { StockCardImagesSyncService } from 'src/service/tcgdex/stock-card-images-sync.service';
 import { isQuantityKind } from 'src/constants/bulk-product';
 import {
   type OwnerKey,
@@ -37,7 +38,14 @@ export class SaleController {
     private readonly reservaRepository: ReservaRepository,
     private readonly tcgDexService: TCGDexService,
     private readonly cardStockTagRepository: CardStockTagRepository,
+    private readonly stockCardImagesSync: StockCardImagesSyncService,
   ) {}
+
+  private schedulePruneIfUnused(cardId: string | undefined): void {
+    const id = String(cardId ?? '').trim();
+    if (!id) return;
+    void this.stockCardImagesSync.pruneIfCardUnused(id).catch(() => undefined);
+  }
 
   private async tagsForCard(cardId: string): Promise<string[]> {
     const map = await this.cardStockTagRepository.findMapByCardIds([cardId]);
@@ -222,6 +230,7 @@ export class SaleController {
       }
 
       // No marcar vendida mientras quede cantidad > 0.
+      this.schedulePruneIfUnused(body.card_id);
       return { success: true, sold_count: sellQty };
     }
 
@@ -248,6 +257,7 @@ export class SaleController {
 
     await this.stockRepository.updateCardState(body.stock_id, 'vendida');
 
+    this.schedulePruneIfUnused(body.card_id);
     return { success: true };
   }
 
@@ -288,6 +298,7 @@ export class SaleController {
     };
     const results: BatchResult[] = [];
     const defaultOwner = getCurrentOwner();
+    const soldCardIds = new Set<string>();
 
     // Preserve input order; process sequentially, switching owner context per item.
     const remainingQtyByStockOwner = new Map<string, number>();
@@ -311,7 +322,13 @@ export class SaleController {
       const result = await runWithOwnerAsync(itemOwner, async () =>
         this.sellBatchOneItem(item, itemOwner, remainingQtyByStockOwner),
       );
-      results.push(result);
+      const { card_id: soldCardId, ...publicResult } = result;
+      results.push(publicResult);
+      if (result.success && soldCardId) soldCardIds.add(soldCardId);
+    }
+
+    for (const cardId of soldCardIds) {
+      this.schedulePruneIfUnused(cardId);
     }
 
     const sold_count = results.filter((r) => r.success).length;
@@ -335,6 +352,7 @@ export class SaleController {
     success: boolean;
     message?: string;
     owner: OwnerKey;
+    card_id?: string;
   }> {
     const stockId = item.stock_id?.trim() ?? '';
     if (!stockId || !isValidObjectId(stockId)) {
@@ -448,7 +466,7 @@ export class SaleController {
             stock,
           ),
         );
-        return { stock_id: stockId, success: true, owner };
+        return { stock_id: stockId, success: true, owner, card_id: stock.card_id };
       } catch {
         return {
           stock_id: stockId,
@@ -476,7 +494,7 @@ export class SaleController {
       if (cardState === 'reserva') {
         await this.reservaRepository.deleteByStockId(stockId);
       }
-      return { stock_id: stockId, success: true, owner };
+      return { stock_id: stockId, success: true, owner, card_id: stock.card_id };
     } catch {
       return {
         stock_id: stockId,

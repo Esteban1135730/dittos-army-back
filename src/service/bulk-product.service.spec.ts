@@ -144,4 +144,38 @@ describe('BulkProductService', () => {
       expect.objectContaining({ card_state: 'disponible' }),
     );
   });
+
+  it('repara card_state vendida del SKU bulk a disponible sin resetear quantity', async () => {
+    stockRepository.findOneByCardId.mockResolvedValue({
+      _id: '507f1f77bcf86cd799439011',
+      card_id: BULK_CARD_ID,
+      card_name: BULK_CARD_NAME,
+      product_kind: 'quantity',
+      quantity: 9936,
+      image_url: '/bulk-dummy.svg',
+      card_state: 'vendida',
+    });
+    stockRepository.updateById.mockResolvedValue({
+      _id: '507f1f77bcf86cd799439011',
+      card_id: BULK_CARD_ID,
+      card_state: 'disponible',
+      quantity: 9936,
+    });
+    pvpRepository.findBaseByCardId.mockResolvedValue({
+      card_id: BULK_CARD_ID,
+      pvp: 2000,
+      currency: 'COP',
+    });
+
+    const res = await service.ensureBulk();
+
+    expect(res.created).toBe(false);
+    expect(res.quantity).toBe(9936);
+    expect(res.pvp_ensured).toBe(false);
+    expect(stockRepository.create).not.toHaveBeenCalled();
+    expect(stockRepository.updateById).toHaveBeenCalledWith(
+      '507f1f77bcf86cd799439011',
+      { card_state: 'disponible' },
+    );
+  });
 });

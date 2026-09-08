@@ -7,6 +7,7 @@ import { PvpRepository } from 'src/repository/pvp.repository';
 import { ReservaRepository } from 'src/repository/reserva.repository';
 import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
 import { CardStockTagRepository } from 'src/repository/card-stock-tag.repository';
+import { StockCardImagesSyncService } from 'src/service/tcgdex/stock-card-images-sync.service';
 
 const stockId = '507f1f77bcf86cd799439011';
 
@@ -46,6 +47,10 @@ describe('SaleController sell-batch', () => {
           useValue: {
             findMapByCardIds: jest.fn().mockResolvedValue(new Map()),
           },
+        },
+        {
+          provide: StockCardImagesSyncService,
+          useValue: { pruneIfCardUnused: jest.fn().mockResolvedValue(undefined) },
         },
       ],
     }).compile();

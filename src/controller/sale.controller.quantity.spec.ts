@@ -7,6 +7,7 @@ import { PvpRepository } from 'src/repository/pvp.repository';
 import { ReservaRepository } from 'src/repository/reserva.repository';
 import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
 import { CardStockTagRepository } from 'src/repository/card-stock-tag.repository';
+import { StockCardImagesSyncService } from 'src/service/tcgdex/stock-card-images-sync.service';
 
 const stockId = '507f1f77bcf86cd799439011';
 
@@ -18,6 +19,7 @@ describe('SaleController quantity products', () => {
     updateCardState: jest.Mock;
     decrementQuantityAtomic: jest.Mock;
   };
+  let pruneIfCardUnused: jest.Mock;
 
   beforeEach(async () => {
     saleRepository = { create: jest.fn().mockResolvedValue({}) };
@@ -26,6 +28,7 @@ describe('SaleController quantity products', () => {
       updateCardState: jest.fn().mockResolvedValue(undefined),
       decrementQuantityAtomic: jest.fn(),
     };
+    pruneIfCardUnused = jest.fn().mockResolvedValue(undefined);
 
     const moduleRef = await Test.createTestingModule({
       controllers: [SaleController],
@@ -41,6 +44,10 @@ describe('SaleController quantity products', () => {
           useValue: {
             findMapByCardIds: jest.fn().mockResolvedValue(new Map()),
           },
+        },
+        {
+          provide: StockCardImagesSyncService,
+          useValue: { pruneIfCardUnused },
         },
       ],
     }).compile();
@@ -142,5 +149,22 @@ describe('SaleController quantity products', () => {
       stockId,
       'vendida',
     );
+    expect(pruneIfCardUnused).toHaveBeenCalledWith('swsh3-136');
+  });
+
+  it('sell no falla si pruneIfCardUnused rechaza', async () => {
+    pruneIfCardUnused.mockRejectedValue(new Error('disk'));
+    stockRepository.findById.mockResolvedValue({
+      card_id: 'swsh3-136',
+      card_state: 'disponible',
+    });
+
+    const res = await controller.sellCard({
+      stock_id: stockId,
+      card_id: 'swsh3-136',
+      amount_cop: 50000,
+    });
+
+    expect(res.success).toBe(true);
   });
 });

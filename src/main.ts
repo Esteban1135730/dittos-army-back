@@ -1,27 +1,16 @@
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { existsSync } from 'fs';
-import { join } from 'path';
+import { mkdirSync } from 'fs';
 import { AppModule } from './app.module';
-
-function resolveLocalImagesDir(): string | undefined {
-  const fromEnv = process.env.TCGDEX_LOCAL_IMAGES_DIR?.trim();
-  if (fromEnv && existsSync(fromEnv)) return fromEnv;
-  const winDefault = 'D:\\TcgDex images';
-  if (process.platform === 'win32' && existsSync(winDefault)) return winDefault;
-  const posixDefault = join(process.cwd(), 'data', 'tcgdex-images');
-  if (existsSync(posixDefault)) return posixDefault;
-  return fromEnv || (process.platform === 'win32' ? winDefault : posixDefault);
-}
+import { resolveCardImagesRoot } from './service/tcgdex/local-card-images.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const imagesDir = resolveCardImagesRoot();
+  mkdirSync(imagesDir, { recursive: true });
 
-  const imagesDir = resolveLocalImagesDir();
-  if (imagesDir && existsSync(imagesDir)) {
-    app.useStaticAssets(imagesDir, { prefix: '/card-images/' });
-  }
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.useStaticAssets(imagesDir, { prefix: '/card-images/' });
 
   // Configurar CORS
   app.enableCors({
