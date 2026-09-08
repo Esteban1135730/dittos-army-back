@@ -84,6 +84,11 @@ export function isOwnerKey(value: unknown): value is OwnerKey {
   return value === 'pablo' || value === 'esteban';
 }
 
+/** The complementary owner (pablo ↔ esteban). */
+export function otherOwner(owner: OwnerKey): OwnerKey {
+  return owner === 'pablo' ? 'esteban' : 'pablo';
+}
+
 export function getOwnerDefinition(key: OwnerKey): OwnerDefinition {
   return OWNERS_CONFIG.owners[key];
 }

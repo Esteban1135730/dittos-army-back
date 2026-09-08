@@ -1,6 +1,7 @@
 import {
   isFeatureAllowed,
   isOwnerKey,
+  otherOwner,
   OWNERS_CONFIG,
   getOwnerDefinition,
 } from './owners.config';
@@ -32,6 +33,11 @@ describe('owners.config', () => {
     expect(isOwnerKey('pablo')).toBe(true);
     expect(isOwnerKey('esteban')).toBe(true);
     expect(isOwnerKey('otro')).toBe(false);
+  });
+
+  it('otherOwner intercambia pablo y esteban', () => {
+    expect(otherOwner('pablo')).toBe('esteban');
+    expect(otherOwner('esteban')).toBe('pablo');
   });
 });
 

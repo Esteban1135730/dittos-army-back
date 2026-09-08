@@ -79,6 +79,11 @@ export class ReservaRepository {
     return this.reservaModel.findOne({ stock_id: stockId }).exec();
   }
 
+  async findAllByStockId(stockId: string): Promise<Reserva[]> {
+    if (!stockId?.trim()) return [];
+    return this.reservaModel.find({ stock_id: stockId }).exec();
+  }
+
   async findByClientAndStockId(
     clientId: string,
     stockId: string,
@@ -86,6 +91,16 @@ export class ReservaRepository {
     if (!clientId?.trim() || !stockId?.trim()) return null;
     return this.reservaModel
       .findOne({ client_id: clientId, stock_id: stockId })
+      .exec();
+  }
+
+  async findAllByClientAndStockId(
+    clientId: string,
+    stockId: string,
+  ): Promise<Reserva[]> {
+    if (!clientId?.trim() || !stockId?.trim()) return [];
+    return this.reservaModel
+      .find({ client_id: clientId, stock_id: stockId })
       .exec();
   }
 
@@ -117,6 +132,20 @@ export class ReservaRepository {
       .deleteOne({ stock_id: stockId })
       .exec();
     return (result.deletedCount ?? 0) > 0;
+  }
+
+  async updateById(
+    id: string,
+    data: { precio?: number; currency?: string },
+  ): Promise<Reserva | null> {
+    if (!id?.trim()) return null;
+    return this.reservaModel
+      .findByIdAndUpdate(
+        id,
+        { ...data, updated_at: new Date() },
+        { new: true },
+      )
+      .exec();
   }
 
   async updateByStockId(

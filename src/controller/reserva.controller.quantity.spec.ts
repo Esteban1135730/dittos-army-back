@@ -18,6 +18,9 @@ describe('ReservaController quantity products', () => {
     create: jest.Mock;
     findByStockId: jest.Mock;
     findByClientAndStockId: jest.Mock;
+    findAllByStockId: jest.Mock;
+    findAllByClientAndStockId: jest.Mock;
+    updateById: jest.Mock;
     addQuantity: jest.Mock;
     setPedidoId: jest.Mock;
     deleteById: jest.Mock;
@@ -41,6 +44,9 @@ describe('ReservaController quantity products', () => {
       create: jest.fn(),
       findByStockId: jest.fn(),
       findByClientAndStockId: jest.fn().mockResolvedValue(null),
+      findAllByStockId: jest.fn().mockResolvedValue([]),
+      findAllByClientAndStockId: jest.fn().mockResolvedValue([]),
+      updateById: jest.fn(),
       addQuantity: jest.fn(),
       setPedidoId: jest.fn(),
       deleteById: jest.fn().mockResolvedValue(true),
@@ -125,6 +131,7 @@ describe('ReservaController quantity products', () => {
         quantity: 3,
         stock_id: stockId,
         pedido_id: pedidoId,
+        stock_owner: 'pablo',
       }),
     );
   });
@@ -148,6 +155,15 @@ describe('ReservaController quantity products', () => {
       quantity: 2,
       pedido_id: pedidoId,
     });
+    reservaRepository.findAllByClientAndStockId.mockResolvedValue([
+      {
+        _id: 'res1',
+        client_id: clientId,
+        stock_id: stockId,
+        quantity: 2,
+        pedido_id: pedidoId,
+      },
+    ]);
     reservaRepository.addQuantity.mockResolvedValue({
       _id: 'res1',
       quantity: 4,
@@ -183,6 +199,14 @@ describe('ReservaController quantity products', () => {
       stock_id: stockId,
       quantity: 2,
     });
+    reservaRepository.findAllByClientAndStockId.mockResolvedValue([
+      {
+        _id: 'res-orphan',
+        client_id: clientId,
+        stock_id: stockId,
+        quantity: 2,
+      },
+    ]);
     reservaRepository.setPedidoId.mockResolvedValue({
       _id: 'res-orphan',
       pedido_id: pedidoId,
@@ -214,6 +238,13 @@ describe('ReservaController quantity products', () => {
       stock_id: stockId,
       quantity: 4,
     });
+    reservaRepository.findAllByClientAndStockId.mockResolvedValue([
+      {
+        _id: 'res1',
+        stock_id: stockId,
+        quantity: 4,
+      },
+    ]);
     stockRepository.findById.mockResolvedValue({
       product_kind: 'quantity',
       card_state: 'disponible',

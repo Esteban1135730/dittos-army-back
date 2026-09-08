@@ -22,11 +22,19 @@ import {
   extractClientNameFromStoreMessage,
   parseStoreCatalogCartLines,
 } from '../utils/store-whatsapp-message-parser';
+import { otherOwner, type OwnerKey } from '../config/owners.config';
+import { getCurrentOwner } from '../owner/owner-context';
+import {
+  reservaMatchesStockOwner,
+  withStockOwner,
+} from '../owner/stock-owner';
+import type { Reserva } from '../schema/reserva.schema';
 
 const BLOCKED_STOCK_STATES = new Set(['reserva', 'vendida', 'propiedad']);
 
 export type ImportLineAssignment = {
   stock_id: string;
+  stock_owner: OwnerKey;
   precio_cop: number;
 };
 
@@ -44,6 +52,7 @@ export type ImportWhatsAppLineResult = {
   requested: number;
   matched: number;
   stock_ids: string[];
+  stock_owners: OwnerKey[];
   precio_cop_por_unidad: number[];
   suggested_pvp_cop: number | null;
   card_name?: string;
@@ -68,6 +77,7 @@ export type ImportWhatsAppCreated = {
   reserva_id: string;
   precio: number;
   currency: string;
+  stock_owner: OwnerKey;
 };
 
 export type StoreWhatsAppLineOverride = {
@@ -145,7 +155,9 @@ export class StoreWhatsAppReservationImportService {
     for (const line of plan.lines) {
       let lineCreated = 0;
       const overridePvp = overrideMap.get(line.index)?.pvp_cop;
-      for (const stockId of line.stock_ids) {
+      for (let i = 0; i < line.stock_ids.length; i++) {
+        const stockId = line.stock_ids[i];
+        const stockOwner = line.stock_owners[i] ?? getCurrentOwner();
         const precioCop =
           resolveLinePrecioCop(
             overridePvp,
@@ -156,11 +168,16 @@ export class StoreWhatsAppReservationImportService {
           );
         if (precioCop <= 0) continue;
 
-        const stock = await this.stockRepository.findById(stockId);
+        const stock = await withStockOwner(stockOwner, () =>
+          this.stockRepository.findById(stockId),
+        );
         if (!stock || !this.isStockReservable(stock)) {
           continue;
         }
-        const existing = await this.reservaRepository.findByStockId(stockId);
+        const existing = this.pickReservaForOwner(
+          await this.reservaRepository.findAllByStockId(stockId),
+          stockOwner,
+        );
         if (existing) continue;
 
         const reserva = await this.reservaRepository.create({
@@ -169,13 +186,17 @@ export class StoreWhatsAppReservationImportService {
           precio: precioCop,
           currency: 'COP',
           pedido_id: String(pedido._id),
+          stock_owner: stockOwner,
         });
-        await this.stockRepository.updateCardState(stockId, 'reserva');
+        await withStockOwner(stockOwner, () =>
+          this.stockRepository.updateCardState(stockId, 'reserva'),
+        );
         created.push({
           stock_id: stockId,
           reserva_id: String((reserva as { _id?: unknown })._id ?? ''),
           precio: precioCop,
           currency: 'COP',
+          stock_owner: stockOwner,
         });
         lineCreated += 1;
       }
@@ -249,21 +270,6 @@ export class StoreWhatsAppReservationImportService {
       );
     }
 
-    const [allStock, allReservas] = await Promise.all([
-      this.stockRepository.findAll(),
-      this.reservaRepository.findAll(),
-    ]);
-    const reservedStockIds = new Set(allReservas.map((r) => r.stock_id));
-    const available = allStock
-      .filter(
-        (s) =>
-          this.isStockReservable(s) &&
-          !reservedStockIds.has(this.stockId(s as StockRow)),
-      )
-      .sort((a, b) =>
-        this.stockId(a as StockRow).localeCompare(this.stockId(b as StockRow)),
-      ) as StockRow[];
-
     const cardIds = [
       ...new Set(
         parsedLines
@@ -271,12 +277,18 @@ export class StoreWhatsAppReservationImportService {
           .map((l) => (l.result.ok ? l.result.parsed.card_id : '')),
       ),
     ].filter(Boolean);
-    const pvps = await this.pvpRepository.findByCardIds(cardIds);
-    const pvpByCard = groupPvpsByCardId(pvps);
+
+    const requestOwner = getCurrentOwner();
+    const secondaryOwner = otherOwner(requestOwner);
+    const requestReservas = await this.reservaRepository.findAll();
+    const [currentPool, otherPool] = await Promise.all([
+      this.loadOwnerMatchPool(requestOwner, cardIds, requestReservas),
+      this.loadOwnerMatchPool(secondaryOwner, cardIds, requestReservas),
+    ]);
 
     const imageByCardId = new Map<string, string>();
     const nameByCardId = new Map<string, string>();
-    for (const s of allStock as StockRow[]) {
+    for (const s of [...currentPool.allStock, ...otherPool.allStock]) {
       const cid = String(s.card_id ?? '').trim();
       if (!cid) continue;
       const url = String(s.image_url ?? '').trim();
@@ -291,7 +303,7 @@ export class StoreWhatsAppReservationImportService {
     let linesFailed = 0;
     let unitsReserved = 0;
 
-    const usedStockIds = new Set<string>();
+    const usedStockKeys = new Set<string>();
 
     parsedLines.forEach((entry, index) => {
       if (!entry.result.ok) {
@@ -302,6 +314,7 @@ export class StoreWhatsAppReservationImportService {
           requested: 0,
           matched: 0,
           stock_ids: [],
+          stock_owners: [],
           precio_cop_por_unidad: [],
           suggested_pvp_cop: null,
           issues: [issue],
@@ -314,9 +327,9 @@ export class StoreWhatsAppReservationImportService {
       const overridePvp = overrides?.get(index)?.pvp_cop;
       const assignments = this.matchLine(
         parsed,
-        available,
-        usedStockIds,
-        pvpByCard,
+        currentPool,
+        otherPool,
+        usedStockKeys,
         overridePvp,
       );
       const issues: string[] = [];
@@ -331,8 +344,11 @@ export class StoreWhatsAppReservationImportService {
       }
 
       const stock_ids = assignments.map((a) => a.stock_id);
+      const stock_owners = assignments.map((a) => a.stock_owner);
       const precio_cop_por_unidad = assignments.map((a) => a.precio_cop);
-      for (const id of stock_ids) usedStockIds.add(id);
+      for (const a of assignments) {
+        usedStockKeys.add(`${a.stock_owner}:${a.stock_id}`);
+      }
 
       const suggested =
         resolveLinePrecioCop(
@@ -360,6 +376,7 @@ export class StoreWhatsAppReservationImportService {
         requested,
         matched,
         stock_ids,
+        stock_owners,
         precio_cop_por_unidad,
         suggested_pvp_cop: suggested != null && suggested > 0 ? suggested : null,
         card_name: cardName ?? parsed.card_id,
@@ -389,48 +406,103 @@ export class StoreWhatsAppReservationImportService {
       quantity: number;
       unit_price_cop: number | null;
     },
-    available: StockRow[],
-    usedStockIds: Set<string>,
-    pvpByCard: Map<
-      string,
-      {
-        card_id: string;
-        rareza?: string | null;
-        pvp: number;
-        currency: string;
-      }[]
-    >,
+    currentPool: OwnerMatchPool,
+    otherPool: OwnerMatchPool,
+    usedStockKeys: Set<string>,
     overridePvp?: number | null,
   ): ImportLineAssignment[] {
-    const candidates = available.filter((s) => {
-      const id = this.stockId(s);
-      if (usedStockIds.has(id)) return false;
-      if (s.card_id !== parsed.card_id) return false;
-      if (stockLineLanguage(s) !== parsed.language) return false;
-      const lineRareza = effectiveOperationalRarezaFromStock(s);
-      return parsed.rareza === lineRareza;
-    });
-
-    const pvps = pvpByCard.get(parsed.card_id) ?? [];
     const out: ImportLineAssignment[] = [];
-
-    for (const stock of candidates) {
-      if (out.length >= parsed.quantity) break;
-      const lineRareza = effectiveOperationalRarezaFromStock(stock);
-      const pvpData = resolvePvpForLine(pvps, lineRareza);
-      const dbCop =
-        pvpData && pvpData.pvp > 0
-          ? precioToCop(pvpData.pvp, pvpData.pvp_currency || 'COP')
-          : 0;
-      const precioCop = resolveLinePrecioCop(
-        overridePvp,
-        parsed.unit_price_cop,
-        dbCop,
-      );
-      out.push({ stock_id: this.stockId(stock), precio_cop: precioCop });
-    }
-
+    const takeFrom = (pool: OwnerMatchPool) => {
+      for (const stock of pool.available) {
+        if (out.length >= parsed.quantity) break;
+        const id = this.stockId(stock);
+        const key = `${pool.owner}:${id}`;
+        if (usedStockKeys.has(key)) continue;
+        if (!this.stockMatchesParsed(stock, parsed)) continue;
+        usedStockKeys.add(key);
+        out.push({
+          stock_id: id,
+          stock_owner: pool.owner,
+          precio_cop: this.precioForStock(stock, parsed, pool, overridePvp),
+        });
+      }
+    };
+    takeFrom(currentPool);
+    takeFrom(otherPool);
     return out;
+  }
+
+  private stockMatchesParsed(
+    stock: StockRow,
+    parsed: { card_id: string; language: string; rareza: string | null },
+  ): boolean {
+    if (stock.card_id !== parsed.card_id) return false;
+    if (stockLineLanguage(stock) !== parsed.language) return false;
+    return parsed.rareza === effectiveOperationalRarezaFromStock(stock);
+  }
+
+  private precioForStock(
+    stock: StockRow,
+    parsed: { card_id: string; unit_price_cop: number | null },
+    pool: OwnerMatchPool,
+    overridePvp?: number | null,
+  ): number {
+    const lineRareza = effectiveOperationalRarezaFromStock(stock);
+    const pvps = pool.pvpByCard.get(parsed.card_id) ?? [];
+    const pvpData = resolvePvpForLine(pvps, lineRareza);
+    const dbCop =
+      pvpData && pvpData.pvp > 0
+        ? precioToCop(pvpData.pvp, pvpData.pvp_currency || 'COP')
+        : 0;
+    return resolveLinePrecioCop(overridePvp, parsed.unit_price_cop, dbCop);
+  }
+
+  private async loadOwnerMatchPool(
+    owner: OwnerKey,
+    cardIds: string[],
+    requestReservas: Reserva[],
+  ): Promise<OwnerMatchPool> {
+    const requestOwner = getCurrentOwner();
+    return withStockOwner(owner, async () => {
+      const [allStock, ownerReservas] = await Promise.all([
+        this.stockRepository.findAll(),
+        this.reservaRepository.findAll(),
+      ]);
+      const reservedStockIds = new Set<string>();
+      for (const r of ownerReservas) {
+        if (reservaMatchesStockOwner(r, owner, owner)) {
+          reservedStockIds.add(r.stock_id);
+        }
+      }
+      for (const r of requestReservas) {
+        if (reservaMatchesStockOwner(r, owner, requestOwner)) {
+          reservedStockIds.add(r.stock_id);
+        }
+      }
+      const available = (allStock as StockRow[])
+        .filter(
+          (s) =>
+            this.isStockReservable(s) &&
+            !reservedStockIds.has(this.stockId(s)),
+        )
+        .sort((a, b) => this.stockId(a).localeCompare(this.stockId(b)));
+      const pvps = cardIds.length
+        ? await this.pvpRepository.findByCardIds(cardIds)
+        : [];
+      return {
+        owner,
+        allStock: allStock as StockRow[],
+        available,
+        pvpByCard: groupPvpsByCardId(pvps),
+      };
+    });
+  }
+
+  private pickReservaForOwner(
+    reservas: Reserva[],
+    stockOwner: OwnerKey,
+  ): Reserva | undefined {
+    return reservas.find((r) => reservaMatchesStockOwner(r, stockOwner));
   }
 
   private stockId(stock: StockRow): string {
@@ -442,3 +514,18 @@ export class StoreWhatsAppReservationImportService {
     return !BLOCKED_STOCK_STATES.has(state);
   }
 }
+
+type OwnerMatchPool = {
+  owner: OwnerKey;
+  allStock: StockRow[];
+  available: StockRow[];
+  pvpByCard: Map<
+    string,
+    {
+      card_id: string;
+      rareza?: string | null;
+      pvp: number;
+      currency: string;
+    }[]
+  >;
+};

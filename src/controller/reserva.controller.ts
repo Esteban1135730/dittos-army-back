@@ -23,6 +23,13 @@ import { StoreWhatsAppIncomingImportService } from 'src/service/store-whatsapp-i
 import { isQuantityKind } from 'src/constants/bulk-product';
 import type { Stock } from 'src/schema/stock.schema';
 import { isValidObjectId } from 'mongoose';
+import type { OwnerKey } from 'src/config/owners.config';
+import {
+  reservaMatchesStockOwner,
+  resolveRequestedStockOwner,
+  stockOwnerFromReserva,
+  withStockOwner,
+} from 'src/owner/stock-owner';
 
 function reservaQty(quantity: number | undefined): number {
   if (typeof quantity === 'number' && Number.isInteger(quantity) && quantity >= 1) {
@@ -245,12 +252,15 @@ export class ReservaController {
     if (!dto.client_id || !dto.stock_id || dto.precio == null) {
       throw new Error('client_id, stock_id y precio son requeridos');
     }
-    const stock = await this.stockRepository.findById(dto.stock_id);
+    const stockOwner = resolveRequestedStockOwner(dto.stock_owner);
+    const stock = await withStockOwner(stockOwner, () =>
+      this.stockRepository.findById(dto.stock_id),
+    );
     if (!stock) {
       return { error: 'Stock no encontrado' };
     }
     if (isQuantityKind((stock as { product_kind?: string }).product_kind)) {
-      return this.createQuantityReserva(dto, stock);
+      return this.createQuantityReserva(dto, stock, stockOwner);
     }
     if (stock.card_state === ESTADO_RESERVA) {
       return { error: 'La carta ya está reservada' };
@@ -258,7 +268,10 @@ export class ReservaController {
     if (stock.card_state === 'vendida' || stock.card_state === 'propiedad') {
       return { error: 'La carta no está disponible para reservar' };
     }
-    const existing = await this.reservaRepository.findByStockId(dto.stock_id);
+    const existing = this.pickReservaForStockOwner(
+      await this.reservaRepository.findAllByStockId(dto.stock_id),
+      stockOwner,
+    );
     if (existing) {
       return { error: 'Ya existe una reserva para esta carta' };
     }
@@ -270,8 +283,11 @@ export class ReservaController {
       ...dto,
       pedido_id: String(pedido._id),
       currency: dto.currency ?? 'COP',
+      stock_owner: stockOwner,
     });
-    await this.stockRepository.updateCardState(dto.stock_id, ESTADO_RESERVA);
+    await withStockOwner(stockOwner, () =>
+      this.stockRepository.updateCardState(dto.stock_id, ESTADO_RESERVA),
+    );
     return reserva;
   }
 
@@ -279,12 +295,15 @@ export class ReservaController {
   private async createQuantityReserva(
     dto: ReservaDto,
     stock: Stock,
+    stockOwner: OwnerKey,
   ): Promise<Reserva | { error: string }> {
     if (stock.card_state === 'vendida' || stock.card_state === 'propiedad') {
       return { error: 'La carta no está disponible para reservar' };
     }
     if (stock.card_state === ESTADO_RESERVA) {
-      await this.stockRepository.updateCardState(dto.stock_id, ESTADO_DISPONIBLE);
+      await withStockOwner(stockOwner, () =>
+        this.stockRepository.updateCardState(dto.stock_id, ESTADO_DISPONIBLE),
+      );
     }
     const qtyRaw = dto.quantity;
     const qty = qtyRaw === undefined || qtyRaw === null ? 1 : Number(qtyRaw);
@@ -303,9 +322,12 @@ export class ReservaController {
       dto.pedido_id,
     );
     const pedidoId = String(pedido._id);
-    const existing = await this.reservaRepository.findByClientAndStockId(
-      dto.client_id,
-      dto.stock_id,
+    const existing = this.pickReservaForStockOwner(
+      await this.reservaRepository.findAllByClientAndStockId(
+        dto.client_id,
+        dto.stock_id,
+      ),
+      stockOwner,
     );
     if (existing) {
       const existingPedido = (existing as { pedido_id?: string }).pedido_id;
@@ -315,9 +337,8 @@ export class ReservaController {
         );
       }
     }
-    const decremented = await this.stockRepository.decrementQuantityAtomic(
-      dto.stock_id,
-      qty,
+    const decremented = await withStockOwner(stockOwner, () =>
+      this.stockRepository.decrementQuantityAtomic(dto.stock_id, qty),
     );
     if (!decremented) {
       return { error: 'Stock insuficiente' };
@@ -335,6 +356,7 @@ export class ReservaController {
       pedido_id: pedidoId,
       currency: dto.currency ?? 'COP',
       quantity: qty,
+      stock_owner: stockOwner,
     });
   }
 
@@ -352,22 +374,27 @@ export class ReservaController {
   async cancelByStockId(
     @Param('stockId') stockId: string,
     @Query('client_id') clientId?: string,
+    @Query('stock_owner') stockOwnerQuery?: string,
   ): Promise<{ success: boolean; error?: string }> {
-    const reserva = clientId?.trim()
-      ? await this.reservaRepository.findByClientAndStockId(
-          clientId.trim(),
-          stockId,
-        )
-      : await this.reservaRepository.findByStockId(stockId);
+    const reserva = await this.resolveReservaByStock(
+      stockId,
+      clientId,
+      stockOwnerQuery,
+    );
     if (!reserva) {
       return { success: false, error: 'Reserva no encontrada' };
     }
     await this.pedidoService.assertReservaLineMutable(reserva);
-    const stock = await this.stockRepository.findById(stockId);
+    const stockOwner = stockOwnerFromReserva(reserva);
+    const stock = await withStockOwner(stockOwner, () =>
+      this.stockRepository.findById(stockId),
+    );
     const reservaId = String((reserva as { _id?: unknown })._id ?? '');
     if (stock && isQuantityKind((stock as { product_kind?: string }).product_kind)) {
       const held = reservaQty(reserva.quantity);
-      await this.stockRepository.incrementQuantityAtomic(stockId, held);
+      await withStockOwner(stockOwner, () =>
+        this.stockRepository.incrementQuantityAtomic(stockId, held),
+      );
       if (reservaId) {
         await this.reservaRepository.deleteById(reservaId);
       } else {
@@ -375,8 +402,14 @@ export class ReservaController {
       }
       return { success: true };
     }
-    await this.reservaRepository.deleteByStockId(stockId);
-    await this.stockRepository.updateCardState(stockId, ESTADO_DISPONIBLE);
+    if (reservaId) {
+      await this.reservaRepository.deleteById(reservaId);
+    } else {
+      await this.reservaRepository.deleteByStockId(stockId);
+    }
+    await withStockOwner(stockOwner, () =>
+      this.stockRepository.updateCardState(stockId, ESTADO_DISPONIBLE),
+    );
     return { success: true };
   }
 
@@ -384,35 +417,69 @@ export class ReservaController {
   async updatePrecioByStockId(
     @Param('stockId') stockId: string,
     @Query('client_id') clientId: string | undefined,
+    @Query('stock_owner') stockOwnerQuery: string | undefined,
     @Body() body: { precio: number; currency?: string },
   ): Promise<Reserva | { error: string }> {
     if (body.precio == null || body.precio < 0) {
       throw new Error('precio es requerido y debe ser mayor o igual a 0');
     }
-    const reserva = clientId?.trim()
-      ? await this.reservaRepository.findByClientAndStockId(
-          clientId.trim(),
-          stockId,
-        )
-      : await this.reservaRepository.findByStockId(stockId);
+    const reserva = await this.resolveReservaByStock(
+      stockId,
+      clientId,
+      stockOwnerQuery,
+    );
     if (!reserva) {
       return { error: 'Reserva no encontrada' };
     }
     await this.pedidoService.assertReservaLineMutable(reserva);
-    const updated = clientId?.trim()
-      ? await this.reservaRepository.updateByClientAndStockId(
+    const reservaId = String((reserva as { _id?: unknown })._id ?? '');
+    const payload = {
+      precio: body.precio,
+      currency: body.currency ?? reserva.currency,
+    };
+    const updated = reservaId
+      ? await this.reservaRepository.updateById(reservaId, payload)
+      : clientId?.trim()
+        ? await this.reservaRepository.updateByClientAndStockId(
+            clientId.trim(),
+            stockId,
+            payload,
+          )
+        : await this.reservaRepository.updateByStockId(stockId, payload);
+    return updated ?? { error: 'Error al actualizar' };
+  }
+
+  private pickReservaForStockOwner(
+    reservas: Reserva[],
+    stockOwner: OwnerKey,
+  ): Reserva | undefined {
+    return reservas.find((r) => reservaMatchesStockOwner(r, stockOwner));
+  }
+
+  /**
+   * Elige la reserva de `stock_id` en la DB del request.
+   * Query `stock_owner` desambigua ObjectIds chocantes.
+   */
+  private async resolveReservaByStock(
+    stockId: string,
+    clientId: string | undefined,
+    stockOwnerQuery: string | undefined,
+  ): Promise<Reserva | null> {
+    const list = clientId?.trim()
+      ? await this.reservaRepository.findAllByClientAndStockId(
           clientId.trim(),
           stockId,
-          {
-            precio: body.precio,
-            currency: body.currency ?? reserva.currency,
-          },
         )
-      : await this.reservaRepository.updateByStockId(stockId, {
-          precio: body.precio,
-          currency: body.currency ?? reserva.currency,
-        });
-    return updated ?? { error: 'Error al actualizar' };
+      : await this.reservaRepository.findAllByStockId(stockId);
+    if (list.length === 0) return null;
+    if (stockOwnerQuery != null && stockOwnerQuery !== '') {
+      const owner = resolveRequestedStockOwner(stockOwnerQuery);
+      return this.pickReservaForStockOwner(list, owner) ?? null;
+    }
+    if (list.length === 1) return list[0];
+    throw new BadRequestException(
+      'stock_owner es requerido cuando hay más de una reserva con el mismo stock_id',
+    );
   }
 
   @Post('client/:clientId/finalizar-venta')

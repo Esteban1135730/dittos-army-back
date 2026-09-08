@@ -28,6 +28,13 @@ export class Reserva {
   @Prop({ required: false })
   pedido_id?: string;
 
+  /**
+   * Owner de la DB donde vive el stock (044). Opcional en documentos viejos
+   * (= owner del request al leer). En altas nuevas siempre se persiste.
+   */
+  @Prop({ required: false, enum: ['pablo', 'esteban'] })
+  stock_owner?: 'pablo' | 'esteban';
+
   /** Fecha de creación; las nuevas reservas la rellena el repositorio. Opcional en documentos antiguos. */
   @Prop({ type: Date, required: false })
   created_at?: Date;

@@ -36,6 +36,11 @@ import {
   isCiudadBogota,
   isTiendaEntregaId,
 } from 'src/utils/tiendas-entrega';
+import type { OwnerKey } from 'src/config/owners.config';
+import {
+  stockOwnerFromReserva,
+  withStockOwner,
+} from 'src/owner/stock-owner';
 
 const CALENDARIO_MAX_DAYS = 62;
 const CALENDARIO_PENDIENTE = new Set(['reservado', 'pagado']);
@@ -291,13 +296,15 @@ export class PedidoService {
     await this.attachOrphansToPedido(pedido.client_id, pedidoId);
     const reservas = await this.reservaRepository.findByPedidoId(pedidoId);
     for (const reserva of reservas) {
-      const stock = await this.stockRepository.findById(reserva.stock_id);
+      const stockOwner = stockOwnerFromReserva(reserva);
+      const stock = await withStockOwner(stockOwner, () =>
+        this.stockRepository.findById(reserva.stock_id),
+      );
       const reservaId = String((reserva as { _id?: unknown })._id ?? '');
       if (stock && isQuantityKind((stock as { product_kind?: string }).product_kind)) {
         const held = reservaQty(reserva.quantity);
-        await this.stockRepository.incrementQuantityAtomic(
-          reserva.stock_id,
-          held,
+        await withStockOwner(stockOwner, () =>
+          this.stockRepository.incrementQuantityAtomic(reserva.stock_id, held),
         );
         if (reservaId) {
           await this.reservaRepository.deleteById(reservaId);
@@ -306,10 +313,16 @@ export class PedidoService {
         }
         continue;
       }
-      await this.reservaRepository.deleteByStockId(reserva.stock_id);
-      await this.stockRepository.updateCardState(
-        reserva.stock_id,
-        ESTADO_DISPONIBLE,
+      if (reservaId) {
+        await this.reservaRepository.deleteById(reservaId);
+      } else {
+        await this.reservaRepository.deleteByStockId(reserva.stock_id);
+      }
+      await withStockOwner(stockOwner, () =>
+        this.stockRepository.updateCardState(
+          reserva.stock_id,
+          ESTADO_DISPONIBLE,
+        ),
       );
     }
     await this.pedidoRepository.deleteById(String(pedido._id));
@@ -331,42 +344,49 @@ export class PedidoService {
 
     const snapshot: PedidoLineSnapshot[] = [];
     for (const reserva of reservas) {
-      const stock = await this.stockRepository.findById(reserva.stock_id);
+      const stockOwner = stockOwnerFromReserva(reserva);
+      const stock = await withStockOwner(stockOwner, () =>
+        this.stockRepository.findById(reserva.stock_id),
+      );
       if (!stock) {
         throw new NotFoundException(
           `Stock no encontrado: ${reserva.stock_id}`,
         );
       }
       const amountCop = precioToCop(reserva.precio, reserva.currency ?? 'COP');
-      const tagsMap = await this.cardStockTagRepository.findMapByCardIds([
-        stock.card_id,
-      ]);
+      const tagsMap = await withStockOwner(stockOwner, () =>
+        this.cardStockTagRepository.findMapByCardIds([stock.card_id]),
+      );
       const isQty = isQuantityKind(
         (stock as { product_kind?: string }).product_kind,
       );
       const units = isQty ? reservaQty(reserva.quantity) : 1;
       for (let i = 0; i < units; i++) {
-        await this.saleRepository.create(
-          enrichSaleCreatePayload(
-            {
-              stock_id: reserva.stock_id,
-              card_id: stock.card_id,
-              type: 'venta',
-              amount_cop: amountCop,
-              client_id: pedido.client_id,
-              notes: `Venta finalizada desde pedido ${String(pedido._id)} (cliente ${pedido.client_id}). Precio original: ${reserva.precio} ${reserva.currency ?? 'COP'}.`,
-            },
-            stock,
-            {
-              tags_snapshot: tagsMap.get(String(stock.card_id).trim()) ?? [],
-            },
+        await withStockOwner(stockOwner, () =>
+          this.saleRepository.create(
+            enrichSaleCreatePayload(
+              {
+                stock_id: reserva.stock_id,
+                card_id: stock.card_id,
+                type: 'venta',
+                amount_cop: amountCop,
+                client_id: pedido.client_id,
+                notes: `Venta finalizada desde pedido ${String(pedido._id)} (cliente ${pedido.client_id}). Precio original: ${reserva.precio} ${reserva.currency ?? 'COP'}.`,
+              },
+              stock,
+              {
+                tags_snapshot: tagsMap.get(String(stock.card_id).trim()) ?? [],
+              },
+            ),
           ),
         );
       }
       if (!isQty) {
-        await this.stockRepository.updateCardState(
-          reserva.stock_id,
-          ESTADO_VENDIDA,
+        await withStockOwner(stockOwner, () =>
+          this.stockRepository.updateCardState(
+            reserva.stock_id,
+            ESTADO_VENDIDA,
+          ),
         );
       }
       const reservaId = String((reserva as { _id?: unknown })._id ?? '');
@@ -682,14 +702,27 @@ export class PedidoService {
 
   private async resolveLiveLines(pedidoId: string): Promise<PedidoLineDto[]> {
     const reservas = await this.reservaRepository.findByPedidoId(pedidoId);
-    const stockIds = reservas.map((r) => r.stock_id);
-    const stocks = await this.stockRepository.findByIds(stockIds);
-    const stockById = new Map(
-      stocks.map((s) => [String((s as Stock & { _id?: unknown })._id), s]),
-    );
+    const idsByOwner = new Map<OwnerKey, string[]>();
+    for (const reserva of reservas) {
+      const owner = stockOwnerFromReserva(reserva);
+      const ids = idsByOwner.get(owner) ?? [];
+      ids.push(reserva.stock_id);
+      idsByOwner.set(owner, ids);
+    }
+    const stockByOwnerId = new Map<string, Stock>();
+    for (const [owner, ids] of idsByOwner) {
+      const stocks = await withStockOwner(owner, () =>
+        this.stockRepository.findByIds(ids),
+      );
+      for (const s of stocks) {
+        const id = String((s as Stock & { _id?: unknown })._id);
+        stockByOwnerId.set(`${owner}:${id}`, s);
+      }
+    }
     return reservas.map((reserva) => {
+      const owner = stockOwnerFromReserva(reserva);
       const stock =
-        stockById.get(reserva.stock_id) ??
+        stockByOwnerId.get(`${owner}:${reserva.stock_id}`) ??
         ({ card_id: '', card_name: '', image_url: '' } as Stock);
       return this.lineFromReserva(reserva, stock);
     });
