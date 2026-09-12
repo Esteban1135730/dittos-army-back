@@ -176,6 +176,62 @@ describe('DashboardOverviewService', () => {
     expect(result.clients_reservations.ganancia_estimada_cop).toBe(8000);
   });
 
+  it('domicilio conserva el precio y ganancia 100% (costo 0)', async () => {
+    mockEmptyBase();
+    stockRepository.findAll.mockResolvedValue([
+      {
+        _id: stockId,
+        card_id: 'da-domicilio',
+        card_state: 'disponible',
+        currency: 'COP',
+        unity_cost: 0,
+        shipment: 0,
+        cards_in_shipmet: 1,
+      },
+    ]);
+    saleRepository.findActiveVentas.mockResolvedValue([
+      { stock_id: stockId, card_id: 'da-domicilio', amount_cop: 8000 },
+    ]);
+    reservaRepository.findAll.mockResolvedValue([
+      { stock_id: stockId, precio: 8000, currency: 'COP' },
+    ]);
+
+    const result = await service.getOverview();
+
+    expect(result.sales.active_amount_cop).toBe(8000);
+    expect(result.sales.active_estimated_profit_cop).toBe(8000);
+    expect(result.clients_reservations.ventas_esperadas_cop).toBe(8000);
+    expect(result.clients_reservations.ganancia_estimada_cop).toBe(8000);
+  });
+
+  it('envio conserva el precio y ganancia 0 en venta y reserva', async () => {
+    mockEmptyBase();
+    stockRepository.findAll.mockResolvedValue([
+      {
+        _id: stockId,
+        card_id: 'da-envio',
+        card_state: 'disponible',
+        currency: 'COP',
+        unity_cost: 0,
+        shipment: 0,
+        cards_in_shipmet: 1,
+      },
+    ]);
+    saleRepository.findActiveVentas.mockResolvedValue([
+      { stock_id: stockId, card_id: 'da-envio', amount_cop: 8000 },
+    ]);
+    reservaRepository.findAll.mockResolvedValue([
+      { stock_id: stockId, precio: 8000, currency: 'COP' },
+    ]);
+
+    const result = await service.getOverview();
+
+    expect(result.sales.active_amount_cop).toBe(8000);
+    expect(result.sales.active_estimated_profit_cop).toBe(0);
+    expect(result.clients_reservations.ventas_esperadas_cop).toBe(8000);
+    expect(result.clients_reservations.ganancia_estimada_cop).toBe(0);
+  });
+
   it('suma costo CT transit con remaining > 0 (remaining × unit_cost_cop)', async () => {
     mockEmptyBase();
     cardtraderTransitLineRepository.findByRemainingQuantityGreaterThanZero.mockResolvedValue(

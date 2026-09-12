@@ -1,4 +1,6 @@
+import { parseCivilDateUtc } from './civil-date';
 import { languageCodeFromStoreLabel } from './store-language-labels';
+import { isTiendaEntregaId } from './tiendas-entrega';
 import { operationalRarezaFromStoreVariantTag } from './store-variant-display';
 
 export type ParsedStoreCartLine = {
@@ -20,6 +22,45 @@ export function extractClientNameFromStoreMessage(
   const m = message.match(/A nombre de:\s*(.+?)(?:\r?\n|$)/i);
   if (!m) return null;
   return m[1].trim() || null;
+}
+
+export type ExtractedStoreDelivery = {
+  store_id: string | null;
+  fecha_tentativa_entrega: string | null;
+  issues: string[];
+};
+
+export function extractStoreDeliveryFromMessage(
+  message: string,
+): ExtractedStoreDelivery {
+  const issues: string[] = [];
+  let store_id: string | null = null;
+  let fecha_tentativa_entrega: string | null = null;
+
+  const storeMatch = message.match(/store_id:\s*([a-z0-9-]+)/);
+  if (storeMatch) {
+    const rawId = storeMatch[1];
+    if (isTiendaEntregaId(rawId)) {
+      store_id = rawId;
+    } else {
+      issues.push('unknown_store_id');
+    }
+  }
+
+  const fechaLine = message.match(
+    /Fecha tentativa de entrega:\s*(.+?)(?:\r?\n|$)/i,
+  );
+  if (fechaLine) {
+    const raw = fechaLine[1].trim();
+    const ymd = /^(\d{4}-\d{2}-\d{2})/.exec(raw);
+    if (ymd && parseCivilDateUtc(ymd[1])) {
+      fecha_tentativa_entrega = ymd[1];
+    } else {
+      issues.push('invalid_fecha');
+    }
+  }
+
+  return { store_id, fecha_tentativa_entrega, issues };
 }
 
 /** COP de la tienda: `$ 15.000` o `15.000` (punto de miles). */

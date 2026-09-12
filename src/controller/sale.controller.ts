@@ -16,7 +16,7 @@ import { ReservaRepository } from 'src/repository/reserva.repository';
 import { SaleDocument } from 'src/schema/sale.schema';
 import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
 import { StockCardImagesSyncService } from 'src/service/tcgdex/stock-card-images-sync.service';
-import { isQuantityKind } from 'src/constants/bulk-product';
+import { isQuantityKind, isZeroProfitCardId } from 'src/constants/bulk-product';
 import {
   type OwnerKey,
   isOwnerKey,
@@ -25,7 +25,7 @@ import {
   getCurrentOwner,
   runWithOwnerAsync,
 } from 'src/owner/owner-context';
-import { enrichSaleCreatePayload } from 'src/utils/sale-cost-snapshot';
+import { enrichSaleCreatePayload, effectiveSaleCostCop } from 'src/utils/sale-cost-snapshot';
 import { CardStockTagRepository } from 'src/repository/card-stock-tag.repository';
 import type { Stock } from 'src/schema/stock.schema';
 
@@ -528,9 +528,12 @@ export class SaleController {
           }
         }
 
-        // Calcular costo de compra
-        const cardCost =
-          stock.shipment / stock.cards_in_shipmet + stock.unity_cost;
+        // Calcular costo de compra (envio: costo = precio → ganancia 0)
+        const cardCost = effectiveSaleCostCop(
+          sale.card_id ?? stock.card_id,
+          sale.amount_cop,
+          stock.shipment / stock.cards_in_shipmet + stock.unity_cost,
+        );
 
         return {
           _id: sale._id.toString(),
@@ -614,8 +617,11 @@ export class SaleController {
           }
         }
 
-        const cardCost =
-          stock.shipment / stock.cards_in_shipmet + stock.unity_cost;
+        const cardCost = effectiveSaleCostCop(
+          sale.card_id ?? stock.card_id,
+          sale.amount_cop,
+          stock.shipment / stock.cards_in_shipmet + stock.unity_cost,
+        );
 
         return {
           _id: sale._id.toString(),
@@ -730,9 +736,16 @@ export class SaleController {
       return { success: false, message: 'Venta no encontrada' };
     }
 
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     if (body.amount_cop !== undefined) {
       updateData.amount_cop = body.amount_cop;
+      if (isZeroProfitCardId(sale.card_id)) {
+        updateData.cost_cop_snapshot = effectiveSaleCostCop(
+          sale.card_id,
+          body.amount_cop,
+          0,
+        );
+      }
     }
     if (body.notes !== undefined) {
       updateData.notes = body.notes;

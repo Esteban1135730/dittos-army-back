@@ -30,6 +30,7 @@ import { Stock } from 'src/schema/stock.schema';
 import { precioToCop } from 'src/utils/precio-to-cop';
 import { enrichSaleCreatePayload } from 'src/utils/sale-cost-snapshot';
 import { isQuantityKind } from 'src/constants/bulk-product';
+import { parseCivilDateUtc } from 'src/utils/civil-date';
 import {
   TIENDAS_ENTREGA,
   getTiendaEntrega,
@@ -418,6 +419,20 @@ export class PedidoService {
     return this.toResponse(updated ?? pedido);
   }
 
+  /** Solo lectura: no adjunta huérfanas. */
+  async findReservadoByClientId(
+    clientId: string,
+  ): Promise<PedidoDocument | null> {
+    return this.pedidoRepository.findReservadoByClientId(clientId);
+  }
+
+  /** Solo lectura: no adjunta huérfanas. */
+  async findOpenByClientId(
+    clientId: string,
+  ): Promise<PedidoDocument | null> {
+    return this.pedidoRepository.findOpenByClientId(clientId);
+  }
+
   async requireReservadoPedido(
     clientId: string,
     pedidoId?: string,
@@ -565,22 +580,8 @@ export class PedidoService {
       }
       return undefined;
     }
-    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
-    const isoDay = m ? raw : raw.slice(0, 10);
-    const parsed = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDay);
-    if (!parsed) {
-      throw new BadRequestException('fecha_tentativa_entrega inválida');
-    }
-    const year = Number(parsed[1]);
-    const month = Number(parsed[2]);
-    const day = Number(parsed[3]);
-    const date = new Date(Date.UTC(year, month - 1, day));
-    if (
-      Number.isNaN(date.getTime()) ||
-      date.getUTCFullYear() !== year ||
-      date.getUTCMonth() !== month - 1 ||
-      date.getUTCDate() !== day
-    ) {
+    const date = parseCivilDateUtc(raw);
+    if (!date) {
       throw new BadRequestException('fecha_tentativa_entrega inválida');
     }
     return date;

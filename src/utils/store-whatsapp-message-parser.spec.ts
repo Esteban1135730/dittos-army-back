@@ -1,5 +1,6 @@
 import {
   extractClientNameFromStoreMessage,
+  extractStoreDeliveryFromMessage,
   parseStoreCatalogCartLines,
   parseStoreCatalogLine,
 } from './store-whatsapp-message-parser';
@@ -68,5 +69,88 @@ describe('store-whatsapp-message-parser', () => {
     if (!r.ok) return;
     expect(r.parsed.unit_price_cop).toBe(15000);
     expect(r.parsed.quantity).toBe(2);
+  });
+
+  describe('extractStoreDeliveryFromMessage', () => {
+    const catalogLine =
+      '- Test Card | ID: sv08-130 | Expansión: Set (#130) | Idioma: Inglés x1';
+
+    it('extrae tienda y fecha válidas', () => {
+      const msg = [
+        catalogLine,
+        'A nombre de: Cliente Test',
+        'Recogida en tienda: Hidden TCG Store | store_id: hidden-tcg-store',
+        'Fecha tentativa de entrega: 2026-09-20',
+      ].join('\n');
+      expect(extractStoreDeliveryFromMessage(msg)).toEqual({
+        store_id: 'hidden-tcg-store',
+        fecha_tentativa_entrega: '2026-09-20',
+        issues: [],
+      });
+    });
+
+    it('extrae solo tienda', () => {
+      const msg = [
+        catalogLine,
+        'Recogida en tienda: Hidden TCG Store | store_id: hidden-tcg-store',
+      ].join('\n');
+      expect(extractStoreDeliveryFromMessage(msg)).toEqual({
+        store_id: 'hidden-tcg-store',
+        fecha_tentativa_entrega: null,
+        issues: [],
+      });
+    });
+
+    it('extrae solo fecha', () => {
+      const msg = [catalogLine, 'Fecha tentativa de entrega: 2026-09-20'].join(
+        '\n',
+      );
+      expect(extractStoreDeliveryFromMessage(msg)).toEqual({
+        store_id: null,
+        fecha_tentativa_entrega: '2026-09-20',
+        issues: [],
+      });
+    });
+
+    it('store_id inventado → null + unknown_store_id', () => {
+      const msg = [
+        catalogLine,
+        'Recogida en tienda: Fake Shop | store_id: no-existe',
+        'Fecha tentativa de entrega: 2026-09-20',
+      ].join('\n');
+      expect(extractStoreDeliveryFromMessage(msg)).toEqual({
+        store_id: null,
+        fecha_tentativa_entrega: '2026-09-20',
+        issues: ['unknown_store_id'],
+      });
+    });
+
+    it('fecha malformada → null + invalid_fecha', () => {
+      const msg = [
+        catalogLine,
+        'Recogida en tienda: Hidden TCG Store | store_id: hidden-tcg-store',
+        'Fecha tentativa de entrega: 2026-13-40',
+      ].join('\n');
+      expect(extractStoreDeliveryFromMessage(msg)).toEqual({
+        store_id: 'hidden-tcg-store',
+        fecha_tentativa_entrega: null,
+        issues: ['invalid_fecha'],
+      });
+    });
+
+    it('mensaje 017 sin entrega → ambos null y issues vacíos', () => {
+      const msg = [
+        'Hola, quiero reservar las siguientes cartas:',
+        '',
+        catalogLine,
+        '',
+        'A nombre de: Ana',
+      ].join('\n');
+      expect(extractStoreDeliveryFromMessage(msg)).toEqual({
+        store_id: null,
+        fecha_tentativa_entrega: null,
+        issues: [],
+      });
+    });
   });
 });

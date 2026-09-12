@@ -16,6 +16,7 @@ import {
   resolvePvpForLine,
 } from '../utils/pvp-resolve';
 import { stockLineCostCop } from '../utils/stock-line-cost-cop';
+import { effectiveSaleCostCop } from '../utils/sale-cost-snapshot';
 import {
   resolveStockReceivedAt,
   type ReceivedAtSource,
@@ -311,6 +312,7 @@ export class MetricsAnalyticsService {
       cost = stock ? stockLineCostCop(stock) : 0;
       fromSnapshot = false;
     }
+    cost = effectiveSaleCostCop(sale.card_id, revenue, cost);
 
     const stock = stockById.get(sale.stock_id);
     const kindSnap = (sale as SaleDocument & { product_kind_snapshot?: string })

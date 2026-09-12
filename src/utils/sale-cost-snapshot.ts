@@ -1,7 +1,23 @@
+import { isZeroProfitCardId } from '../constants/bulk-product';
 import type { Sale } from '../schema/sale.schema';
 import type { Stock } from '../schema/stock.schema';
 import { stockLineCostCop } from './stock-line-cost-cop';
 import { resolveStockReceivedAt } from './stock-received-at';
+
+/**
+ * Costo en COP para ganancia = venta − costo.
+ * Envío conserva el precio y usa costo = amount (ganancia 0).
+ */
+export function effectiveSaleCostCop(
+  cardId: string | null | undefined,
+  amountCop: number,
+  stockCostCop: number,
+): number {
+  if (isZeroProfitCardId(cardId)) {
+    return Number.isFinite(amountCop) ? Math.round(amountCop) : 0;
+  }
+  return Number.isFinite(stockCostCop) ? stockCostCop : 0;
+}
 
 export type EnrichSaleSnapshotOpts = {
   /** PVP en COP si se resolvió en el flujo. */
@@ -32,7 +48,11 @@ export function enrichSaleCreatePayload(
   const received = resolveStockReceivedAt(stock);
   const payload: Partial<Sale> = {
     ...base,
-    cost_cop_snapshot: Number.isFinite(cost) ? cost : 0,
+    cost_cop_snapshot: effectiveSaleCostCop(
+      base.card_id,
+      base.amount_cop ?? 0,
+      cost,
+    ),
   };
   if (received.date) {
     payload.received_at_snapshot = received.date;

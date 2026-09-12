@@ -123,6 +123,41 @@ describe('MetricsAnalyticsService', () => {
     expect(res.summary.aov_cop).toBe(75000);
   });
 
+  it('envio conserva revenue y fuerza ganancia 0 aunque el snapshot de costo sea 0', async () => {
+    saleRepository.findVentasInPeriod.mockResolvedValue([
+      {
+        stock_id: stockId1,
+        card_id: 'da-envio',
+        type: 'venta',
+        amount_cop: 8000,
+        cost_cop_snapshot: 0,
+        created_at: new Date('2026-05-10T12:00:00.000Z'),
+      },
+    ]);
+    stockRepository.findAll.mockResolvedValue([
+      {
+        _id: { toString: () => stockId1 },
+        card_id: 'da-envio',
+        card_name: 'envio',
+        card_state: 'disponible',
+        shipment: 0,
+        unity_cost: 0,
+        cards_in_shipmet: 1,
+        currency: 'COP',
+        product_kind: 'quantity',
+      },
+    ]);
+
+    const res = await service.getAnalytics({
+      from: '2026-05-01',
+      to: '2026-05-31',
+    });
+
+    expect(res.summary.revenue_cop).toBe(8000);
+    expect(res.summary.cost_cop).toBe(8000);
+    expect(res.summary.gross_profit_cop).toBe(0);
+  });
+
   it('top sellers ordenado por units', async () => {
     saleRepository.findVentasInPeriod.mockResolvedValue([
       {

@@ -83,6 +83,39 @@ describe('SaleController quantity products', () => {
     expect(stockRepository.updateCardState).not.toHaveBeenCalled();
   });
 
+  it('sell envio persiste costo = amount (ganancia 0)', async () => {
+    stockRepository.findById.mockResolvedValue({
+      card_id: 'da-envio',
+      card_state: 'disponible',
+      product_kind: 'quantity',
+      quantity: 99,
+      shipment: 0,
+      unity_cost: 0,
+      cards_in_shipmet: 1,
+      currency: 'COP',
+    });
+    stockRepository.decrementQuantityAtomic.mockResolvedValue({
+      quantity: 98,
+      product_kind: 'quantity',
+    });
+
+    const res = await controller.sellCard({
+      stock_id: stockId,
+      card_id: 'da-envio',
+      amount_cop: 8000,
+      quantity: 1,
+    });
+
+    expect(res.success).toBe(true);
+    expect(saleRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        card_id: 'da-envio',
+        amount_cop: 8000,
+        cost_cop_snapshot: 8000,
+      }),
+    );
+  });
+
   it('sell con qty insuficiente no crea Sales', async () => {
     stockRepository.findById.mockResolvedValue({
       card_id: 'da-bulk',

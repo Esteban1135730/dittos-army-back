@@ -1,6 +1,7 @@
 /**
- * Seed idempotente de SKUs quantity `envio` y `proteccion de cartas`
- * para owner Pablo (DB `test`). PVP 0: el precio se pone en cada pedido.
+ * Seed idempotente de SKUs quantity `envio`, `domicilio` y `proteccion de cartas`
+ * para owner Pablo (DB `test`). Domicilio/protección: PVP 0 (precio en cada pedido).
+ * Envío: no se pisa el PVP existente; la ganancia es siempre 0.
  *
  * Uso (desde `dittos-army-back/`):
  *   npx ts-node -r tsconfig-paths/register scripts/ensure-pablo-accessory-skus.ts
@@ -19,6 +20,7 @@ import {
   ACCESSORY_DEFAULT_PVP_COP,
   BULK_DEFAULT_QUANTITY,
   BULK_IMAGE_URL,
+  ENVIO_CARD_ID,
   PABLO_ACCESSORY_SKUS,
 } from 'src/constants/bulk-product';
 
@@ -122,8 +124,14 @@ async function main() {
         })
         .exec();
 
+      const preservePvp = sku.card_id === ENVIO_CARD_ID;
+
       if (existingPvp) {
-        if (existingPvp.pvp !== ACCESSORY_DEFAULT_PVP_COP) {
+        if (preservePvp) {
+          console.log(
+            `[skip] pvp envio se conserva ${sku.card_id} = ${existingPvp.pvp}`,
+          );
+        } else if (existingPvp.pvp !== ACCESSORY_DEFAULT_PVP_COP) {
           if (dryRun) {
             console.log(
               `[dry-run] update pvp ${sku.card_id} ${existingPvp.pvp} -> ${ACCESSORY_DEFAULT_PVP_COP}`,

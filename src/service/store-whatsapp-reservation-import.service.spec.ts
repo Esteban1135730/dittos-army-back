@@ -1,3 +1,4 @@
+import { ConflictException } from '@nestjs/common';
 import { StoreWhatsAppReservationImportService } from './store-whatsapp-reservation-import.service';
 import { ClientRepository } from '../repository/client.repository';
 import { StockRepository } from '../repository/stock.repository';
@@ -90,6 +91,11 @@ describe('StoreWhatsAppReservationImportService', () => {
 
     const pedidoService = {
       requireReservadoPedido: jest.fn().mockResolvedValue({ _id: 'p1' }),
+      findReservadoByClientId: jest.fn().mockResolvedValue({ _id: 'p1' }),
+      findOpenByClientId: jest
+        .fn()
+        .mockResolvedValue({ _id: 'p1', status: 'reservado' }),
+      create: jest.fn().mockResolvedValue({ id: 'p-new', _id: 'p-new' }),
     } as unknown as PedidoService;
 
     const svc = new StoreWhatsAppReservationImportService(
@@ -100,7 +106,13 @@ describe('StoreWhatsAppReservationImportService', () => {
       pedidoService,
     );
 
-    return { svc, reservaRepository, stockRepository, pvpRepository };
+    return {
+      svc,
+      reservaRepository,
+      stockRepository,
+      pvpRepository,
+      pedidoService,
+    };
   }
 
   it('preview asigna stock disponible con PVP', async () => {
@@ -397,5 +409,132 @@ describe('StoreWhatsAppReservationImportService', () => {
     expect(result.created[0].stock_owner).toBe('esteban');
     expect(createOwners).toEqual(['pablo']);
     expect(updateOwners).toEqual(['esteban']);
+  });
+
+  const deliveryMessage = [
+    'Hola, quiero reservar las siguientes cartas:',
+    '',
+    '- Test Card | ID: sv08-130 | Expansión: Set (#130) | Idioma: Inglés x1',
+    '',
+    'A nombre de: Cliente Test',
+    'Recogida en tienda: Hidden TCG Store | store_id: hidden-tcg-store',
+    'Fecha tentativa de entrega: 2026-09-20',
+  ].join('\n');
+
+  const stockReady = {
+    stock: [
+      {
+        _id: 's1',
+        card_id: 'sv08-130',
+        language: 'en',
+        card_state: 'disponible',
+      },
+    ],
+    pvps: [{ card_id: 'sv08-130', pvp: 8000, currency: 'COP', rareza: null }],
+  };
+
+  it('sin pedidos + tienda+fecha → create y reservas con el id creado', async () => {
+    const { svc, reservaRepository, pedidoService } = makeService(stockReady);
+    (pedidoService.findReservadoByClientId as jest.Mock).mockResolvedValue(null);
+    (pedidoService.findOpenByClientId as jest.Mock).mockResolvedValue(null);
+
+    const result = await svc.import('c1', deliveryMessage);
+    expect(pedidoService.create).toHaveBeenCalledWith({
+      client_id: 'c1',
+      entrega_en_tienda: true,
+      store_id: 'hidden-tcg-store',
+      fecha_tentativa_entrega: '2026-09-20',
+    });
+    expect(pedidoService.requireReservadoPedido).not.toHaveBeenCalled();
+    expect(reservaRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pedido_id: 'p-new',
+        stock_id: 's1',
+      }),
+    );
+    expect(result.delivery.pedido_action).toBe('create');
+    expect(result.created).toHaveLength(1);
+  });
+
+  it('con reservado + tienda+fecha → no create; reservas al id existente', async () => {
+    const { svc, reservaRepository, pedidoService } = makeService(stockReady);
+
+    const result = await svc.import('c1', deliveryMessage);
+    expect(pedidoService.create).not.toHaveBeenCalled();
+    expect(pedidoService.requireReservadoPedido).toHaveBeenCalledWith('c1');
+    expect(reservaRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pedido_id: 'p1',
+        stock_id: 's1',
+      }),
+    );
+    expect(result.delivery.pedido_action).toBe('reuse_reservado');
+    expect(result.delivery.existing_pedido_id).toBe('p1');
+  });
+
+  it('sin entrega y sin reservado → reservas huérfanas; no require ni create', async () => {
+    const { svc, reservaRepository, pedidoService } = makeService(stockReady);
+    (pedidoService.findReservadoByClientId as jest.Mock).mockResolvedValue(null);
+    (pedidoService.findOpenByClientId as jest.Mock).mockResolvedValue(null);
+
+    const result = await svc.import('c1', sampleMessage);
+    expect(pedidoService.create).not.toHaveBeenCalled();
+    expect(pedidoService.requireReservadoPedido).not.toHaveBeenCalled();
+    expect(reservaRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stock_id: 's1',
+        client_id: 'c1',
+      }),
+    );
+    expect(
+      (reservaRepository.create as jest.Mock).mock.calls[0][0],
+    ).not.toHaveProperty('pedido_id');
+    expect(result.delivery.pedido_action).toBe('reservas_only');
+  });
+
+  it('solo tienda o solo fecha → reservas_only igual que sin entrega', async () => {
+    const onlyStore = [
+      sampleMessage,
+      'Recogida en tienda: Hidden TCG Store | store_id: hidden-tcg-store',
+    ].join('\n');
+    const onlyFecha = [
+      sampleMessage,
+      'Fecha tentativa de entrega: 2026-09-20',
+    ].join('\n');
+
+    for (const msg of [onlyStore, onlyFecha]) {
+      const { svc, reservaRepository, pedidoService } = makeService(stockReady);
+      (pedidoService.findReservadoByClientId as jest.Mock).mockResolvedValue(
+        null,
+      );
+      (pedidoService.findOpenByClientId as jest.Mock).mockResolvedValue(null);
+
+      const result = await svc.import('c1', msg);
+      expect(pedidoService.create).not.toHaveBeenCalled();
+      expect(pedidoService.requireReservadoPedido).not.toHaveBeenCalled();
+      expect(
+        (reservaRepository.create as jest.Mock).mock.calls[0][0],
+      ).not.toHaveProperty('pedido_id');
+      expect(result.delivery.pedido_action).toBe('reservas_only');
+    }
+  });
+
+  it('pagado abierto sin reservado → preview blocked_pagado; import 409', async () => {
+    const { svc, reservaRepository, pedidoService } = makeService(stockReady);
+    (pedidoService.findReservadoByClientId as jest.Mock).mockResolvedValue(null);
+    (pedidoService.findOpenByClientId as jest.Mock).mockResolvedValue({
+      _id: 'p-paid',
+      status: 'pagado',
+    });
+
+    const preview = await svc.preview('c1', deliveryMessage);
+    expect(preview.delivery.pedido_action).toBe('blocked_pagado');
+    expect(preview.delivery.existing_pedido_id).toBe('p-paid');
+
+    await expect(svc.import('c1', deliveryMessage)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
+    expect(pedidoService.create).not.toHaveBeenCalled();
+    expect(reservaRepository.create).not.toHaveBeenCalled();
   });
 });

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -20,8 +21,10 @@ import {
 import { stockLineLanguage } from '../utils/store-language-labels';
 import {
   extractClientNameFromStoreMessage,
+  extractStoreDeliveryFromMessage,
   parseStoreCatalogCartLines,
 } from '../utils/store-whatsapp-message-parser';
+import { getTiendaEntrega } from '../utils/tiendas-entrega';
 import { otherOwner, type OwnerKey } from '../config/owners.config';
 import { getCurrentOwner } from '../owner/owner-context';
 import {
@@ -60,6 +63,21 @@ export type ImportWhatsAppLineResult = {
   issues: string[];
 };
 
+export type ImportWhatsAppPedidoAction =
+  | 'create'
+  | 'reuse_reservado'
+  | 'reservas_only'
+  | 'blocked_pagado';
+
+export type ImportWhatsAppDelivery = {
+  store_id: string | null;
+  store_name: string | null;
+  fecha_tentativa_entrega: string | null;
+  pedido_action: ImportWhatsAppPedidoAction;
+  existing_pedido_id: string | null;
+  issues: string[];
+};
+
 export type ImportWhatsAppPlan = {
   client_id: string;
   client_name_from_message: string | null;
@@ -70,6 +88,7 @@ export type ImportWhatsAppPlan = {
     lines_failed: number;
     units_reserved: number;
   };
+  delivery: ImportWhatsAppDelivery;
 };
 
 export type ImportWhatsAppCreated = {
@@ -140,9 +159,9 @@ export class StoreWhatsAppReservationImportService {
     }
   > {
     await this.ensureClient(clientId);
-    const pedido = await this.pedidoService.requireReservadoPedido(clientId);
     const overrideMap = new Map(overrides.map((o) => [o.index, o]));
     const plan = await this.buildPlan(clientId, message, overrideMap);
+    const pedidoId = await this.resolvePedidoIdForImport(clientId, plan.delivery);
     const created: ImportWhatsAppCreated[] = [];
     const skipped: {
       line_index: number;
@@ -185,7 +204,7 @@ export class StoreWhatsAppReservationImportService {
           stock_id: stockId,
           precio: precioCop,
           currency: 'COP',
-          pedido_id: String(pedido._id),
+          ...(pedidoId ? { pedido_id: pedidoId } : {}),
           stock_owner: stockOwner,
         });
         await withStockOwner(stockOwner, () =>
@@ -395,7 +414,96 @@ export class StoreWhatsAppReservationImportService {
         lines_failed: linesFailed,
         units_reserved: unitsReserved,
       },
+      delivery: await this.resolveDelivery(clientId, text),
     };
+  }
+
+  private async resolveDelivery(
+    clientId: string,
+    message: string,
+  ): Promise<ImportWhatsAppDelivery> {
+    const extracted = extractStoreDeliveryFromMessage(message);
+    const store = extracted.store_id
+      ? getTiendaEntrega(extracted.store_id)
+      : undefined;
+
+    const store_id = extracted.store_id;
+    const store_name = store?.name ?? null;
+    const fecha_tentativa_entrega = extracted.fecha_tentativa_entrega;
+    const issues = [...extracted.issues];
+
+    const reservado =
+      await this.pedidoService.findReservadoByClientId(clientId);
+    if (reservado) {
+      return {
+        store_id,
+        store_name,
+        fecha_tentativa_entrega,
+        pedido_action: 'reuse_reservado',
+        existing_pedido_id: String(reservado._id),
+        issues,
+      };
+    }
+
+    const open = await this.pedidoService.findOpenByClientId(clientId);
+    if (open?.status === 'pagado') {
+      return {
+        store_id,
+        store_name,
+        fecha_tentativa_entrega,
+        pedido_action: 'blocked_pagado',
+        existing_pedido_id: String(open._id),
+        issues,
+      };
+    }
+
+    if (store_id && fecha_tentativa_entrega) {
+      return {
+        store_id,
+        store_name,
+        fecha_tentativa_entrega,
+        pedido_action: 'create',
+        existing_pedido_id: null,
+        issues,
+      };
+    }
+
+    return {
+      store_id,
+      store_name,
+      fecha_tentativa_entrega,
+      pedido_action: 'reservas_only',
+      existing_pedido_id: null,
+      issues,
+    };
+  }
+
+  private async resolvePedidoIdForImport(
+    clientId: string,
+    delivery: ImportWhatsAppDelivery,
+  ): Promise<string | undefined> {
+    if (delivery.pedido_action === 'blocked_pagado') {
+      throw new ConflictException(
+        'Hay un pedido pagado abierto; no se puede importar por esta vía. Entregalo o gestiona el ciclo en la ficha del cliente.',
+      );
+    }
+
+    if (delivery.pedido_action === 'create') {
+      const created = await this.pedidoService.create({
+        client_id: clientId,
+        entrega_en_tienda: true,
+        store_id: delivery.store_id ?? undefined,
+        fecha_tentativa_entrega: delivery.fecha_tentativa_entrega ?? '',
+      });
+      return created.id;
+    }
+
+    if (delivery.pedido_action === 'reuse_reservado') {
+      const pedido = await this.pedidoService.requireReservadoPedido(clientId);
+      return String(pedido._id);
+    }
+
+    return undefined;
   }
 
   private matchLine(

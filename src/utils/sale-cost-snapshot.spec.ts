@@ -37,6 +37,27 @@ describe('enrichSaleCreatePayload', () => {
     expect(payload.tags_snapshot).toEqual(['jugable']);
   });
 
+  it('envio persiste costo = amount para ganancia 0 y conserva el precio', () => {
+    const payload = enrichSaleCreatePayload(
+      {
+        stock_id: 's-env',
+        card_id: 'da-envio',
+        type: 'venta',
+        amount_cop: 8000,
+      },
+      {
+        shipment: 0,
+        cards_in_shipmet: 1,
+        unity_cost: 0,
+        currency: 'COP',
+        product_kind: 'quantity',
+      },
+    );
+
+    expect(payload.amount_cop).toBe(8000);
+    expect(payload.cost_cop_snapshot).toBe(8000);
+  });
+
   it('usa 0 si el costo no es finito (stock vacío)', () => {
     const payload = enrichSaleCreatePayload(
       { type: 'venta', amount_cop: 100 },

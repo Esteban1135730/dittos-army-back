@@ -5,6 +5,7 @@ import {
   ENVIO_CARD_ID,
   ENVIO_CARD_NAME,
   isSyntheticQuantityCardId,
+  isZeroProfitCardId,
   PABLO_ACCESSORY_SKUS,
   PROTECCION_CARTAS_CARD_ID,
   PROTECCION_CARTAS_CARD_NAME,
@@ -37,5 +38,8 @@ describe('PABLO_ACCESSORY_SKUS', () => {
     expect(isSyntheticQuantityCardId(DOMICILIO_CARD_ID)).toBe(true);
     expect(isSyntheticQuantityCardId(PROTECCION_CARTAS_CARD_ID)).toBe(true);
     expect(isSyntheticQuantityCardId('swsh3-136')).toBe(false);
+    expect(isZeroProfitCardId(ENVIO_CARD_ID)).toBe(true);
+    expect(isZeroProfitCardId(DOMICILIO_CARD_ID)).toBe(false);
+    expect(isZeroProfitCardId('swsh3-136')).toBe(false);
   });
 });

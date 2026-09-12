@@ -8,7 +8,7 @@ export const BULK_DEFAULT_PVP_COP = 2000;
 /** Path relativo servido por el panel (`public/bulk-dummy.svg`). */
 export const BULK_IMAGE_URL = '/bulk-dummy.svg';
 
-/** SKUs quantity de Pablo con PVP 0: el precio se pone en cada pedido. */
+/** SKUs quantity de Pablo. Domicilio/protección: PVP 0 (precio en cada pedido). */
 export const ENVIO_CARD_ID = 'da-envio';
 export const ENVIO_CARD_NAME = 'envio';
 export const DOMICILIO_CARD_ID = 'da-domicilio';
@@ -39,6 +39,17 @@ export type ProductKind = 'unit' | 'quantity';
 
 export function isBulkCardId(cardId: string | null | undefined): boolean {
   return String(cardId ?? '').trim() === BULK_CARD_ID;
+}
+
+/**
+ * Envío cobra precio (PVP / amount) pero no aporta margen:
+ * ganancia = 0 en stock, reservas, ventas y métricas.
+ * Domicilio sí tiene 100% de ganancia (costo 0).
+ */
+export function isZeroProfitCardId(
+  cardId: string | null | undefined,
+): boolean {
+  return String(cardId ?? '').trim() === ENVIO_CARD_ID;
 }
 
 /** SKUs quantity sintéticos (sin TCGdex): bulk + accesorios Pablo. */

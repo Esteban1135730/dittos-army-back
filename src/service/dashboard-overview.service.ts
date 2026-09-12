@@ -13,6 +13,7 @@ import {
   groupPvpsByCardId,
   resolvePvpForLine,
 } from '../utils/pvp-resolve';
+import { effectiveSaleCostCop } from '../utils/sale-cost-snapshot';
 import type { Stock } from '../schema/stock.schema';
 import type { SaleDocument } from '../schema/sale.schema';
 
@@ -218,7 +219,12 @@ export class DashboardOverviewService {
     for (const sale of activeSales) {
       active_amount_cop += sale.amount_cop ?? 0;
       const stock = stockById.get(sale.stock_id);
-      const costCop = stock ? stockLineCostCop(stock) : 0;
+      const stockCost = stock ? stockLineCostCop(stock) : 0;
+      const costCop = effectiveSaleCostCop(
+        sale.card_id ?? stock?.card_id,
+        sale.amount_cop ?? 0,
+        stockCost,
+      );
       active_estimated_profit_cop += (sale.amount_cop ?? 0) - costCop;
     }
 
@@ -240,7 +246,12 @@ export class DashboardOverviewService {
       const precioCop = amountToCop(reserva.precio, reserva.currency ?? 'COP');
       ventas_esperadas_cop += precioCop;
       const stock = stockById.get(reserva.stock_id);
-      const costCop = stock ? stockLineCostCop(stock) : 0;
+      const stockCost = stock ? stockLineCostCop(stock) : 0;
+      const costCop = effectiveSaleCostCop(
+        stock?.card_id,
+        precioCop,
+        stockCost,
+      );
       ganancia_estimada_cop += precioCop - costCop;
     }
 
