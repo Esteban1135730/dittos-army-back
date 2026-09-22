@@ -2458,11 +2458,26 @@
         "database": {
           "en": "Arceus"
         },
-        "englishName": null
+        "englishName": "Platinum Arceus"
       },
       "cardtrader": {
         "id": 2018,
         "code": "aoa"
+      }
+    },
+    "en:pl4-ct-ar": {
+      "tcgdex_set_id": "pl4",
+      "locale": "en",
+      "names": {
+        "en_cardtrader": "Platinum Arceus",
+        "database": {
+          "en": "Arceus"
+        },
+        "englishName": "Platinum Arceus"
+      },
+      "cardtrader": {
+        "id": 1878,
+        "code": "ar"
       }
     },
     "ja:L1a": {

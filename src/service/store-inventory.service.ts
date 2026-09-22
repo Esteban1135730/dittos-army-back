@@ -7,13 +7,26 @@ import { SaleRepository } from '../repository/sale.repository';
 import { CardStockTagRepository } from '../repository/card-stock-tag.repository';
 import { CardtraderTransitLotRepository } from '../repository/cardtrader-transit-lot.repository';
 import { CardtraderTransitLineRepository } from '../repository/cardtrader-transit-line.repository';
+import { isSyntheticQuantityCardId } from '../constants/bulk-product';
+import { sanitizeCardImageUrl } from '../utils/card-image-url';
 import { TCGDexService } from './tcgdex/tcgdex.service';
 import { LocalCardImagesService } from './tcgdex/local-card-images.service';
+import {
+  OWNERS_CONFIG,
+  type OwnerKey,
+} from '../config/owners.config';
+import { runWithOwnerAsync } from '../owner/owner-context';
 import {
   effectiveOperationalRarezaFromStock,
   groupPvpsByCardId,
   resolvePvpForLine,
+  type PvpLike,
 } from '../utils/pvp-resolve';
+import {
+  mergePublicTagMaps,
+  mergeSoldUnitCounts,
+  pickStoreExportPvp,
+} from '../utils/store-export-multi-owner';
 import {
   pickStoreExportCardName,
   tcgdexMetaSpread,
@@ -60,6 +73,24 @@ export type PublishStoreCatalogResult = {
 };
 
 const EXCLUDED_STATES = new Set(['vendida', 'propiedad', 'reserva', 'perdida']);
+
+type PvpByCard = Map<string, PvpLike[]>;
+type PvpByOwner = Record<OwnerKey, PvpByCard>;
+
+function emptyPvpByOwner(): PvpByOwner {
+  return { pablo: new Map(), esteban: new Map() };
+}
+
+function isStoreExportSellable(stock: {
+  card_state?: string | null;
+  card_id?: string | null;
+}): boolean {
+  if (isSyntheticQuantityCardId(stock.card_id)) return false;
+  return (
+    stock.card_state != null &&
+    !EXCLUDED_STATES.has(String(stock.card_state).toLowerCase())
+  );
+}
 
 function storeMetaCacheKey(cardId: string, lang: string): string {
   return `${cardId}::${lang}`;
@@ -123,6 +154,10 @@ export class StoreInventoryService {
     private readonly cardStockTagRepository: CardStockTagRepository,
   ) {}
 
+  private ownerKeys(): OwnerKey[] {
+    return Object.keys(OWNERS_CONFIG.owners) as OwnerKey[];
+  }
+
   private async loadDemandCounts(): Promise<Map<string, number> | null> {
     try {
       const { from, to } = storeDemandWindowUtc();
@@ -135,6 +170,103 @@ export class StoreInventoryService {
       );
       return null;
     }
+  }
+
+  private async loadDemandCountsAllOwners(): Promise<Map<string, number>> {
+    let merged = new Map<string, number>();
+    for (const owner of this.ownerKeys()) {
+      try {
+        const counts = await runWithOwnerAsync(owner, () =>
+          this.loadDemandCounts(),
+        );
+        merged = mergeSoldUnitCounts(merged, counts);
+      } catch (e) {
+        console.warn(
+          `StoreInventory: error counting sold_units_90d for ${owner}`,
+          e,
+        );
+      }
+    }
+    return merged;
+  }
+
+  private async loadSellableStockFromAllOwners(): Promise<any[]> {
+    const all: any[] = [];
+    for (const owner of this.ownerKeys()) {
+      try {
+        const rows = await runWithOwnerAsync(owner, () =>
+          this.stockRepository.findAll(),
+        );
+        all.push(...rows.filter(isStoreExportSellable));
+      } catch (e) {
+        if (owner === 'pablo') throw e;
+        console.warn(
+          `StoreInventory: error loading stock for ${owner}; skipping`,
+          e,
+        );
+      }
+    }
+    return all;
+  }
+
+  private async loadPvpByOwner(cardIds: string[]): Promise<PvpByOwner> {
+    const result = emptyPvpByOwner();
+    if (cardIds.length === 0) return result;
+    for (const owner of this.ownerKeys()) {
+      try {
+        result[owner] = await runWithOwnerAsync(owner, async () => {
+          const pvps = await this.pvpRepository.findByCardIds(cardIds);
+          return groupPvpsByCardId(pvps);
+        });
+      } catch (e) {
+        console.warn(`StoreInventory: error loading PVP for ${owner}`, e);
+      }
+    }
+    return result;
+  }
+
+  private async loadTagMapAllOwners(
+    cardIds: string[],
+  ): Promise<Map<string, string[]>> {
+    let merged = new Map<string, string[]>();
+    if (cardIds.length === 0) return merged;
+    for (const owner of this.ownerKeys()) {
+      try {
+        const part = await runWithOwnerAsync(owner, () =>
+          this.cardStockTagRepository.findMapByCardIds(cardIds),
+        );
+        merged = mergePublicTagMaps(merged, part);
+      } catch (e) {
+        console.warn(`StoreInventory: error loading tags for ${owner}`, e);
+      }
+    }
+    return merged;
+  }
+
+  private resolveExportPvp(
+    pvpByOwner: PvpByOwner,
+    cardId: string,
+    rareza: string | null,
+  ): { pvp: number; pvp_currency: string } | undefined {
+    const pablo = resolvePvpForLine(
+      pvpByOwner.pablo.get(cardId) ?? [],
+      rareza,
+    );
+    const esteban = resolvePvpForLine(
+      pvpByOwner.esteban.get(cardId) ?? [],
+      rareza,
+    );
+    const picked = pickStoreExportPvp(
+      pablo
+        ? { pvp: pablo.pvp, currency: pablo.pvp_currency }
+        : undefined,
+      esteban
+        ? { pvp: esteban.pvp, currency: esteban.pvp_currency }
+        : undefined,
+    );
+    return picked
+      ? { pvp: picked.pvp, pvp_currency: picked.currency }
+      : undefined;
   }
 
   private async localizeImagesForStore<
@@ -205,12 +337,7 @@ export class StoreInventoryService {
       );
 
     try {
-      const stockItems: any[] = await this.stockRepository.findAll();
-      const filtered = stockItems.filter(
-        (s) =>
-          s.card_state != null &&
-          !EXCLUDED_STATES.has(String(s.card_state).toLowerCase()),
-      );
+      const filtered = await this.loadSellableStockFromAllOwners();
       if (filtered.length === 0) {
         await this.writeInventory(outputPath, []);
         await this.pruneUnusedStoreCardImages();
@@ -218,25 +345,8 @@ export class StoreInventoryService {
       }
 
       const cardIds = [...new Set(filtered.map((s) => s.card_id))];
-      const pvpByCard = new Map<
-        string,
-        {
-          card_id: string;
-          rareza?: string | null;
-          pvp: number;
-          currency: string;
-        }[]
-      >();
+      const pvpByOwner = await this.loadPvpByOwner(cardIds);
       const cardMap = new Map<string, StoreCardExportMeta>();
-
-      try {
-        const pvps = await this.pvpRepository.findByCardIds(cardIds);
-        for (const [cid, list] of groupPvpsByCardId(pvps)) {
-          pvpByCard.set(cid, list);
-        }
-      } catch (e) {
-        console.warn('StoreInventory: error loading PVP', e);
-      }
 
       const metaLoads = new Map<
         string,
@@ -279,9 +389,12 @@ export class StoreInventoryService {
           stock.language || stock.languaje || 'en',
         );
         const card = cardMap.get(storeMetaCacheKey(stock.card_id, lang));
-        const list = pvpByCard.get(stock.card_id) ?? [];
         const rzLine = effectiveOperationalRarezaFromStock(stock);
-        const pvpData = resolvePvpForLine(list, rzLine);
+        const pvpData = this.resolveExportPvp(
+          pvpByOwner,
+          stock.card_id,
+          rzLine,
+        );
         return {
           ...stock._doc,
           card_id: stock.card_id,
@@ -295,7 +408,7 @@ export class StoreInventoryService {
             card?.name,
             stock.card_id,
           ),
-          image_url: stock.image_url || card?.image || '',
+          image_url: sanitizeCardImageUrl(stock.image_url) || card?.image || '',
           pvp: pvpData?.pvp,
           pvp_currency: pvpData?.pvp_currency,
           language: lang,
@@ -313,40 +426,44 @@ export class StoreInventoryService {
         if (!firstByLine.has(key)) firstByLine.set(key, item);
       }
 
-      const inventoryRaw: StoreInventoryItem[] = groups.map((g) => {
-        const item = firstByLine.get(g.lineId);
-        const list = pvpByCard.get(g.card_id) ?? [];
-        const pvpData = resolvePvpForLine(list, g.rareza);
-        const pvpCop =
-          pvpData != null
-            ? this.pvpToCop(pvpData.pvp, pvpData.pvp_currency)
-            : 0;
-        const card = cardMap.get(storeMetaCacheKey(g.card_id, g.language));
-        const name = pickStoreExportCardName(
-          item?.card_name,
-          card?.name,
-          g.card_id,
-        );
-        const image = item?.image_url || card?.image || '';
-        return {
-          lineId: g.lineId,
-          card_id: g.card_id,
-          name,
-          language: g.language,
-          pvp: pvpCop,
-          quantity: g.quantity,
-          image,
-          status: 'available' as const,
-          stocked_at: g.stocked_at,
-          ...(g.rareza != null ? { rareza: g.rareza } : {}),
-          ...(card?.expansion ? { expansion: card.expansion } : {}),
-          ...(card?.card_number ? { card_number: card.card_number } : {}),
-          ...tcgdexMetaSpread(card),
-        };
-      });
+      const inventoryRaw: StoreInventoryItem[] = groups
+        .map((g) => {
+          const item = firstByLine.get(g.lineId);
+          const pvpData = this.resolveExportPvp(pvpByOwner, g.card_id, g.rareza);
+          const pvpCop =
+            pvpData != null
+              ? this.pvpToCop(pvpData.pvp, pvpData.pvp_currency)
+              : 0;
+          const card = cardMap.get(storeMetaCacheKey(g.card_id, g.language));
+          const name = pickStoreExportCardName(
+            item?.card_name,
+            card?.name,
+            g.card_id,
+          );
+          const image =
+            sanitizeCardImageUrl(item?.image_url) ||
+            sanitizeCardImageUrl(card?.image) ||
+            '';
+          return {
+            lineId: g.lineId,
+            card_id: g.card_id,
+            name,
+            language: g.language,
+            pvp: pvpCop,
+            quantity: g.quantity,
+            image,
+            status: 'available' as const,
+            stocked_at: g.stocked_at,
+            ...(g.rareza != null ? { rareza: g.rareza } : {}),
+            ...(card?.expansion ? { expansion: card.expansion } : {}),
+            ...(card?.card_number ? { card_number: card.card_number } : {}),
+            ...tcgdexMetaSpread(card),
+          };
+        })
+        .filter((row) => row.pvp > 0);
 
-      const demandCounts = await this.loadDemandCounts();
-      const tagMap = await this.cardStockTagRepository.findMapByCardIds(cardIds);
+      const demandCounts = await this.loadDemandCountsAllOwners();
+      const tagMap = await this.loadTagMapAllOwners(cardIds);
       const inventoryWithDemand = applySoldUnits90d(inventoryRaw, demandCounts).map(
         (row) => {
           const tags = toStorePublicTags(tagMap.get(row.card_id));
@@ -399,7 +516,9 @@ export class StoreInventoryService {
       const openTransitLines = transitLines
         .filter(
           (line) =>
-            openLotIds.has(String(line.lot_id)) && line.not_arrived_at == null,
+            openLotIds.has(String(line.lot_id)) &&
+            line.not_arrived_at == null &&
+            !isSyntheticQuantityCardId(line.card_id),
         )
         .map((line) => ({
           card_id: line.card_id,
@@ -471,7 +590,9 @@ export class StoreInventoryService {
           it.card_id,
         );
         const image =
-          (it.image_url && String(it.image_url).trim()) || meta?.image || '';
+          sanitizeCardImageUrl(it.image_url) ||
+          sanitizeCardImageUrl(meta?.image) ||
+          '';
         const rz =
           it.rareza == null || String(it.rareza).trim() === ''
             ? null
@@ -510,41 +631,29 @@ export class StoreInventoryService {
       const upcomingCardIds = [
         ...new Set(Array.from(byKey.values()).map((r) => r.card_id)),
       ];
-      const pvpByCard = new Map<
-        string,
-        {
-          card_id: string;
-          rareza?: string | null;
-          pvp: number;
-          currency: string;
-        }[]
-      >();
-      try {
-        const pvps = await this.pvpRepository.findByCardIds(upcomingCardIds);
-        for (const [cid, list] of groupPvpsByCardId(pvps)) {
-          pvpByCard.set(cid, list);
-        }
-      } catch (e) {
-        console.warn('StoreUpcoming: error loading PVP', e);
-      }
-      const tagMap =
-        await this.cardStockTagRepository.findMapByCardIds(upcomingCardIds);
-      const demandCounts = await this.loadDemandCounts();
+      const pvpByOwner = await this.loadPvpByOwner(upcomingCardIds);
+      const tagMap = await this.loadTagMapAllOwners(upcomingCardIds);
+      const demandCounts = await this.loadDemandCountsAllOwners();
 
-      const withMeta = Array.from(byKey.values()).map((row) => {
-        const list = pvpByCard.get(row.card_id) ?? [];
-        const pvpData = resolvePvpForLine(list, row.rareza);
-        const pvpCop =
-          pvpData != null
-            ? this.pvpToCop(pvpData.pvp, pvpData.pvp_currency)
-            : 0;
-        const tags = toStorePublicTags(tagMap.get(row.card_id));
-        return {
-          ...row,
-          ...(pvpCop > 0 ? { pvp: pvpCop } : {}),
-          ...(tags ? { tags } : {}),
-        };
-      });
+      const withMeta = Array.from(byKey.values())
+        .map((row) => {
+          const pvpData = this.resolveExportPvp(
+            pvpByOwner,
+            row.card_id,
+            row.rareza,
+          );
+          const pvpCop =
+            pvpData != null
+              ? this.pvpToCop(pvpData.pvp, pvpData.pvp_currency)
+              : 0;
+          const tags = toStorePublicTags(tagMap.get(row.card_id));
+          return {
+            ...row,
+            ...(pvpCop > 0 ? { pvp: pvpCop } : {}),
+            ...(tags ? { tags } : {}),
+          };
+        })
+        .filter((row) => (row.pvp ?? 0) > 0);
 
       const rowsRaw: StoreUpcomingItem[] = applySoldUnits90d(
         withMeta,

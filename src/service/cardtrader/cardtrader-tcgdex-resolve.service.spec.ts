@@ -25,6 +25,36 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(regular.tcgdex_card_id).toBe('swsh11-75');
   });
 
+  it('resuelve Platinum Arceus #082 → pl4-82', async () => {
+    const hit = await service.resolveTcgdexCardId({
+      expansionName: 'Platinum Arceus',
+      collectorNumber: '082',
+      language: 'it',
+    });
+    expect(hit.tcgdex_set_id).toBe('pl4');
+    expect(hit.tcgdex_card_id).toBe('pl4-82');
+    expect(hit.error).toBeNull();
+
+    const byId = await service.resolveTcgdexCardId({
+      expansionId: 1878,
+      collectorNumber: '035',
+      language: 'it',
+    });
+    expect(byId.tcgdex_card_id).toBe('pl4-35');
+  });
+
+  it('resuelve Team Magma\'s Groudon Celebrations vía blueprint → cel25cc-CC011', async () => {
+    const hit = await service.resolveTcgdexCardId({
+      expansionName: 'Celebrations',
+      collectorNumber: '009',
+      language: 'en',
+      blueprint_id: 201767,
+    });
+    expect(hit.tcgdex_set_id).toBe('cel25cc');
+    expect(hit.tcgdex_card_id).toBe('cel25cc-CC011');
+    expect(hit.error).toBeNull();
+  });
+
   it('resuelve Crown Zenith #GG64 → swsh12.5gg-GG64', async () => {
     const hit = await service.resolveTcgdexCardId({
       expansionName: 'Crown Zenith',

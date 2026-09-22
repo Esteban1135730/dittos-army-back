@@ -267,11 +267,18 @@ export class LocalCardImagesService implements OnModuleInit {
     const cardId = input.cardId?.trim();
     if (!cardId) return undefined;
 
-    const relativePath = this.findRelativePath(
+    let relativePath = this.findRelativePath(
       cardId,
       input.locale,
       input.setId,
     );
+    if (!relativePath) {
+      relativePath = this.copyFromLegacyIfPresent(
+        cardId,
+        input.locale,
+        input.setId,
+      );
+    }
     if (relativePath) {
       const url = this.toPublicUrl(relativePath);
       return { image: url, small: url, large: url, source: 'local' };

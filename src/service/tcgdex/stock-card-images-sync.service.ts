@@ -56,6 +56,14 @@ export class StockCardImagesSyncService implements OnApplicationBootstrap {
   ) {}
 
   onApplicationBootstrap(): void {
+    // Render Free: 512 MB; no bajar el catálogo de imágenes al arrancar.
+    if (
+      process.env.SKIP_CARD_IMAGE_SYNC === '1' ||
+      process.env.RENDER === 'true'
+    ) {
+      this.logger.log('Omitiendo sync de imágenes (SKIP_CARD_IMAGE_SYNC / RENDER).');
+      return;
+    }
     setImmediate(() => {
       void this.syncInBackground();
     });

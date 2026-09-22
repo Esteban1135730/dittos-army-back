@@ -5,6 +5,7 @@ import type {
   TCGdexPricingVariant,
   TCGdexPricingCardmarket,
 } from './tcgdex-api.types';
+import { fallbackCardImageUrl, sanitizeCardImageUrl } from '../../../utils/card-image-url';
 
 /** Precio por variante en formato frontend (nombres cortos) */
 export type CardPriceVariant = {
@@ -180,12 +181,10 @@ function buildCardImageUrls(baseUrl: string): {
   small: string;
   large: string;
 } {
-  if (!baseUrl || typeof baseUrl !== 'string') {
+  const base = sanitizeCardImageUrl(baseUrl);
+  if (!base) {
     return { image: '', small: '', large: '' };
   }
-  const base = baseUrl.trim();
-  if (!base) return { image: '', small: '', large: '' };
-  // Si ya incluye quality (ej. /low.png), usarla tal cual para image/small
   if (/\.(png|jpg|jpeg|webp|gif)(\?|$)/i.test(base)) {
     return { image: base, small: base, large: base };
   }
@@ -221,10 +220,18 @@ export function mapCardFromApi(
   const id = raw.id ?? '';
   const localId = raw.localId ?? '';
   const {
-    image: imageUrl,
-    small: imageSmall,
-    large: imageLarge,
+    image: mappedImage,
+    small: mappedSmall,
+    large: mappedLarge,
   } = buildCardImageUrls(raw.image ?? '');
+  const fallback = fallbackCardImageUrl({
+    image: mappedImage,
+    setId: raw.set?.id,
+    localId: raw.localId ?? localId,
+  });
+  const imageUrl = fallback || mappedImage;
+  const imageSmall = fallback || mappedSmall;
+  const imageLarge = fallback || mappedLarge;
   const pricing = raw.pricing;
 
   return {

@@ -14,37 +14,12 @@ import { OwnerModelsService } from 'src/owner/owner-models.service';
 import { runWithOwnerAsync } from 'src/owner/owner-context';
 import { Stock, type StockDocument } from 'src/schema/stock.schema';
 import { Pvp, type PvpDocument } from 'src/schema/pvp.schema';
-import { BULK_IMAGE_URL } from 'src/constants/bulk-product';
+import { BULK_IMAGE_URL, ESTEBAN_MERCH_SKUS } from 'src/constants/bulk-product';
 
 const OWNER = 'esteban' as const;
 const DEFAULT_QTY = 9999;
 
-const SKUS: ReadonlyArray<{
-  card_id: string;
-  card_name: string;
-  pvp_cop: number;
-}> = [
-  {
-    card_id: 'es-figura-3d-pequena',
-    card_name: 'figura 3d pequeña',
-    pvp_cop: 1000,
-  },
-  {
-    card_id: 'es-figura-3d-mediana',
-    card_name: 'figura 3d mediana',
-    pvp_cop: 3000,
-  },
-  {
-    card_id: 'es-figura-3d-mediana-3uni',
-    card_name: 'figura 3d mediana-3uni',
-    pvp_cop: 5000,
-  },
-  {
-    card_id: 'es-carta-tejida',
-    card_name: 'carta tejida',
-    pvp_cop: 35000,
-  },
-];
+const SKUS = ESTEBAN_MERCH_SKUS;
 
 function parseArgs() {
   return { dryRun: process.argv.slice(2).includes('--dry-run') };

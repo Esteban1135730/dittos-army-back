@@ -17,6 +17,22 @@ describe('mapCardFromApi setEnglishName', () => {
     expect(dto.setEnglishName).toBe('Crimson Haze');
   });
 
+  it('usa arte oficial pokemon.com si TCGdex no trae image', () => {
+    const dto = mapCardFromApi({
+      id: 'mep-080',
+      localId: '080',
+      name: 'Fennekin',
+      set: {
+        id: 'mep',
+        name: 'MEP Black Star Promos',
+        cardCount: { official: 0, total: 89 },
+      },
+    });
+    expect(dto.image).toBe(
+      'https://assets.pokemon.com/static-assets/content-assets/cms2/img/cards/web/MEP/MEP_EN_80.png',
+    );
+  });
+
   it('omite setEnglishName si el brief no lo trae', () => {
     const dto = mapCardFromApi({
       id: 'sv8-001',

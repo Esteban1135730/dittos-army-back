@@ -11,6 +11,7 @@ import { CardStockTagRepository } from 'src/repository/card-stock-tag.repository
 import { runWithOwnerAsync } from 'src/owner/owner-context';
 import { assertFeatureAllowed } from 'src/owner/feature-acl.guard';
 import { StockCardImagesSyncService } from 'src/service/tcgdex/stock-card-images-sync.service';
+import { SaleBatchService } from 'src/service/sale-batch.service';
 
 const pabloId = '507f1f77bcf86cd799439011';
 const estebanId = '507f1f77bcf86cd799439022';
@@ -71,6 +72,7 @@ describe('SaleController sell-batch multi-owner (034)', () => {
           provide: StockCardImagesSyncService,
           useValue: { pruneIfCardUnused: jest.fn().mockResolvedValue(undefined) },
         },
+        SaleBatchService,
       ],
     }).compile();
 

@@ -1,4 +1,5 @@
 import type { CardDto } from '../service/tcgdex/dto/card.dto';
+import { sanitizeCardImageUrl } from './card-image-url';
 import {
   buildTcgdexCardIdLookupCandidates,
   catalogLocaleForLanguage,
@@ -155,7 +156,9 @@ export function storeCardMetaFromDto(card: CardDto): StoreCardExportMeta {
   const types = (card.types || []).map((t) => String(t).trim()).filter(Boolean);
   return {
     name: card.name,
-    image: card.image || card.images?.small || card.images?.large || '',
+    image: sanitizeCardImageUrl(
+      card.image || card.images?.small || card.images?.large || '',
+    ),
     expansion,
     ...(cardNumber ? { card_number: cardNumber } : {}),
     ...(rarity ? { tcg_rarity: rarity } : {}),

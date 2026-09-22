@@ -1,10 +1,11 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ESTEBAN_CONNECTION_NAME, OWNERS_CONFIG } from './config/owners.config';
 import { OwnerMiddleware } from './owner/owner.middleware';
 import { OwnerModelsService } from './owner/owner-models.service';
 import { FeatureAclGuard } from './owner/feature-acl.guard';
+import { SyncTokenGuard } from './guard/sync-token.guard';
 import { StockRepository } from './repository/stock.repository';
 import { CardStockTagRepository } from './repository/card-stock-tag.repository';
 import { Stock, StockSchema } from './schema/stock.schema';
@@ -26,6 +27,14 @@ import {
 import { PvpRepository } from './repository/pvp.repository';
 import { Sale, SaleSchema } from './schema/sale.schema';
 import { SaleRepository } from './repository/sale.repository';
+import {
+  MobilePendingSale,
+  MobilePendingSaleSchema,
+} from './schema/mobile-pending-sale.schema';
+import { MobilePendingSaleRepository } from './repository/mobile-pending-sale.repository';
+import { MobilePendingSaleService } from './service/mobile-pending-sale.service';
+import { MobilePendingSaleController } from './controller/mobile-pending-sale.controller';
+import { SaleBatchService } from './service/sale-batch.service';
 import { ClientRepository } from './repository/client.repository';
 import { ReservaRepository } from './repository/reserva.repository';
 import { ReservaIncomingRepository } from './repository/reserva-incoming.repository';
@@ -165,12 +174,14 @@ import { PedidoService } from './service/pedido.service';
 import { PedidoAbonoService } from './service/pedido-abono.service';
 import { EnvioGeocodeService } from './service/envio-geocode.service';
 import { PedidoController } from './controller/pedido.controller';
+import { HealthController } from './controller/health.controller';
 
 const MONGOOSE_FEATURE_MODELS = [
   { name: Stock.name, schema: StockSchema },
   { name: CardStockTag.name, schema: CardStockTagSchema },
   { name: Pvp.name, schema: PvpSchema },
   { name: Sale.name, schema: SaleSchema },
+  { name: MobilePendingSale.name, schema: MobilePendingSaleSchema },
   { name: Client.name, schema: ClientSchema },
   { name: Reserva.name, schema: ReservaSchema },
   { name: ReservaIncoming.name, schema: ReservaIncomingSchema },
@@ -216,6 +227,7 @@ const MONGOOSE_FEATURE_MODELS = [
     StockController,
     PvpController,
     SaleController,
+    MobilePendingSaleController,
     CardController,
     TcgDexController,
     ClientController,
@@ -230,10 +242,12 @@ const MONGOOSE_FEATURE_MODELS = [
     IncomingHomologController,
     CardtraderReceiptController,
     PedidoController,
+    HealthController,
   ],
   providers: [
     OwnerModelsService,
     { provide: APP_GUARD, useClass: FeatureAclGuard },
+    { provide: APP_GUARD, useClass: SyncTokenGuard },
     SetNameHomologsService,
     LocalCardImagesService,
     StockCardImagesSyncService,
@@ -249,6 +263,9 @@ const MONGOOSE_FEATURE_MODELS = [
     CardStockTagRepository,
     PvpRepository,
     SaleRepository,
+    SaleBatchService,
+    MobilePendingSaleRepository,
+    MobilePendingSaleService,
     ClientRepository,
     ReservaRepository,
     ReservaIncomingRepository,
@@ -324,6 +341,9 @@ const MONGOOSE_FEATURE_MODELS = [
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(OwnerMiddleware).forRoutes('*');
+    consumer
+      .apply(OwnerMiddleware)
+      .exclude({ path: 'health', method: RequestMethod.GET })
+      .forRoutes('*');
   }
 }

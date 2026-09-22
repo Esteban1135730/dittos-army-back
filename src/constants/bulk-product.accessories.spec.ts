@@ -37,6 +37,8 @@ describe('PABLO_ACCESSORY_SKUS', () => {
     expect(isSyntheticQuantityCardId(ENVIO_CARD_ID)).toBe(true);
     expect(isSyntheticQuantityCardId(DOMICILIO_CARD_ID)).toBe(true);
     expect(isSyntheticQuantityCardId(PROTECCION_CARTAS_CARD_ID)).toBe(true);
+    expect(isSyntheticQuantityCardId('es-figura-3d-pequena')).toBe(true);
+    expect(isSyntheticQuantityCardId('es-carta-tejida')).toBe(true);
     expect(isSyntheticQuantityCardId('swsh3-136')).toBe(false);
     expect(isZeroProfitCardId(ENVIO_CARD_ID)).toBe(true);
     expect(isZeroProfitCardId(DOMICILIO_CARD_ID)).toBe(false);

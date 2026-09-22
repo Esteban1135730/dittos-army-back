@@ -283,4 +283,26 @@ describe('set_locale_map', () => {
       }),
     ).toBeNull();
   });
+
+  it('mapea Team Magma\'s Groudon Celebrations vía blueprint → cel25cc-CC011', () => {
+    expect(
+      resolveKnownCardTraderPrint({
+        expansionName: 'Celebrations',
+        collectorNumber: '009',
+        blueprint_id: 201767,
+      }),
+    ).toEqual({
+      tcgdex_card_id: 'cel25cc-CC011',
+      tcgdex_set_id: 'cel25cc',
+      locale: 'en',
+    });
+    // Sin blueprint, #009 de Celebrations no debe forzar Classic Collection
+    // (chocaría con Surfing Pikachu VMAX cel25-9).
+    expect(
+      resolveKnownCardTraderPrint({
+        expansionName: 'Celebrations',
+        collectorNumber: '009',
+      }),
+    ).toBeNull();
+  });
 });

@@ -4,6 +4,12 @@ import _ from 'lodash';
 import { mapSetResume, SetResumeDto } from './dto/set.resume.dto';
 import { CardDto, mapCardFromApi } from './dto/card.dto';
 import { isPublicRemoteImageUrl } from '../../utils/store-image-localize';
+import {
+  officialPokemonComCardImageUrl,
+  sanitizeCardImageUrl,
+  tcgdexJaSwordShieldCdnUrl,
+  tcgdexJaSwordShieldCdnUrlFromCardId,
+} from '../../utils/card-image-url';
 import type { TCGdexCardApiResponse } from './dto/tcgdex-api.types';
 import { CardResumeDto, mapCardResume } from './dto/card.resume.dto';
 import { SetNameHomologsService } from './set-name-homologs.service';
@@ -441,6 +447,10 @@ export class TCGDexService {
         if (hit.status === 'error') sawError = true;
       }
     }
+    const cdn = tcgdexJaSwordShieldCdnUrlFromCardId(id);
+    if (cdn && (await this.probePublicImageUrl(cdn))) {
+      return { status: 'found', url: cdn };
+    }
     if (sawError) return { status: 'error' };
     return { status: 'missing' };
   }
@@ -471,7 +481,11 @@ export class TCGDexService {
         return this.setCached(cacheKey, { status: 'missing' }, this.TTL_CARD_DETAIL_MS);
       }
       const dto = mapCardFromApi(raw);
-      const candidate = dto.images?.small || dto.image || '';
+      const candidate =
+        sanitizeCardImageUrl(dto.images?.small || dto.image || '') ||
+        officialPokemonComCardImageUrl(raw.set?.id, raw.localId) ||
+        tcgdexJaSwordShieldCdnUrl(raw.set?.id, raw.localId) ||
+        '';
       if (!isPublicRemoteImageUrl(candidate)) {
         return this.setCached(cacheKey, { status: 'missing' }, this.TTL_CARD_DETAIL_MS);
       }
@@ -488,6 +502,15 @@ export class TCGDexService {
         error: err instanceof Error ? err.message : String(err),
       });
       return { status: 'error' };
+    }
+  }
+
+  private async probePublicImageUrl(url: string): Promise<boolean> {
+    try {
+      const res = await fetch(url, { method: 'HEAD' });
+      return res.ok;
+    } catch {
+      return false;
     }
   }
 

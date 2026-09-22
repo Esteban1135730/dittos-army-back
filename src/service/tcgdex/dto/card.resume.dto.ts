@@ -1,4 +1,4 @@
-import { CardResume } from '@tcgdex/sdk';
+import { sanitizeCardImageUrl } from '../../../utils/card-image-url';
 
 export type CardResumeDto = {
   id: string;
@@ -8,10 +8,14 @@ export type CardResumeDto = {
 };
 
 export function mapCardResume(src: any) {
+  const rawImage =
+    typeof src?.image === 'string' && src.image.trim()
+      ? src.getImageURL?.('low', 'png')
+      : '';
   return {
     id: src.id,
     localId: src.localId,
     name: src.name,
-    image: src.getImageURL('low', 'png'),
+    image: sanitizeCardImageUrl(rawImage) || undefined,
   };
 }

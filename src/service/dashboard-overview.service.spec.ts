@@ -9,6 +9,12 @@ import { IncomingBatchRepository } from '../repository/incoming-batch.repository
 import { IncomingBatchItemRepository } from '../repository/incoming-batch-item.repository';
 import { CardtraderTransitLineRepository } from '../repository/cardtrader-transit-line.repository';
 import { PvpRepository } from '../repository/pvp.repository';
+import {
+  BULK_CARD_ID,
+  DOMICILIO_CARD_ID,
+  ENVIO_CARD_ID,
+  PROTECCION_CARTAS_CARD_ID,
+} from '../constants/bulk-product';
 
 const stockId = '507f1f77bcf86cd799439011';
 const stockId2 = '507f1f77bcf86cd799439012';
@@ -308,5 +314,120 @@ describe('DashboardOverviewService', () => {
     expect(result.incoming.estimated_cost_cop).toBe(2400);
     expect(result.highlights.capital_engaged_cop).toBe(2400);
     expect(result.incoming.open_batches_count).toBe(1);
+  });
+
+  const syntheticCardIds = [
+    BULK_CARD_ID,
+    ENVIO_CARD_ID,
+    DOMICILIO_CARD_ID,
+    PROTECCION_CARTAS_CARD_ID,
+  ] as const;
+
+  it.each(syntheticCardIds)(
+    'ignora stock sintético %s en KPIs de inventario y capital',
+    async (syntheticId) => {
+      mockEmptyBase();
+      stockRepository.findAll.mockResolvedValue([
+        {
+          _id: stockId,
+          card_id: 'c1',
+          card_state: 'disponible',
+          currency: 'COP',
+          unity_cost: 3000,
+          shipment: 0,
+          cards_in_shipmet: 1,
+          quantity: 1,
+        },
+        {
+          _id: stockId2,
+          card_id: syntheticId,
+          card_state: 'disponible',
+          currency: 'EUR',
+          unity_cost: 14600,
+          shipment: 0,
+          cards_in_shipmet: 1,
+          quantity: 9999,
+        },
+      ]);
+      pvpRepository.findByCardIds.mockImplementation(async (ids: string[]) =>
+        ids.flatMap((card_id) => {
+          if (card_id === 'c1') {
+            return [{ card_id, pvp: 8000, currency: 'COP' }];
+          }
+          if (card_id === syntheticId) {
+            return [{ card_id, pvp: 2000, currency: 'COP' }];
+          }
+          return [];
+        }),
+      );
+
+      const result = await service.getOverview();
+
+      expect(result.stock.total_lines).toBe(2);
+      expect(result.stock.by_state.disponible).toBe(2);
+      expect(result.stock.sellable_lines).toBe(1);
+      expect(result.stock.inventory_cost_cop).toBe(3000);
+      expect(result.stock.inventory_pvp_cop).toBe(8000);
+      expect(result.highlights.capital_engaged_cop).toBe(3000);
+      expect(
+        result.charts.money_flow.find((r) => r.key === 'inventory')?.value_cop,
+      ).toBe(3000);
+      expect(pvpRepository.findByCardIds).toHaveBeenCalledWith(['c1']);
+    },
+  );
+
+  it('no suma líneas CT sintéticas en tránsito ni capital', async () => {
+    mockEmptyBase();
+    cardtraderTransitLineRepository.findByRemainingQuantityGreaterThanZero.mockResolvedValue(
+      [
+        { card_id: 'sv1-1', remaining_quantity: 2, unit_cost_cop: 1000 },
+        {
+          card_id: BULK_CARD_ID,
+          remaining_quantity: 9999,
+          unit_cost_cop: 14600,
+        },
+        {
+          card_id: ENVIO_CARD_ID,
+          remaining_quantity: 1,
+          unit_cost_cop: 50000,
+        },
+      ],
+    );
+
+    const result = await service.getOverview();
+
+    expect(result.incoming.units_in_transit).toBe(2);
+    expect(result.incoming.estimated_cost_cop).toBe(2000);
+    expect(result.highlights.capital_engaged_cop).toBe(2000);
+    expect(
+      result.charts.money_flow.find((r) => r.key === 'transit')?.value_cop,
+    ).toBe(2000);
+  });
+
+  it('no suma ítems incoming legacy sintéticos en tránsito', async () => {
+    mockEmptyBase();
+    const batchId = '507f1f77bcf86cd799439099';
+    incomingBatchRepository.findOpenBatches.mockResolvedValue([
+      { _id: batchId },
+    ]);
+    incomingBatchItemRepository.findByBatchId.mockResolvedValue([
+      { card_id: 'c1', remaining_quantity: 1, unit_cost_cop: 400 },
+      {
+        card_id: DOMICILIO_CARD_ID,
+        remaining_quantity: 9999,
+        unit_cost_cop: 9000,
+      },
+      {
+        card_id: PROTECCION_CARTAS_CARD_ID,
+        remaining_quantity: 3,
+        unit_cost_cop: 1000,
+      },
+    ]);
+
+    const result = await service.getOverview();
+
+    expect(result.incoming.units_in_transit).toBe(1);
+    expect(result.incoming.estimated_cost_cop).toBe(400);
+    expect(result.highlights.capital_engaged_cop).toBe(400);
   });
 });

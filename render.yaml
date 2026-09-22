@@ -1,0 +1,28 @@
+# Blueprint Render — API Nest (plan Free)
+# Repo GitHub: pabloangola/dittos-army-back (este archivo va en la raíz de ESE repo).
+#
+# Env en el dashboard (no versionar secretos):
+#   MONGO_URI    misma cadena Atlas que el PC
+#   SYNC_TOKEN   el mismo que pegas en el móvil (X-Sync-Token)
+#
+# Atlas → Network Access: allow 0.0.0.0/0 (Render no tiene IP fija en Free).
+
+services:
+  - type: web
+    name: dittos-army-back
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "20"
+      - key: SKIP_CARD_IMAGE_SYNC
+        value: "1"
+      - key: MONGO_URI
+        sync: false
+      - key: SYNC_TOKEN
+        sync: false

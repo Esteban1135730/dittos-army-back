@@ -51,6 +51,36 @@ describe('store-image-localize', () => {
         'http://localhost:3000/card-images/swsh3/swsh3-136.png',
       ),
     ).toBe('swsh3/swsh3-136.png');
+    expect(
+      parseCardImagesRelativePath('/card-images/S4a-ja/S4a-291.png'),
+    ).toBe('S4a-ja/S4a-291.png');
+  });
+
+  it('no trata /card-images/ relativo como listo: copia o cae a remota', async () => {
+    const resolveRemoteImage = jest
+      .fn()
+      .mockResolvedValue('https://assets.tcgdex.net/ja/S/S4a/291/low.png');
+
+    const result = await localizeStoreItemImages(
+      [
+        {
+          image: '/card-images/S4a-ja/S4a-291.png',
+          card_id: 'S4a-291',
+          language: 'ja',
+        },
+      ],
+      {
+        storeRepoPath: 'C:\\store',
+        localImagesRoot: 'C:\\images',
+        existsFn: () => false,
+        resolveRemoteImage,
+      },
+    );
+
+    expect(result[0].image).toBe(
+      'https://assets.tcgdex.net/ja/S/S4a/291/low.png',
+    );
+    expect(resolveRemoteImage).toHaveBeenCalledWith('S4a-291', 'ja');
   });
 
   it('genera URL pública del asset', () => {

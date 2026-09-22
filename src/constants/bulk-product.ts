@@ -35,6 +35,30 @@ export const PABLO_ACCESSORY_SKUS = [
   },
 ] as const;
 
+/** SKUs merch quantity de Esteban (sin TCGdex): figuras 3D y carta tejida. */
+export const ESTEBAN_MERCH_SKUS = [
+  {
+    card_id: 'es-figura-3d-pequena',
+    card_name: 'figura 3d pequeña',
+    pvp_cop: 1000,
+  },
+  {
+    card_id: 'es-figura-3d-mediana',
+    card_name: 'figura 3d mediana',
+    pvp_cop: 3000,
+  },
+  {
+    card_id: 'es-figura-3d-mediana-3uni',
+    card_name: 'figura 3d mediana-3uni',
+    pvp_cop: 5000,
+  },
+  {
+    card_id: 'es-carta-tejida',
+    card_name: 'carta tejida',
+    pvp_cop: 35000,
+  },
+] as const;
+
 export type ProductKind = 'unit' | 'quantity';
 
 export function isBulkCardId(cardId: string | null | undefined): boolean {
@@ -52,13 +76,22 @@ export function isZeroProfitCardId(
   return String(cardId ?? '').trim() === ENVIO_CARD_ID;
 }
 
-/** SKUs quantity sintéticos (sin TCGdex): bulk + accesorios Pablo. */
+export function isEstebanMerchCardId(
+  cardId: string | null | undefined,
+): boolean {
+  const id = String(cardId ?? '').trim();
+  if (!id) return false;
+  return ESTEBAN_MERCH_SKUS.some((sku) => sku.card_id === id);
+}
+
+/** SKUs quantity sintéticos (sin TCGdex): bulk, accesorios Pablo y merch Esteban. */
 export function isSyntheticQuantityCardId(
   cardId: string | null | undefined,
 ): boolean {
   const id = String(cardId ?? '').trim();
   if (!id) return false;
   if (isBulkCardId(id)) return true;
+  if (isEstebanMerchCardId(id)) return true;
   return PABLO_ACCESSORY_SKUS.some((sku) => sku.card_id === id);
 }
 

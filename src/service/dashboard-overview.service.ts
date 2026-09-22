@@ -14,6 +14,7 @@ import {
   resolvePvpForLine,
 } from '../utils/pvp-resolve';
 import { effectiveSaleCostCop } from '../utils/sale-cost-snapshot';
+import { isSyntheticQuantityCardId } from '../constants/bulk-product';
 import type { Stock } from '../schema/stock.schema';
 import type { SaleDocument } from '../schema/sale.schema';
 
@@ -191,6 +192,7 @@ export class DashboardOverviewService {
     for (const stock of stockItems) {
       const state = stockStateKey(stock);
       by_state[state] = (by_state[state] ?? 0) + 1;
+      if (isSyntheticQuantityCardId(stock.card_id)) continue;
       if (!NON_INVENTORY_STATES.has(state)) {
         sellable_lines += 1;
         inventory_cost_cop += stockLineCostCop(stock);
@@ -202,6 +204,7 @@ export class DashboardOverviewService {
     const pvpByCard = groupPvpsByCardId(pvps);
 
     for (const stock of stockItems) {
+      if (isSyntheticQuantityCardId(stock.card_id)) continue;
       const state = stockStateKey(stock);
       if (NON_INVENTORY_STATES.has(state)) continue;
       const rareza = effectiveOperationalRarezaFromStock(stock);
@@ -279,6 +282,7 @@ export class DashboardOverviewService {
       );
       for (const items of itemGroups) {
         for (const item of items) {
+          if (isSyntheticQuantityCardId(item.card_id)) continue;
           const remaining = item.remaining_quantity ?? 0;
           if (remaining <= 0) continue;
           units_in_transit += remaining;
@@ -289,6 +293,7 @@ export class DashboardOverviewService {
 
     // CardTrader transit: only lines still pending (remaining > 0); never fx_total_lot.
     for (const line of ctTransitLines) {
+      if (isSyntheticQuantityCardId(line.card_id)) continue;
       const remaining = line.remaining_quantity ?? 0;
       if (remaining <= 0) continue;
       units_in_transit += remaining;

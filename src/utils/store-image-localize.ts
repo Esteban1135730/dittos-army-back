@@ -80,14 +80,53 @@ export function isBlockedVendorImageUrl(url: string): boolean {
 }
 
 export function parseCardImagesRelativePath(url: string): string | undefined {
+  const trimmed = url.trim();
+  if (!trimmed) return undefined;
+  let pathname = '';
   try {
-    const parsed = new URL(url.trim());
-    const match = parsed.pathname.match(/^\/card-images\/(.+)$/i);
-    if (!match?.[1]) return undefined;
+    pathname = new URL(trimmed).pathname;
+  } catch {
+    pathname = trimmed.split('?')[0] ?? '';
+  }
+  const match = pathname.match(/^\/card-images\/(.+)$/i);
+  if (!match?.[1]) return undefined;
+  try {
     return sanitizeRelativeAssetPath(decodeURIComponent(match[1]));
   } catch {
-    return undefined;
+    return sanitizeRelativeAssetPath(match[1]);
   }
+}
+
+function storePublicUrlExists(
+  publicUrl: string,
+  storeRepoPath: string,
+  existsFn: (p: string) => boolean,
+): boolean {
+  if (!publicUrl.startsWith('/')) return false;
+  const rel = sanitizeRelativeAssetPath(publicUrl.replace(/^\//, ''));
+  if (!rel) return false;
+  return existsFn(path.join(storeRepoPath, 'public', ...rel.split('/')));
+}
+
+/**
+ * Imagen que la tienda puede dejar tal cual: CDN público, o archivo ya en
+ * `public/` del store. `/card-images/` y CardTrader no cuentan (404 / bloqueo).
+ */
+export function isCatalogImageReadyForExport(
+  url: string,
+  options: { storeRepoPath: string; existsFn?: (p: string) => boolean },
+): boolean {
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+  if (isLocalhostImageUrl(trimmed)) return false;
+  if (isBlockedVendorImageUrl(trimmed)) return false;
+  if (parseCardImagesRelativePath(trimmed)) return false;
+  if (/^https?:\/\//i.test(trimmed)) return isPublicRemoteImageUrl(trimmed);
+  if (trimmed.startsWith('/')) {
+    const exists = options.existsFn ?? existsSync;
+    return storePublicUrlExists(trimmed, options.storeRepoPath, exists);
+  }
+  return false;
 }
 
 export function sanitizeRelativeAssetPath(relative: string): string {
@@ -278,14 +317,20 @@ export async function localizeStoreItemImages<
   return Promise.all(
     items.map(async (item) => {
       const original = item.image?.trim() ?? '';
-      const alreadyUsable =
-        Boolean(original) &&
-        !isLocalhostImageUrl(original) &&
-        !isBlockedVendorImageUrl(original);
+      if (
+        isCatalogImageReadyForExport(original, {
+          storeRepoPath: options.storeRepoPath,
+          existsFn: options.existsFn,
+        })
+      ) {
+        return item;
+      }
 
-      if (alreadyUsable) return item;
-
-      if (isLocalhostImageUrl(original)) {
+      const cardImagesRel = parseCardImagesRelativePath(original);
+      if (cardImagesRel) {
+        const copied = await resolveByRelativePath(cardImagesRel);
+        if (copied) return { ...item, image: copied };
+      } else if (isLocalhostImageUrl(original)) {
         const localized = await resolveLocalAsset(original);
         if (localized) return { ...item, image: localized };
       }

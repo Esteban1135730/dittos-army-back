@@ -241,6 +241,17 @@ const KNOWN_CARDTRADER_PRINTS: KnownCardTraderPrint[] = [
     expansionName: 'Miscellaneous Promos',
     collectorNumbers: ['011', '11'],
   },
+  /**
+   * CT lista Classic Collection bajo Celebrations; #009 choca con cel25-9
+   * (Surfing Pikachu VMAX). Solo blueprint — no matchear por collector solo.
+   */
+  {
+    tcgdex_card_id: 'cel25cc-CC011',
+    tcgdex_set_id: 'cel25cc',
+    locale: 'en',
+    blueprintId: 201767,
+    collectorNumbers: [],
+  },
 ];
 
 function collectorKey(raw: string | null | undefined): string {

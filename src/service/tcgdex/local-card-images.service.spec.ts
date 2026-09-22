@@ -70,6 +70,7 @@ describe('LocalCardImagesService', () => {
 
   it('usa remoto y registra manifest si no hay archivo local', () => {
     const { service, root } = createFixture();
+    jest.spyOn(service, 'legacyImagesRoots').mockReturnValue([]);
     const remote = {
       image: 'https://assets.tcgdex.net/en/base/base1/1/low.png',
       small: 'https://assets.tcgdex.net/en/base/base1/1/low.png',
@@ -129,6 +130,23 @@ describe('LocalCardImagesService', () => {
     const copied = service.copyFromLegacyIfPresent('base1-1', 'en', 'base1');
     expect(copied).toBe('base1/base1-1.png');
     expect(existsSync(join(root, 'base1', 'base1-1.png'))).toBe(true);
+  });
+
+  it('resolve copia desde legacy si no está en la raíz primaria', () => {
+    const { service, root } = createFixture();
+    const legacy = mkdtempSync(join(tmpdir(), 'tcg-legacy-'));
+    mkdirSync(join(legacy, 'pl2'), { recursive: true });
+    writeFileSync(join(legacy, 'pl2', 'pl2-84.png'), Buffer.alloc(256));
+    jest.spyOn(service, 'legacyImagesRoots').mockReturnValue([legacy]);
+
+    const resolved = service.resolve({
+      cardId: 'pl2-84',
+      locale: 'en',
+      setId: 'pl2',
+    });
+    expect(resolved?.source).toBe('local');
+    expect(resolved?.image).toContain('/card-images/pl2/pl2-84.png');
+    expect(existsSync(join(root, 'pl2', 'pl2-84.png'))).toBe(true);
   });
 
   it('deleteFilesForCardId borra solo ese cardId', () => {
