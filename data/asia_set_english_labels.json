@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "generated_at": "2026-06-10T04:34:05.670Z",
+  "generated_at": "2026-09-22T21:56:13.721Z",
   "sources": [
     "cards-database/data-asia",
     "cards-database/scripts/utils-data/jp_set_translations.ts",
@@ -10,11 +10,11 @@
     "dittos-army-back/data/cardtrader_tcgdex_homolog.json"
   ],
   "stats": {
-    "scanned": 352,
-    "resolved": 338,
+    "scanned": 367,
+    "resolved": 350,
     "ambiguousSetIds": [],
-    "missing": 5,
-    "expansionAliases": 1282
+    "missing": 11,
+    "expansionAliases": 1295
   },
   "bySetId": {
     "ADV1": "ADV Expansion Pack",
@@ -68,6 +68,10 @@
     "M2a": "Mega Dream ex",
     "M3": "Nihil Zero",
     "M4": "Ninja Spinner",
+    "M5": "Abyss Eye",
+    "M6a": "30th Celebration JP",
+    "MC": "Starter Decks 100 Battle Collection",
+    "MF": "30th Celebration Premium Deck Set",
     "neo1": "Neo Genesis",
     "neo2": "Neo Discovery",
     "neo3": "Neo Revelation",
@@ -107,7 +111,7 @@
     "CS3aC": "Primordial Arts - Overgrow",
     "CS3b": "Primordial Arts - Torrent",
     "CS3bC": "Primordial Arts - Torrent",
-    "sv1a": "Triplet Beat",
+    "CS3D": "Primordial Arts",
     "CS4.5": "Final Flame Dance",
     "CS4.5C": "Final Flame Dance",
     "Cs41": "CS4.1: Brilliant Energy Promo Pack",
@@ -116,6 +120,7 @@
     "CS4aC": "Nine Colors Gathering - Friends",
     "CS4b": "Nine Colors Gathering - Origin",
     "CS4bC": "Nine Colors Gathering - Origin",
+    "CS4Da": "Nine Colors Gathering",
     "CS5.5C": "Shadow of Glory",
     "Cs51": "CS5.1: Shadow of Glory Promo Pack",
     "Cs55": "CS5.5: Shadow of Glory",
@@ -131,6 +136,7 @@
     "CS6aC": "Azure Shadow - Roar",
     "Cs6b": "CS6b: Azure Shadow - Pursuit",
     "CS6bC": "Azure Shadow - Pursuit",
+    "CSA": "Triplet Beat",
     "S-P": "Sword & Shield Promos",
     "S10a": "Dark Phantasma",
     "S10b": "Pokémon GO Enhanced Expansion Pack",
@@ -242,26 +248,31 @@
     "SM0": "Pikachu and new Friends",
     "SM1+": "Sun & Moon plus",
     "SM10": "Double Blaze",
-    "sn10a": "GG End",
+    "SM10a": "GG End",
     "SM10b": "Sky Legend",
-    "sn11": "Miracle Twin",
+    "SM11": "Miracle Twin",
     "SM11a": "Remix Bout",
     "SM11b": "Dream League",
     "SM12": "Alter Genesis",
     "SM12a": "Tag Team GX: Tag All Stars",
     "SM1M": "Collection Moon",
+    "SM1p": "Sun and Moon plus",
     "SM1S": "Collection Sun",
     "sm2+": "Facing a New Trial",
     "SM2K": "Islands Await You",
     "SM2L": "Alolan Moonlight",
+    "SM2p": "Let's Face New Trials",
     "SM3+": "Shining Legends",
     "SM3H": "Did You See The Fighting Rainbow",
     "SM3N": "Light Consuming Darkness",
+    "SM3p": "Shining Legends",
     "SM4+": "GX Battle Boost",
     "SM4A": "Beasts from the Ultradimension",
+    "SM4p": "GX Battle Boost",
     "SM4S": "Awakened Heroes",
     "SM5+": "Ultra Force",
     "SM5M": "Ultra Moon",
+    "SM5p": "Ultra Force",
     "SM5S": "Ultra Sun",
     "SM6": "Forbidden Light",
     "SM6a": "Dragon Storm",
@@ -342,6 +353,7 @@
     "XY3": "Rising Fist",
     "XY4": "Phantom Gate",
     "XY5a": "Gaia Volcano",
+    "XY5b": "Tidal Storm",
     "XY6": "Emerald Break",
     "XY7": "Bandit Ring",
     "CP3": "Pokekyun Collection",
@@ -630,6 +642,13 @@
     "Nihil Zero": "Nihil Zero",
     "M4": "Ninja Spinner",
     "Ninja Spinner": "Ninja Spinner",
+    "M5": "Abyss Eye",
+    "2026-05-22": "Abyss Eye",
+    "M6a": "30th Celebration JP",
+    "2026-09-16": "30th Celebration Premium Deck Set",
+    "MC": "Starter Decks 100 Battle Collection",
+    "2025-12-19": "Starter Decks 100 Battle Collection",
+    "MF": "30th Celebration Premium Deck Set",
     "neo1": "Neo Genesis",
     "Neo Genesis": "Neo Genesis",
     "neo2": "Neo Discovery",
@@ -1061,7 +1080,7 @@
     "ダブルブレイズ": "Double Blaze",
     "더블블레이즈": "Double Blaze",
     "Double Blaze": "Double Blaze",
-    "sn10a": "GG End",
+    "SM10a": "GG End",
     "ジージーエンド": "GG End",
     "GG엔드": "GG End",
     "GG End": "GG End",
@@ -1069,7 +1088,7 @@
     "スカイレジェンド": "Sky Legend",
     "스카이레전드": "Sky Legend",
     "Sky Legend": "Sky Legend",
-    "sn11": "Miracle Twin",
+    "SM11": "Miracle Twin",
     "ミラクルツイン": "Miracle Twin",
     "미라클트윈": "Miracle Twin",
     "Miracle Twin": "Miracle Twin",
@@ -1093,6 +1112,8 @@
     "コレクションムーン": "Collection Moon",
     "문 컬렉션": "Collection Moon",
     "Collection Moon": "Collection Moon",
+    "SM1p": "Sun and Moon plus",
+    "2017-01-27": "Sun and Moon plus",
     "SM1S": "Collection Sun",
     "コレクションサン": "Collection Sun",
     "썬 컬렉션": "Collection Sun",
@@ -1107,6 +1128,8 @@
     "アローラの月光": "Alolan Moonlight",
     "알로라의 달빛": "Alolan Moonlight",
     "Alolan Moonlight": "Alolan Moonlight",
+    "SM2p": "Let's Face New Trials",
+    "2017-04-21": "Let's Face New Trials",
     "SM3+": "Shining Legends",
     "빛나는 전설": "Shining Legends",
     "Shining Legends": "Shining Legends",
@@ -1116,12 +1139,16 @@
     "SM3N": "Light Consuming Darkness",
     "Darkness that Consumes Light": "Light Consuming Darkness",
     "Light Consuming Darkness": "Light Consuming Darkness",
+    "SM3p": "Shining Legends",
+    "2017-07-15": "Shining Legends",
     "SM4+": "GX Battle Boost",
     "GX 배틀부스트": "GX Battle Boost",
     "GX Battle Boost": "GX Battle Boost",
     "SM4A": "Beasts from the Ultradimension",
     "Ultradimensional Beasts": "Beasts from the Ultradimension",
     "Beasts from the Ultradimension": "Beasts from the Ultradimension",
+    "SM4p": "GX Battle Boost",
+    "2017-10-20": "GX Battle Boost",
     "SM4S": "Awakened Heroes",
     "覚醒の勇者": "Awakened Heroes",
     "각성의 용사": "Awakened Heroes",
@@ -1133,6 +1160,8 @@
     "ウルトラムーン": "Ultra Moon",
     "울트라문": "Ultra Moon",
     "Ultra Moon": "Ultra Moon",
+    "SM5p": "Ultra Force",
+    "2018-01-19": "Ultra Force",
     "SM5S": "Ultra Sun",
     "ウルトラサン": "Ultra Sun",
     "울트라썬": "Ultra Sun",
@@ -1208,6 +1237,7 @@
     "CSV7: Blade Awakening": "Blade Awakening",
     "Blade Awakening": "Blade Awakening",
     "2023-03-03": "Premium Trainer Box ex",
+    "2022-11-29": "Scarlet & Violet Promos",
     "2023-02-24": "ex Starter Set Quaxly & Mimikyu ex",
     "2023-01-26": "Scarlet & Violet Promos",
     "Scarlet & Violet Promos": "Scarlet & Violet Promos",
@@ -1376,8 +1406,9 @@
     "Phantom Gate": "Phantom Gate",
     "XY5a": "Gaia Volcano",
     "가이아 볼케이노": "Gaia Volcano",
-    "Gaia Volcano": "Gaia Volcano",
-    "타이달스톰": "Gaia Volcano",
+    "Gaia Volcano": "Tidal Storm",
+    "XY5b": "Tidal Storm",
+    "타이달스톰": "Tidal Storm",
     "XY6": "Emerald Break",
     "エメラルドブレイク": "Emerald Break",
     "Emerald Break": "Emerald Break",
@@ -1421,6 +1452,33 @@
   },
   "missing": [
     {
+      "serie": "M",
+      "id": "M-P",
+      "names": {
+        "id": "M-P",
+        "ja": "2025-07-28"
+      },
+      "file": "M-P.ts"
+    },
+    {
+      "serie": "M",
+      "id": "M6",
+      "names": {
+        "id": "M6",
+        "ja": "2026-07-31"
+      },
+      "file": "M6.ts"
+    },
+    {
+      "serie": "Miscellaneous",
+      "id": "miscp",
+      "names": {
+        "id": "miscp",
+        "en": "Miscellaneous Promos"
+      },
+      "file": "Miscellaneous Promos.ts"
+    },
+    {
       "serie": "SV",
       "id": "CBB1C",
       "names": {
@@ -1435,8 +1493,7 @@
       "id": "CBB2C",
       "names": {
         "id": "CBB2C",
-        "ja": "Gem Pack Vol.2",
-        "en": "Gem Pack Vol.2"
+        "zh-cn": "宝石包Vol.2"
       },
       "file": "CBB2C.ts"
     },
@@ -1445,8 +1502,7 @@
       "id": "CBB3C",
       "names": {
         "id": "CBB3C",
-        "ja": "Gem Pack Vol.3",
-        "en": "Gem Pack Vol.3"
+        "zh-cn": "宝石包Vol.3"
       },
       "file": "CBB3C.ts"
     },
@@ -1455,8 +1511,7 @@
       "id": "CBB4C",
       "names": {
         "id": "CBB4C",
-        "ja": "Gem Pack Vol.4",
-        "en": "Gem Pack Vol.4"
+        "zh-cn": "宝石包 Vol.4"
       },
       "file": "CBB4C.ts"
     },
@@ -1465,10 +1520,36 @@
       "id": "CBB5C",
       "names": {
         "id": "CBB5C",
-        "ja": "Gem Pack Vol.5",
-        "en": "Gem Pack Vol.5"
+        "zh-cn": "宝石包 Vol.5"
       },
       "file": "CBB5C.ts"
+    },
+    {
+      "serie": "SV",
+      "id": "CSV8C",
+      "names": {
+        "id": "CSV8C",
+        "zh-cn": "璀璨诡幻"
+      },
+      "file": "CSV8C.ts"
+    },
+    {
+      "serie": "SV",
+      "id": "CSV9.5C",
+      "names": {
+        "id": "CSV9.5C",
+        "zh-cn": "太晶盛聚"
+      },
+      "file": "CSV9.5C.ts"
+    },
+    {
+      "serie": "SV",
+      "id": "CSV9C",
+      "names": {
+        "id": "CSV9C",
+        "zh-cn": "星彩晶璃"
+      },
+      "file": "CSV9C.ts"
     }
   ]
 }

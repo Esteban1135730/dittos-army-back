@@ -18,7 +18,9 @@ import { RequireFeature } from 'src/owner/feature-acl.guard';
 @Controller('cardtrader/transit-lots')
 @RequireFeature('cardtrader')
 export class CardtraderTransitLotController {
-  constructor(private readonly transitLotService: CardtraderTransitLotService) {}
+  constructor(
+    private readonly transitLotService: CardtraderTransitLotService,
+  ) {}
 
   @Get('open/catalog')
   listOpenCatalog() {

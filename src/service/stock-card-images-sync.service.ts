@@ -1,13 +1,9 @@
-import {
-  Injectable,
-  Logger,
-  OnApplicationBootstrap,
-} from '@nestjs/common';
-import { isSyntheticQuantityCardId } from '../../constants/bulk-product';
-import { OWNERS_CONFIG, type OwnerKey } from '../../config/owners.config';
-import { runWithOwnerAsync } from '../../owner/owner-context';
-import { StockRepository } from '../../repository/stock.repository';
-import type { Stock } from '../../schema/stock.schema';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { isSyntheticQuantityCardId } from '../constants/bulk-product';
+import { OWNERS_CONFIG, type OwnerKey } from '../config/owners.config';
+import { runWithOwnerAsync } from '../owner/owner-context';
+import { StockRepository } from '../repository/stock.repository';
+import type { Stock } from '../schema/stock.schema';
 import {
   CARD_IMAGE_DOWNLOAD_CONCURRENCY,
   CARD_IMAGE_FETCH_TIMEOUT_MS,
@@ -21,12 +17,12 @@ import {
   pickDownloadUrl,
   rewriteImageUrlIfLocalhostOrEmpty,
   rewriteImageUrlToCloudIfLocalCache,
-} from '../../utils/stock-card-images-sync';
+} from '../utils/stock-card-images-sync';
 import {
   inferSetIdFromCardId,
   LocalCardImagesService,
-} from './local-card-images.service';
-import { TCGDexService } from './tcgdex.service';
+} from '../pokemon/tcgdex/local-card-images.service';
+import { TCGDexService } from '../pokemon/tcgdex/tcgdex.service';
 
 type StockImageRef = {
   owner: OwnerKey;
@@ -61,7 +57,9 @@ export class StockCardImagesSyncService implements OnApplicationBootstrap {
       process.env.SKIP_CARD_IMAGE_SYNC === '1' ||
       process.env.RENDER === 'true'
     ) {
-      this.logger.log('Omitiendo sync de imágenes (SKIP_CARD_IMAGE_SYNC / RENDER).');
+      this.logger.log(
+        'Omitiendo sync de imágenes (SKIP_CARD_IMAGE_SYNC / RENDER).',
+      );
       return;
     }
     setImmediate(() => {
@@ -250,7 +248,9 @@ export class StockCardImagesSyncService implements OnApplicationBootstrap {
       return { ...none, relative: copied, copied: true };
     }
 
-    const stockUrl = refs.map((r) => pickDownloadUrl(r.image_url)).find(Boolean);
+    const stockUrl = refs
+      .map((r) => pickDownloadUrl(r.image_url))
+      .find(Boolean);
     if (stockUrl) {
       const saved = await this.downloadToCache(cardId, setId, stockUrl);
       if (saved) {
@@ -258,7 +258,9 @@ export class StockCardImagesSyncService implements OnApplicationBootstrap {
       }
     }
 
-    this.logger.warn(`Sin imagen local para card_id=${cardId} (ausente en TCGdex nube)`);
+    this.logger.warn(
+      `Sin imagen local para card_id=${cardId} (ausente en TCGdex nube)`,
+    );
     return { ...none, failed: true };
   }
 

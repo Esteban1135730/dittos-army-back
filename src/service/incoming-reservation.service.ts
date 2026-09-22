@@ -301,7 +301,9 @@ export class IncomingReservationService {
     const transitLines = ids.length
       ? await this.transitLineRepo.findByIds(ids)
       : [];
-    const transitMap = new Map(transitLines.map((it) => [it._id.toString(), it]));
+    const transitMap = new Map(
+      transitLines.map((it) => [it._id.toString(), it]),
+    );
 
     return rows.map((r) => {
       const tl = transitMap.get(r.batch_item_id);
@@ -320,7 +322,8 @@ export class IncomingReservationService {
         language: tl?.language,
         precio_cop: r.precio_cop ?? null,
         unit_cost_cop:
-          typeof tl?.unit_cost_cop === 'number' && Number.isFinite(tl.unit_cost_cop)
+          typeof tl?.unit_cost_cop === 'number' &&
+          Number.isFinite(tl.unit_cost_cop)
             ? tl.unit_cost_cop
             : null,
       };

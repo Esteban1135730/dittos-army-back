@@ -34,9 +34,9 @@ describe('CardTraderController quote-lines/resolve', () => {
     await expect(controller.resolveQuoteLines({})).rejects.toBeInstanceOf(
       BadRequestException,
     );
-    await expect(controller.resolveQuoteLines({ lines: [] })).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(
+      controller.resolveQuoteLines({ lines: [] }),
+    ).rejects.toBeInstanceOf(BadRequestException);
     expect(quoteResolve.resolveLines).not.toHaveBeenCalled();
   });
 
@@ -47,9 +47,9 @@ describe('CardTraderController quote-lines/resolve', () => {
       expansion: 'Base Set',
       collector_number: '25',
     }));
-    await expect(controller.resolveQuoteLines({ lines })).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(
+      controller.resolveQuoteLines({ lines }),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('400 si falta name/expansion/collector_number en una línea', async () => {
@@ -83,7 +83,10 @@ describe('CardTraderController quote-lines/resolve', () => {
         condition_label: 'Perfecto',
       },
     ]);
-    expect(out.results[0]).toMatchObject({ status: 'matched', blueprint_id: 99 });
+    expect(out.results[0]).toMatchObject({
+      status: 'matched',
+      blueprint_id: 99,
+    });
   });
 });
 
@@ -120,9 +123,9 @@ describe('CardTraderController blueprints/search', () => {
 
   it('400 si game_id no es 5', async () => {
     const { controller } = await setup();
-    await expect(controller.searchBlueprints('Pikachu', '1')).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(
+      controller.searchBlueprints('Pikachu', '1'),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('delega al servicio con q recortado', async () => {

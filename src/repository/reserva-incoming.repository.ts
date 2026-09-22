@@ -11,7 +11,9 @@ export class ReservaIncomingRepository {
   constructor(private readonly ownerModels: OwnerModelsService) {}
 
   private get model(): Model<ReservaIncomingDocument> {
-    return this.ownerModels.getModel<ReservaIncomingDocument>(ReservaIncoming.name);
+    return this.ownerModels.getModel<ReservaIncomingDocument>(
+      ReservaIncoming.name,
+    );
   }
 
   async sumQuantityForBatchItem(batchItemId: string): Promise<number> {
@@ -52,7 +54,9 @@ export class ReservaIncomingRepository {
     const set: Record<string, unknown> = { quantity, updated_at: now };
     if (precioCop !== undefined) {
       set.precio_cop =
-        typeof precioCop === 'number' && Number.isFinite(precioCop) && precioCop > 0
+        typeof precioCop === 'number' &&
+        Number.isFinite(precioCop) &&
+        precioCop > 0
           ? Math.round(precioCop)
           : null;
     }
@@ -78,7 +82,9 @@ export class ReservaIncomingRepository {
     precioCop: number | null,
   ): Promise<ReservaIncomingDocument | null> {
     const value =
-      typeof precioCop === 'number' && Number.isFinite(precioCop) && precioCop > 0
+      typeof precioCop === 'number' &&
+      Number.isFinite(precioCop) &&
+      precioCop > 0
         ? Math.round(precioCop)
         : null;
     return this.model

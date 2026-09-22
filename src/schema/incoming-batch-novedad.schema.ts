@@ -42,8 +42,7 @@ export class IncomingBatchNovedad {
   updated_at: Date;
 }
 
-export const IncomingBatchNovedadSchema = SchemaFactory.createForClass(
-  IncomingBatchNovedad,
-);
+export const IncomingBatchNovedadSchema =
+  SchemaFactory.createForClass(IncomingBatchNovedad);
 
 IncomingBatchNovedadSchema.index({ batch_item_id: 1, resolved: 1 });

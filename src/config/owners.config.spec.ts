@@ -4,6 +4,7 @@ import {
   otherOwner,
   OWNERS_CONFIG,
   getOwnerDefinition,
+  databaseNameFor,
 } from './owners.config';
 import {
   getCurrentOwner,
@@ -12,12 +13,22 @@ import {
 } from '../owner/owner-context';
 
 describe('owners.config', () => {
-  it('defaultOwner es pablo y dbNames correctos', () => {
+  it('defaultOwner es pablo; tcg pokemon y bases físicas actuales', () => {
     expect(OWNERS_CONFIG.defaultOwner).toBe('pablo');
+    expect(getOwnerDefinition('pablo').tcg).toBe('pokemon');
+    expect(getOwnerDefinition('esteban').tcg).toBe('pokemon');
     expect(getOwnerDefinition('pablo').dbName).toBe('test');
     expect(getOwnerDefinition('esteban').dbName).toBe('esteban');
+    expect(getOwnerDefinition('pablo').legacyDbName).toBeUndefined();
+    expect(getOwnerDefinition('esteban').legacyDbName).toBeUndefined();
     expect(getOwnerDefinition('pablo').stockQrPrefix).toBe('DA-STOCK:');
     expect(getOwnerDefinition('esteban').stockQrPrefix).toBe('ESTEBAN-STOCK:');
+  });
+
+  it('databaseNameFor sigue la convención {tcg}-{owner}', () => {
+    expect(databaseNameFor('pokemon', 'pablo')).toBe('pokemon-pablo');
+    expect(databaseNameFor('magic', 'pablo')).toBe('magic-pablo');
+    expect(databaseNameFor('pokemon', 'esteban')).toBe('pokemon-esteban');
   });
 
   it('ACL: Esteban con cotizar/cardtrader; sin incoming/export-tienda', () => {
@@ -46,9 +57,9 @@ describe('owner-context routing', () => {
     expect(resolveOwnerFromRequest({})).toBe('pablo');
     expect(resolveOwnerFromRequest({ header: 'esteban' })).toBe('esteban');
     expect(resolveOwnerFromRequest({ query: 'esteban' })).toBe('esteban');
-    expect(
-      resolveOwnerFromRequest({ header: 'pablo', query: 'esteban' }),
-    ).toBe('pablo');
+    expect(resolveOwnerFromRequest({ header: 'pablo', query: 'esteban' })).toBe(
+      'pablo',
+    );
     expect(resolveOwnerFromRequest({ header: 'invalid' })).toBeNull();
   });
 
@@ -60,7 +71,7 @@ describe('owner-context routing', () => {
     expect(getCurrentOwner()).toBe('pablo');
   });
 
-  it('simula routing de conexión: mutación esteban no usa dbName test', () => {
+  it('simula routing de conexión: mutación esteban no usa dbName de pablo', () => {
     const writes: string[] = [];
     const writeForCurrent = () => {
       const owner = getCurrentOwner();

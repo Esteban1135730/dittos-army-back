@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "generated_at": "2026-07-29T00:36:07.558Z",
+  "generated_at": "2026-09-22T21:50:00.000Z",
   "description": "Homologacion CardTrader expansion -> TCGdex local set. Clave: locale:tcgdex_set_id",
   "sources": [
     "GET https://api.cardtrader.com/api/v2/expansions (game_id=5)",
@@ -5000,6 +5000,64 @@
       "cardtrader": {
         "id": 1514,
         "code": "df"
+      }
+    },
+    "en:30th-c": {
+      "tcgdex_set_id": "30th-c",
+      "locale": "en",
+      "names": {
+        "en_cardtrader": "30th Celebration",
+        "database": {
+          "en": "30th Classic Collection"
+        },
+        "englishName": null
+      },
+      "cardtrader": {
+        "id": 4679,
+        "code": "30c"
+      }
+    },
+    "en:30th": {
+      "tcgdex_set_id": "30th",
+      "locale": "en",
+      "names": {
+        "en_cardtrader": "30th Celebration",
+        "database": {
+          "en": "30th Celebration"
+        },
+        "englishName": null
+      },
+      "cardtrader": {
+        "id": 4679,
+        "code": "30c"
+      }
+    },
+    "ja:M6a": {
+      "tcgdex_set_id": "M6a",
+      "locale": "ja",
+      "names": {
+        "en_cardtrader": "30th Celebration JP",
+        "database": {},
+        "englishName": "30th Celebration JP"
+      },
+      "cardtrader": {
+        "id": 4678,
+        "code": "m6a"
+      }
+    },
+    "ja:MF": {
+      "tcgdex_set_id": "MF",
+      "locale": "ja",
+      "names": {
+        "en_cardtrader": "30th Celebration Premium Deck Set",
+        "database": {
+          "ja": "30th CELEBRATION プレミアムデッキセット エーフィ・ブラッキー"
+        },
+        "englishName": "30th Celebration Premium Deck Set"
+      },
+      "cardtrader": {
+        "id": 4856,
+        "code": "mf"
       }
     }
   },

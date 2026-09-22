@@ -12,7 +12,9 @@ export class CardtraderTransitLotRepository {
   constructor(private readonly ownerModels: OwnerModelsService) {}
 
   private get lotModel(): Model<CardtraderTransitLotDocument> {
-    return this.ownerModels.getModel<CardtraderTransitLotDocument>(CardtraderTransitLot.name);
+    return this.ownerModels.getModel<CardtraderTransitLotDocument>(
+      CardtraderTransitLot.name,
+    );
   }
 
   async create(data: {

@@ -29,9 +29,7 @@ export class BulkProductService {
     private readonly pvpRepository: PvpRepository,
   ) {}
 
-  isQuantityProduct(stock: {
-    product_kind?: string | null;
-  }): boolean {
+  isQuantityProduct(stock: { product_kind?: string | null }): boolean {
     return isQuantityKind(stock.product_kind);
   }
 

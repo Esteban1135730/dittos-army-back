@@ -16,7 +16,7 @@ import { isSyntheticQuantityCardId } from 'src/constants/bulk-product';
 import { runWithOwnerAsync } from 'src/owner/owner-context';
 import { OwnerModelsService } from 'src/owner/owner-models.service';
 import { Stock, type StockDocument } from 'src/schema/stock.schema';
-import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
+import { TCGDexService } from 'src/pokemon';
 import { fallbackCardImageUrl, sanitizeCardImageUrl } from 'src/utils/card-image-url';
 import { isActiveStockForImageCache } from 'src/utils/stock-card-images-sync';
 import { isLocalhostImageUrl } from 'src/utils/store-image-localize';

@@ -48,12 +48,18 @@ describe('tiendas-entrega', () => {
     );
     expect(matchTiendaEntregaFromLegacy('play4cards')?.id).toBe('play4cards');
     expect(matchTiendaEntregaFromLegacy('LX Store')?.id).toBe('lx-store');
-    expect(matchTiendaEntregaFromLegacy('Real Burgers')?.id).toBe('real-burgers');
-    expect(matchTiendaEntregaFromLegacy('real burguers')?.id).toBe('real-burgers');
+    expect(matchTiendaEntregaFromLegacy('Real Burgers')?.id).toBe(
+      'real-burgers',
+    );
+    expect(matchTiendaEntregaFromLegacy('real burguers')?.id).toBe(
+      'real-burgers',
+    );
   });
 
   it('no inventa tienda si el texto es una dirección de envío', () => {
-    expect(matchTiendaEntregaFromLegacy('Calle 100 #15-20 apto 301')).toBeNull();
+    expect(
+      matchTiendaEntregaFromLegacy('Calle 100 #15-20 apto 301'),
+    ).toBeNull();
     expect(matchTiendaEntregaFromLegacy('')).toBeNull();
     expect(matchTiendaEntregaFromLegacy(undefined)).toBeNull();
   });

@@ -35,10 +35,7 @@ export class PedidoController {
   }
 
   @Get('calendario')
-  listCalendario(
-    @Query('from') from?: string,
-    @Query('to') to?: string,
-  ) {
+  listCalendario(@Query('from') from?: string, @Query('to') to?: string) {
     return this.pedidoService.listCalendario(from, to);
   }
 
@@ -57,10 +54,7 @@ export class PedidoController {
   }
 
   @Post(':id/abonos')
-  createAbono(
-    @Param('id') id: string,
-    @Body() body: { amount_cop?: number },
-  ) {
+  createAbono(@Param('id') id: string, @Body() body: { amount_cop?: number }) {
     return this.pedidoAbonoService.addAbono(id, body?.amount_cop);
   }
 

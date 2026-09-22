@@ -112,7 +112,10 @@ const ALIASES: { needles: string[]; id: string }[] = [
   { needles: ['play4cards', 'play 4 cards', 'play4 cards'], id: 'play4cards' },
   { needles: ['tokyo'], id: 'tokyo-hobby-nations' },
   { needles: ['valhalla'], id: 'valhalla' },
-  { needles: ['real burgers', 'real burguers', 'realburgers'], id: 'real-burgers' },
+  {
+    needles: ['real burgers', 'real burguers', 'realburgers'],
+    id: 'real-burgers',
+  },
 ];
 
 /** Empareja el texto legado `Client.tienda_entrega` con el catálogo. */

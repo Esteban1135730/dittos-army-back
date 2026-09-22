@@ -19,13 +19,13 @@ export class StockReviewSessionRepository {
   constructor(private readonly ownerModels: OwnerModelsService) {}
 
   private get model(): Model<StockReviewSessionDocument> {
-    return this.ownerModels.getModel<StockReviewSessionDocument>(StockReviewSession.name);
+    return this.ownerModels.getModel<StockReviewSessionDocument>(
+      StockReviewSession.name,
+    );
   }
 
   async findActive(): Promise<StockReviewSessionDocument | null> {
-    return this.model
-      .findOne({ status: { $in: ACTIVE_STATUSES } })
-      .exec();
+    return this.model.findOne({ status: { $in: ACTIVE_STATUSES } }).exec();
   }
 
   async findById(id: string): Promise<StockReviewSessionDocument | null> {
@@ -75,9 +75,7 @@ export class StockReviewSessionRepository {
     if (patch.completed_at != null) {
       $set.completed_at = patch.completed_at;
     }
-    return this.model
-      .findByIdAndUpdate(id, { $set }, { new: true })
-      .exec();
+    return this.model.findByIdAndUpdate(id, { $set }, { new: true }).exec();
   }
 
   async markCancelled(id: string): Promise<void> {

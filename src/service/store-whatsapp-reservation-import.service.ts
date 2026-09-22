@@ -27,10 +27,7 @@ import {
 import { getTiendaEntrega } from '../utils/tiendas-entrega';
 import { otherOwner, type OwnerKey } from '../config/owners.config';
 import { getCurrentOwner } from '../owner/owner-context';
-import {
-  reservaMatchesStockOwner,
-  withStockOwner,
-} from '../owner/stock-owner';
+import { reservaMatchesStockOwner, withStockOwner } from '../owner/stock-owner';
 import type { Reserva } from '../schema/reserva.schema';
 
 const BLOCKED_STOCK_STATES = new Set(['reserva', 'vendida', 'propiedad']);
@@ -114,10 +111,18 @@ function resolveLinePrecioCop(
   messagePvp: number | null | undefined,
   dbPvpCop: number,
 ): number {
-  if (typeof overridePvp === 'number' && Number.isFinite(overridePvp) && overridePvp > 0) {
+  if (
+    typeof overridePvp === 'number' &&
+    Number.isFinite(overridePvp) &&
+    overridePvp > 0
+  ) {
     return Math.round(overridePvp);
   }
-  if (typeof messagePvp === 'number' && Number.isFinite(messagePvp) && messagePvp > 0) {
+  if (
+    typeof messagePvp === 'number' &&
+    Number.isFinite(messagePvp) &&
+    messagePvp > 0
+  ) {
     return Math.round(messagePvp);
   }
   if (dbPvpCop > 0) return dbPvpCop;
@@ -161,7 +166,10 @@ export class StoreWhatsAppReservationImportService {
     await this.ensureClient(clientId);
     const overrideMap = new Map(overrides.map((o) => [o.index, o]));
     const plan = await this.buildPlan(clientId, message, overrideMap);
-    const pedidoId = await this.resolvePedidoIdForImport(clientId, plan.delivery);
+    const pedidoId = await this.resolvePedidoIdForImport(
+      clientId,
+      plan.delivery,
+    );
     const created: ImportWhatsAppCreated[] = [];
     const skipped: {
       line_index: number;
@@ -177,14 +185,13 @@ export class StoreWhatsAppReservationImportService {
       for (let i = 0; i < line.stock_ids.length; i++) {
         const stockId = line.stock_ids[i];
         const stockOwner = line.stock_owners[i] ?? getCurrentOwner();
-        const precioCop =
-          resolveLinePrecioCop(
-            overridePvp,
-            line.parsed?.unit_price_cop,
-            line.precio_cop_por_unidad[lineCreated] ??
-              line.precio_cop_por_unidad[0] ??
-              0,
-          );
+        const precioCop = resolveLinePrecioCop(
+          overridePvp,
+          line.parsed?.unit_price_cop,
+          line.precio_cop_por_unidad[lineCreated] ??
+            line.precio_cop_por_unidad[0] ??
+            0,
+        );
         if (precioCop <= 0) continue;
 
         const stock = await withStockOwner(stockOwner, () =>
@@ -382,7 +389,8 @@ export class StoreWhatsAppReservationImportService {
       else if (matched > 0) linesPartial += 1;
       else linesFailed += 1;
 
-      const cardName = cardNameFromRaw(entry.raw) ?? nameByCardId.get(parsed.card_id) ?? null;
+      const cardName =
+        cardNameFromRaw(entry.raw) ?? nameByCardId.get(parsed.card_id) ?? null;
       const image_url = imageByCardId.get(parsed.card_id) ?? null;
 
       lines.push({
@@ -397,7 +405,8 @@ export class StoreWhatsAppReservationImportService {
         stock_ids,
         stock_owners,
         precio_cop_por_unidad,
-        suggested_pvp_cop: suggested != null && suggested > 0 ? suggested : null,
+        suggested_pvp_cop:
+          suggested != null && suggested > 0 ? suggested : null,
         card_name: cardName ?? parsed.card_id,
         image_url,
         issues,
@@ -590,8 +599,7 @@ export class StoreWhatsAppReservationImportService {
       const available = (allStock as StockRow[])
         .filter(
           (s) =>
-            this.isStockReservable(s) &&
-            !reservedStockIds.has(this.stockId(s)),
+            this.isStockReservable(s) && !reservedStockIds.has(this.stockId(s)),
         )
         .sort((a, b) => this.stockId(a).localeCompare(this.stockId(b)));
       const pvps = cardIds.length

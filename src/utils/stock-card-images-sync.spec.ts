@@ -145,7 +145,10 @@ describe('stock-card-images-sync helpers', () => {
     it('pasa vacío y /card-images al CDN', () => {
       expect(rewriteImageUrlToCloudIfLocalCache('', cloud)).toBe(cloud);
       expect(
-        rewriteImageUrlToCloudIfLocalCache('/card-images/sv04/sv04-236.png', cloud),
+        rewriteImageUrlToCloudIfLocalCache(
+          '/card-images/sv04/sv04-236.png',
+          cloud,
+        ),
       ).toBe(cloud);
       expect(
         rewriteImageUrlToCloudIfLocalCache(
@@ -194,9 +197,9 @@ describe('stock-card-images-sync helpers', () => {
 
   describe('isAcceptableCardImageBody', () => {
     it('acepta content-type imagen y rechaza oversized', () => {
-      expect(
-        isAcceptableCardImageBody(Buffer.alloc(16), 'image/png'),
-      ).toBe(true);
+      expect(isAcceptableCardImageBody(Buffer.alloc(16), 'image/png')).toBe(
+        true,
+      );
       expect(isAcceptableCardImageBody(Buffer.alloc(16), 'text/html')).toBe(
         false,
       );

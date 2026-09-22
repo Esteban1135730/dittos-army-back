@@ -11,7 +11,9 @@ export class CardtraderTransitLineRepository {
   constructor(private readonly ownerModels: OwnerModelsService) {}
 
   private get lineModel(): Model<CardtraderTransitLineDocument> {
-    return this.ownerModels.getModel<CardtraderTransitLineDocument>(CardtraderTransitLine.name);
+    return this.ownerModels.getModel<CardtraderTransitLineDocument>(
+      CardtraderTransitLine.name,
+    );
   }
 
   async createMany(lines: Partial<CardtraderTransitLine>[]): Promise<any[]> {
@@ -41,9 +43,7 @@ export class CardtraderTransitLineRepository {
     ct0ItemIds: number[],
   ): Promise<CardtraderTransitLineDocument[]> {
     const ids = [
-      ...new Set(
-        ct0ItemIds.filter((id) => Number.isInteger(id) && id > 0),
-      ),
+      ...new Set(ct0ItemIds.filter((id) => Number.isInteger(id) && id > 0)),
     ];
     if (!ids.length) return [];
     return this.lineModel.find({ ct0_item_id: { $in: ids } }).exec();

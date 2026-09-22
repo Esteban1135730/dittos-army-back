@@ -13,7 +13,9 @@ export type CtBlueprintLike = {
   };
 };
 
-export function isTemporaryNovedadCardId(cardId: string | null | undefined): boolean {
+export function isTemporaryNovedadCardId(
+  cardId: string | null | undefined,
+): boolean {
   const id = String(cardId ?? '').trim();
   return id.startsWith('ct-bp-') || id.startsWith('novedad-');
 }
@@ -121,7 +123,8 @@ export function buildNovedadTcgdexResolveInput(args: {
       : readExpansionIdFromBlueprint(blueprint);
 
   const expansionName =
-    (args.expansionName?.trim() || '') ||
+    args.expansionName?.trim() ||
+    '' ||
     readExpansionNameFromBlueprint(blueprint) ||
     undefined;
 

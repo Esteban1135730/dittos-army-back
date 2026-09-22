@@ -5,10 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { isValidObjectId } from 'mongoose';
-import {
-  STOCK_TAG_VALUES,
-  type StockTag,
-} from '../constants/stock-tags';
+import { STOCK_TAG_VALUES, type StockTag } from '../constants/stock-tags';
 import { CardStockTagRepository } from '../repository/card-stock-tag.repository';
 import { PvpRepository } from '../repository/pvp.repository';
 import { SaleRepository } from '../repository/sale.repository';
@@ -145,7 +142,9 @@ export class StockReviewService {
   ) {}
 
   private assertValidTag(tag: string): StockTag {
-    const t = String(tag ?? '').trim().toLowerCase();
+    const t = String(tag ?? '')
+      .trim()
+      .toLowerCase();
     if (!STOCK_TAG_VALUES.includes(t as StockTag)) {
       throw new BadRequestException(
         `tag inválido. Permitidos: ${STOCK_TAG_VALUES.join(', ')}`,
@@ -154,14 +153,13 @@ export class StockReviewService {
     return t as StockTag;
   }
 
-  private parseCreateInput(
-    input: CreateStockReviewSessionInput,
-  ): { scope: StockReviewScope; tag: StockTag | null } {
+  private parseCreateInput(input: CreateStockReviewSessionInput): {
+    scope: StockReviewScope;
+    tag: StockTag | null;
+  } {
     const scope = input?.scope;
     if (scope !== 'all' && scope !== 'tag') {
-      throw new BadRequestException(
-        `scope inválido. Permitidos: all, tag`,
-      );
+      throw new BadRequestException(`scope inválido. Permitidos: all, tag`);
     }
     if (scope === 'all') {
       if (input.tag != null && String(input.tag).trim() !== '') {
@@ -258,7 +256,9 @@ export class StockReviewService {
     };
   }
 
-  private toSessionView(doc: StockReviewSessionDocument): StockReviewSessionView {
+  private toSessionView(
+    doc: StockReviewSessionDocument,
+  ): StockReviewSessionView {
     const { scope, tag } = resolveSessionScope(doc);
     const items = (doc.items ?? []).map((i) => this.toItemView(i));
     return {
@@ -296,7 +296,9 @@ export class StockReviewService {
   /**
    * Sincroniza ítems vs stock actual con **una** query `findByIds`, no N× findById.
    */
-  private async syncObsoleteItems(doc: StockReviewSessionDocument): Promise<void> {
+  private async syncObsoleteItems(
+    doc: StockReviewSessionDocument,
+  ): Promise<void> {
     const items = doc.items ?? [];
     const toCheck = items.filter((i) => !i.obsolete && i.outcome == null);
     if (toCheck.length === 0) return;
@@ -398,7 +400,10 @@ export class StockReviewService {
     return this.toSessionView(doc);
   }
 
-  async verifyItem(sessionId: string, stockId: string): Promise<StockReviewSessionView> {
+  async verifyItem(
+    sessionId: string,
+    stockId: string,
+  ): Promise<StockReviewSessionView> {
     const doc = await this.loadMutableSession(sessionId);
     if (doc.status !== 'en_verificacion') {
       throw new BadRequestException(
@@ -517,20 +522,22 @@ export class StockReviewService {
     if (otherLanguages.length > 0) {
       return `${name}: no quedan unidades pendientes en ${languageLabel(group.language)}. Hay pendientes en ${otherLanguages
         .map(languageLabel)
-        .join(', ')}; corrige el idioma en stock si la carta física es de ese idioma.`;
+        .join(
+          ', ',
+        )}; corrige el idioma en stock si la carta física es de ese idioma.`;
     }
     return `${name}: todas las unidades de esta carta ya están verificadas.`;
   }
 
-  async finalizeVerification(sessionId: string): Promise<StockReviewSessionView> {
+  async finalizeVerification(
+    sessionId: string,
+  ): Promise<StockReviewSessionView> {
     const doc = await this.loadMutableSession(sessionId);
     if (doc.status !== 'en_verificacion') {
       throw new BadRequestException('La sesión no está en verificación');
     }
 
-    const pending = (doc.items ?? []).filter(
-      (i) => !i.verified && !i.obsolete,
-    );
+    const pending = (doc.items ?? []).filter((i) => !i.verified && !i.obsolete);
     const patch =
       pending.length === 0
         ? {
@@ -578,10 +585,7 @@ export class StockReviewService {
     }
 
     if (outcome === 'perdida') {
-      await this.stockRepository.markAsLost(
-        stockId,
-        stockLineCostCop(stock),
-      );
+      await this.stockRepository.markAsLost(stockId, stockLineCostCop(stock));
     } else if (outcome === 'propiedad') {
       await this.saleRepository.create({
         stock_id: stockId,
@@ -627,7 +631,12 @@ export class StockReviewService {
   }
 
   private async resolveSaleAmountCop(
-    stock: { card_id: string; rareza?: string | null; holofoil?: boolean; league_card?: boolean },
+    stock: {
+      card_id: string;
+      rareza?: string | null;
+      holofoil?: boolean;
+      league_card?: boolean;
+    },
     amountCop?: number,
   ): Promise<number> {
     if (amountCop != null && !Number.isNaN(amountCop) && amountCop >= 0) {
@@ -644,7 +653,9 @@ export class StockReviewService {
     return pvpToCop(resolved.pvp, resolved.pvp_currency ?? 'COP');
   }
 
-  private async maybeCompleteSession(doc: StockReviewSessionDocument): Promise<void> {
+  private async maybeCompleteSession(
+    doc: StockReviewSessionDocument,
+  ): Promise<void> {
     const allDone = (doc.items ?? []).every(
       (i) => i.verified || i.obsolete || i.outcome != null,
     );
@@ -657,7 +668,9 @@ export class StockReviewService {
   async cancelSession(sessionId: string): Promise<void> {
     const doc = await this.loadMutableSession(sessionId);
     if (doc.status === 'completada') {
-      throw new BadRequestException('No se puede cancelar una sesión completada');
+      throw new BadRequestException(
+        'No se puede cancelar una sesión completada',
+      );
     }
     await this.sessionRepository.markCancelled(sessionId);
   }

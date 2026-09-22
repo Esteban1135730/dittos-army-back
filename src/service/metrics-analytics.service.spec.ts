@@ -285,7 +285,9 @@ describe('MetricsAnalyticsService', () => {
     });
     expect(res.sales_by_cycle.some((c) => c.cycle_key === 'active')).toBe(true);
     expect(
-      res.sales_by_cycle.some((c) => c.cycle_closed_at === closed.toISOString()),
+      res.sales_by_cycle.some(
+        (c) => c.cycle_closed_at === closed.toISOString(),
+      ),
     ).toBe(true);
   });
 
@@ -423,7 +425,9 @@ describe('MetricsAnalyticsService', () => {
       from: '2026-01-01',
       to: '2026-12-31',
     });
-    expect(res.dead_stock.items.find((i) => i.card_id === 'hot')).toBeUndefined();
+    expect(
+      res.dead_stock.items.find((i) => i.card_id === 'hot'),
+    ).toBeUndefined();
   });
 
   it('sí alerta unidad outlier vs mediana de venta del mismo tipo', async () => {
@@ -656,9 +660,7 @@ describe('MetricsAnalyticsService', () => {
       to: '2026-05-31',
     });
 
-    const byTag = Object.fromEntries(
-      res.sales_by_tag.map((t) => [t.tag, t]),
-    );
+    const byTag = Object.fromEntries(res.sales_by_tag.map((t) => [t.tag, t]));
     expect(byTag.jugable.units).toBe(1);
     expect(byTag.vintage.units).toBe(1);
     expect(byTag.brillo.units).toBe(1);

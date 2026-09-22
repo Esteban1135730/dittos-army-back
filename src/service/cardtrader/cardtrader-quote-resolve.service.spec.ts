@@ -43,11 +43,17 @@ describe('resolveQuoteExpansion', () => {
   const index = buildQuoteExpansionIndex({
     sets: {
       'en:g1': {
-        names: { en_cardtrader: 'Generations', database: { en: 'Generations' } },
+        names: {
+          en_cardtrader: 'Generations',
+          database: { en: 'Generations' },
+        },
         cardtrader: { id: 1577 },
       },
       'en:swsh12.5': {
-        names: { en_cardtrader: 'Crown Zenith', database: { en: 'Crown Zenith' } },
+        names: {
+          en_cardtrader: 'Crown Zenith',
+          database: { en: 'Crown Zenith' },
+        },
         cardtrader: { id: 3171 },
       },
       'en:sv08.5': {
@@ -70,7 +76,10 @@ describe('resolveQuoteExpansion', () => {
 
   it('match exacto Generations', () => {
     const hit = resolveQuoteExpansion(index, 'Generations');
-    expect(hit).toMatchObject({ expansionId: 1577, expansionName: 'Generations' });
+    expect(hit).toMatchObject({
+      expansionId: 1577,
+      expansionName: 'Generations',
+    });
   });
 
   it('alias SVP Black Star Promos → SV Black Star Promos', () => {
@@ -80,7 +89,10 @@ describe('resolveQuoteExpansion', () => {
 
   it('Crown Zenith Galarian Gallery → Crown Zenith', () => {
     const hit = resolveQuoteExpansion(index, 'Crown Zenith Galarian Gallery');
-    expect(hit).toMatchObject({ expansionId: 3171, expansionName: 'Crown Zenith' });
+    expect(hit).toMatchObject({
+      expansionId: 3171,
+      expansionName: 'Crown Zenith',
+    });
   });
 
   it('Prismatic Evolutions exacto no se confunde con Poké Ball RH', () => {
@@ -171,9 +183,9 @@ describe('matchBlueprintsForQuoteLine', () => {
       cardName: 'Fuecoco',
     });
     expect(hits.length).toBeGreaterThanOrEqual(1);
-    expect(hits.every((h) => h.blueprint_id === 11 || h.blueprint_id === 12)).toBe(
-      true,
-    );
+    expect(
+      hits.every((h) => h.blueprint_id === 11 || h.blueprint_id === 12),
+    ).toBe(true);
   });
 });
 
@@ -182,7 +194,10 @@ describe('CardTraderQuoteResolveService', () => {
     sets: {
       'en:g1': {
         tcgdex_set_id: 'g1',
-        names: { en_cardtrader: 'Generations', database: { en: 'Generations' } },
+        names: {
+          en_cardtrader: 'Generations',
+          database: { en: 'Generations' },
+        },
         cardtrader: { id: 1577 },
       },
     },
@@ -195,10 +210,7 @@ describe('CardTraderQuoteResolveService', () => {
     const cardTrader = {
       getBlueprintsExport: jest.fn().mockResolvedValue(exportData),
     } as unknown as CardTraderService;
-    const svc = new CardTraderQuoteResolveService(
-      cardTrader,
-      tcgDex as never,
-    );
+    const svc = new CardTraderQuoteResolveService(cardTrader, tcgDex as never);
     svc.replaceExpansionIndex(index);
     return svc;
   }
@@ -264,7 +276,11 @@ describe('CardTraderQuoteResolveService', () => {
 
   it('lote: matched y not_found en la misma respuesta', async () => {
     const svc = serviceWith([
-      { id: 99, name: 'Shroomish', fixed_properties: { collector_number: 'RC2' } },
+      {
+        id: 99,
+        name: 'Shroomish',
+        fixed_properties: { collector_number: 'RC2' },
+      },
     ]);
     const { results } = await svc.resolveLines([
       { name: 'Shroomish', expansion: 'Generations', collector_number: 'RC2' },
@@ -289,13 +305,15 @@ describe('CardTraderQuoteResolveService', () => {
 
   it('searchBlueprintsByName omite cartas sin homologación y topea a 40', async () => {
     const tcgDex = {
-      findCardByName: jest.fn().mockImplementation(async (_q: string, locale?: string) => {
-        if (locale && locale !== 'en') return [];
-        return [
-          { id: 'unknown-1', localId: '1', name: 'Nope' },
-          { id: 'g1-RC2', localId: 'RC2', name: 'Shroomish' },
-        ];
-      }),
+      findCardByName: jest
+        .fn()
+        .mockImplementation(async (_q: string, locale?: string) => {
+          if (locale && locale !== 'en') return [];
+          return [
+            { id: 'unknown-1', localId: '1', name: 'Nope' },
+            { id: 'g1-RC2', localId: 'RC2', name: 'Shroomish' },
+          ];
+        }),
     };
     const svc = serviceWith(
       [
@@ -337,30 +355,42 @@ describe('CardTraderQuoteResolveService', () => {
       },
     });
     const tcgDex = {
-      findCardByName: jest.fn().mockImplementation(async (_q: string, locale?: string) => {
-        if (locale === 'ja') {
-          return [{ id: 'SV8a-001', localId: '001', name: 'ピカチュウ' }];
-        }
-        return [];
-      }),
+      findCardByName: jest
+        .fn()
+        .mockImplementation(async (_q: string, locale?: string) => {
+          if (locale === 'ja') {
+            return [{ id: 'SV8a-001', localId: '001', name: 'ピカチュウ' }];
+          }
+          return [];
+        }),
     };
     const cardTrader = {
-      getBlueprintsExport: jest.fn().mockImplementation(async (expansionId: number) => {
-        if (expansionId === 3985) {
-          return [
-            { id: 501, name: 'Pikachu', fixed_properties: { collector_number: '001' } },
-            { id: 502, name: 'Pikachu ex', fixed_properties: { collector_number: '001' } },
-          ];
-        }
-        return [];
-      }),
+      getBlueprintsExport: jest
+        .fn()
+        .mockImplementation(async (expansionId: number) => {
+          if (expansionId === 3985) {
+            return [
+              {
+                id: 501,
+                name: 'Pikachu',
+                fixed_properties: { collector_number: '001' },
+              },
+              {
+                id: 502,
+                name: 'Pikachu ex',
+                fixed_properties: { collector_number: '001' },
+              },
+            ];
+          }
+          return [];
+        }),
     } as unknown as CardTraderService;
     const svc = new CardTraderQuoteResolveService(cardTrader, tcgDex as never);
     svc.replaceExpansionIndex(asianIndex);
     const { items } = await svc.searchBlueprintsByName('ピカチュウ');
     expect(items.map((i) => i.blueprint_id).sort()).toEqual([501, 502]);
-    expect(items.every((i) => i.expansion_id === 3985 && i.locale === 'ja')).toBe(
-      true,
-    );
+    expect(
+      items.every((i) => i.expansion_id === 3985 && i.locale === 'ja'),
+    ).toBe(true);
   });
 });

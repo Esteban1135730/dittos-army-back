@@ -25,7 +25,9 @@ export function foldCardName(value: string | null | undefined): string {
 export function normalizeCollectorNumber(
   value: string | null | undefined,
 ): string {
-  const raw = String(value ?? '').trim().toUpperCase();
+  const raw = String(value ?? '')
+    .trim()
+    .toUpperCase();
   if (!raw) return '';
   if (/^\d+$/.test(raw)) return String(Number(raw));
   const mixed = raw.match(/^([A-Z]+)0*(\d+)$/);
@@ -41,7 +43,9 @@ export function normalizeBlueprintsExport(data: unknown): CtBlueprintLike[] {
   if (Array.isArray(data)) {
     return data.filter(
       (x): x is CtBlueprintLike =>
-        !!x && typeof x === 'object' && typeof (x as CtBlueprintLike).id === 'number',
+        !!x &&
+        typeof x === 'object' &&
+        typeof (x as CtBlueprintLike).id === 'number',
     );
   }
   return [];

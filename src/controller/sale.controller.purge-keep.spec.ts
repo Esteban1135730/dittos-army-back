@@ -5,9 +5,9 @@ import { ClientRepository } from 'src/repository/client.repository';
 import { StockRepository } from 'src/repository/stock.repository';
 import { PvpRepository } from 'src/repository/pvp.repository';
 import { ReservaRepository } from 'src/repository/reserva.repository';
-import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
+import { TCGDexService } from 'src/pokemon';
 import { CardStockTagRepository } from 'src/repository/card-stock-tag.repository';
-import { StockCardImagesSyncService } from 'src/service/tcgdex/stock-card-images-sync.service';
+import { StockCardImagesSyncService } from 'src/service/stock-card-images-sync.service';
 import { SaleBatchService } from 'src/service/sale-batch.service';
 
 const saleId = '507f1f77bcf86cd799439011';
@@ -57,7 +57,9 @@ describe('SaleController purgeKeep (DELETE /sales/keep/:id)', () => {
         },
         {
           provide: StockCardImagesSyncService,
-          useValue: { pruneIfCardUnused: jest.fn().mockResolvedValue(undefined) },
+          useValue: {
+            pruneIfCardUnused: jest.fn().mockResolvedValue(undefined),
+          },
         },
         SaleBatchService,
       ],

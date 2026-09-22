@@ -85,10 +85,12 @@ describe('StoreInventoryService multi-owner (045)', () => {
     ),
   };
   const tcgDexService = {
-    resolveStoreExportMeta: jest.fn(async (_id: string, _lang: string, name?: string) => ({
-      name: name || 'Pecharunt',
-      image: '',
-    })),
+    resolveStoreExportMeta: jest.fn(
+      async (_id: string, _lang: string, name?: string) => ({
+        name: name || 'Pecharunt',
+        image: '',
+      }),
+    ),
     getRemoteStoreCardImageUrl: jest.fn(async () => undefined),
   };
   const localCardImagesService = {
@@ -204,7 +206,9 @@ describe('StoreInventoryService multi-owner (045)', () => {
       { card_id: CARD_ID, pvp: 12000, currency: 'COP', rareza: null },
     ];
 
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const warn = jest
+      .spyOn(console, 'warn')
+      .mockImplementation(() => undefined);
     const result = await exportInventory();
     warn.mockRestore();
     expect(result.success).toBe(true);
@@ -300,7 +304,12 @@ describe('StoreInventoryService multi-owner (045)', () => {
       { card_id: CARD_ID, pvp: 10000, currency: 'COP', rareza: null },
     ];
     pvpByOwner.esteban = [
-      { card_id: 'es-figura-3d-pequena', pvp: 1000, currency: 'COP', rareza: null },
+      {
+        card_id: 'es-figura-3d-pequena',
+        pvp: 1000,
+        currency: 'COP',
+        rareza: null,
+      },
       { card_id: 'es-carta-tejida', pvp: 35000, currency: 'COP', rareza: null },
     ];
 

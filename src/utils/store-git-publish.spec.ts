@@ -44,7 +44,8 @@ describe('publishStoreCatalogToGit', () => {
     const runGit = jest.fn(
       setupGit({
         'rev-parse --is-inside-work-tree': 'true',
-        'status --porcelain -- public/inventory.json public/upcoming.json public/assets': '',
+        'status --porcelain -- public/inventory.json public/upcoming.json public/assets':
+          '',
       }),
     );
 

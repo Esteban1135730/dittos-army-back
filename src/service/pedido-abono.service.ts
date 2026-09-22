@@ -8,7 +8,10 @@ import { isValidObjectId } from 'mongoose';
 import { PedidoAbonoRepository } from '../repository/pedido-abono.repository';
 import { PedidoRepository } from '../repository/pedido.repository';
 import { ReservaRepository } from '../repository/reserva.repository';
-import type { PedidoDocument, PedidoLineSnapshot } from '../schema/pedido.schema';
+import type {
+  PedidoDocument,
+  PedidoLineSnapshot,
+} from '../schema/pedido.schema';
 import type { PedidoAbonoDocument } from '../schema/pedido-abono.schema';
 import { precioToCop } from '../utils/precio-to-cop';
 
@@ -27,10 +30,15 @@ export type PedidoAbonosResponseDto = {
 };
 
 const MSG_NO_RESERVADO_ADD = 'Solo se puede abonar un pedido reservado';
-const MSG_NO_RESERVADO_DEL = 'Solo se puede eliminar un abono en un pedido reservado';
+const MSG_NO_RESERVADO_DEL =
+  'Solo se puede eliminar un abono en un pedido reservado';
 
 function lineQty(quantity: number | undefined): number {
-  if (typeof quantity === 'number' && Number.isInteger(quantity) && quantity >= 1) {
+  if (
+    typeof quantity === 'number' &&
+    Number.isInteger(quantity) &&
+    quantity >= 1
+  ) {
     return quantity;
   }
   return 1;
@@ -43,7 +51,8 @@ export function totalPvpFromPedidoLines(
   for (const line of lines) {
     const precio = line.precio;
     if (typeof precio !== 'number' || !Number.isFinite(precio)) continue;
-    total += precioToCop(precio, line.currency ?? 'COP') * lineQty(line.quantity);
+    total +=
+      precioToCop(precio, line.currency ?? 'COP') * lineQty(line.quantity);
   }
   return total;
 }

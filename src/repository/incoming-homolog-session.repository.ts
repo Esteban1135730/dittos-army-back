@@ -13,7 +13,9 @@ export class IncomingHomologSessionRepository {
   constructor(private readonly ownerModels: OwnerModelsService) {}
 
   private get model(): Model<IncomingHomologSessionDocument> {
-    return this.ownerModels.getModel<IncomingHomologSessionDocument>(IncomingHomologSession.name);
+    return this.ownerModels.getModel<IncomingHomologSessionDocument>(
+      IncomingHomologSession.name,
+    );
   }
 
   async create(
@@ -146,7 +148,9 @@ export class IncomingHomologSessionRepository {
     return Boolean(result);
   }
 
-  async revertConverted(id: string): Promise<IncomingHomologSessionDocument | null> {
+  async revertConverted(
+    id: string,
+  ): Promise<IncomingHomologSessionDocument | null> {
     return this.model
       .findByIdAndUpdate(
         id,

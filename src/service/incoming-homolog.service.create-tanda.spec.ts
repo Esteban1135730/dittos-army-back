@@ -331,7 +331,7 @@ describe('IncomingHomologService.createTanda (CT path)', () => {
     stockRepo.createMany.mockImplementation(async (dtos: unknown[]) => {
       const owner = getCurrentOwner();
       ownersSeen.push(owner);
-      return (dtos as unknown[]).map(() => ({ _id: `stock-${owner}` }));
+      return dtos.map(() => ({ _id: `stock-${owner}` }));
     });
 
     const service = makeService();

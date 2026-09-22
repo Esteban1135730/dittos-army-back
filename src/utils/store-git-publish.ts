@@ -48,8 +48,7 @@ async function runGitCommand(
 
 export function resolveStoreRepoPath(cwd = process.cwd()): string {
   return (
-    process.env.STORE_REPO_PATH ||
-    path.join(cwd, '..', 'dittos-army-store')
+    process.env.STORE_REPO_PATH || path.join(cwd, '..', 'dittos-army-store')
   );
 }
 

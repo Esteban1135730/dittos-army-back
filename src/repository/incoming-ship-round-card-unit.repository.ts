@@ -11,7 +11,9 @@ export class IncomingShipRoundCardUnitRepository {
   constructor(private readonly ownerModels: OwnerModelsService) {}
 
   private get model(): Model<IncomingShipRoundCardUnitDocument> {
-    return this.ownerModels.getModel<IncomingShipRoundCardUnitDocument>(IncomingShipRoundCardUnit.name);
+    return this.ownerModels.getModel<IncomingShipRoundCardUnitDocument>(
+      IncomingShipRoundCardUnit.name,
+    );
   }
 
   async createMany(
@@ -30,7 +32,9 @@ export class IncomingShipRoundCardUnitRepository {
   }
 
   async deleteByRoundId(roundId: string): Promise<number> {
-    const result = await this.model.deleteMany({ ship_round_id: roundId }).exec();
+    const result = await this.model
+      .deleteMany({ ship_round_id: roundId })
+      .exec();
     return result.deletedCount ?? 0;
   }
 }

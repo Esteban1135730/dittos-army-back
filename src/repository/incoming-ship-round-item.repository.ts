@@ -11,7 +11,9 @@ export class IncomingShipRoundItemRepository {
   constructor(private readonly ownerModels: OwnerModelsService) {}
 
   private get itemModel(): Model<IncomingShipRoundItemDocument> {
-    return this.ownerModels.getModel<IncomingShipRoundItemDocument>(IncomingShipRoundItem.name);
+    return this.ownerModels.getModel<IncomingShipRoundItemDocument>(
+      IncomingShipRoundItem.name,
+    );
   }
 
   async createMany(items: Partial<IncomingShipRoundItem>[]): Promise<any[]> {

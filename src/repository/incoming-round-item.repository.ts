@@ -11,7 +11,9 @@ export class IncomingRoundItemRepository {
   constructor(private readonly ownerModels: OwnerModelsService) {}
 
   private get roundItemModel(): Model<IncomingRoundItemDocument> {
-    return this.ownerModels.getModel<IncomingRoundItemDocument>(IncomingRoundItem.name);
+    return this.ownerModels.getModel<IncomingRoundItemDocument>(
+      IncomingRoundItem.name,
+    );
   }
 
   async findByRoundId(roundId: string): Promise<IncomingRoundItemDocument[]> {

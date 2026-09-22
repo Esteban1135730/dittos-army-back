@@ -23,9 +23,7 @@ export function stockOwnerFromReserva(
   },
   fallbackOwner: OwnerKey = getCurrentOwner(),
 ): OwnerKey {
-  return isOwnerKey(reserva.stock_owner)
-    ? reserva.stock_owner
-    : fallbackOwner;
+  return isOwnerKey(reserva.stock_owner) ? reserva.stock_owner : fallbackOwner;
 }
 
 export function withStockOwner<T>(

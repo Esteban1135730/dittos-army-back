@@ -94,9 +94,7 @@ export class LocalCardImagesService implements OnModuleInit {
     }
     candidates.push(join(process.cwd(), 'data', 'tcgdex-images'));
     const primary = this.getImagesRoot();
-    return candidates.filter(
-      (root) => root !== primary && existsSync(root),
-    );
+    return candidates.filter((root) => root !== primary && existsSync(root));
   }
 
   ensureImagesRoot(): string {
@@ -167,7 +165,8 @@ export class LocalCardImagesService implements OnModuleInit {
 
   relativePathForCard(cardId: string, setId?: string): string {
     const id = cardId.trim();
-    const set = (setId ?? inferSetIdFromCardId(id) ?? 'unknown').trim() || 'unknown';
+    const set =
+      (setId ?? inferSetIdFromCardId(id) ?? 'unknown').trim() || 'unknown';
     return `${set}/${id}.png`;
   }
 
@@ -204,7 +203,10 @@ export class LocalCardImagesService implements OnModuleInit {
     }
   }
 
-  private localFileExists(relativePath: string, root = this.getImagesRoot()): boolean {
+  private localFileExists(
+    relativePath: string,
+    root = this.getImagesRoot(),
+  ): boolean {
     const safe = sanitizeRelativeAssetPath(relativePath);
     if (!safe) return false;
     const fullPath = join(root, ...safe.split('/'));
@@ -233,7 +235,12 @@ export class LocalCardImagesService implements OnModuleInit {
     locale = 'en',
     setId?: string,
   ): string | undefined {
-    return this.findRelativePathInRoot(this.getImagesRoot(), cardId, locale, setId);
+    return this.findRelativePathInRoot(
+      this.getImagesRoot(),
+      cardId,
+      locale,
+      setId,
+    );
   }
 
   private findRelativePathInRoot(
@@ -267,11 +274,7 @@ export class LocalCardImagesService implements OnModuleInit {
     const cardId = input.cardId?.trim();
     if (!cardId) return undefined;
 
-    let relativePath = this.findRelativePath(
-      cardId,
-      input.locale,
-      input.setId,
-    );
+    let relativePath = this.findRelativePath(cardId, input.locale, input.setId);
     if (!relativePath) {
       relativePath = this.copyFromLegacyIfPresent(
         cardId,
@@ -356,7 +359,11 @@ export class LocalCardImagesService implements OnModuleInit {
     if (!existsSync(root)) return [];
     const out: string[] = [];
     const walk = (dir: string): void => {
-      let entries: Array<{ name: string; isDirectory(): boolean; isFile(): boolean }>;
+      let entries: Array<{
+        name: string;
+        isDirectory(): boolean;
+        isFile(): boolean;
+      }>;
       try {
         entries = readdirSync(dir, { withFileTypes: true });
       } catch {

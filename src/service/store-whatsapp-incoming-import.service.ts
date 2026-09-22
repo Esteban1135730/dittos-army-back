@@ -8,10 +8,7 @@ import { ClientRepository } from '../repository/client.repository';
 import { PvpRepository } from '../repository/pvp.repository';
 import { IncomingReservationService } from './incoming-reservation.service';
 import { precioToCop } from '../utils/precio-to-cop';
-import {
-  groupPvpsByCardId,
-  resolvePvpForLine,
-} from '../utils/pvp-resolve';
+import { groupPvpsByCardId, resolvePvpForLine } from '../utils/pvp-resolve';
 import { normalizeOperationalRareza } from '../constants/item-rareza';
 import {
   extractClientNameFromStoreMessage,
@@ -104,8 +101,11 @@ export class StoreWhatsAppIncomingImportService {
     await this.ensureClient(clientId);
     const overrideMap = new Map(overrides.map((o) => [o.index, o]));
     const plan = await this.buildPlan(clientId, message, overrideMap);
-    const created: { card_id: string; quantity: number; rareza: string | null }[] =
-      [];
+    const created: {
+      card_id: string;
+      quantity: number;
+      rareza: string | null;
+    }[] = [];
     const skipped: {
       line_index: number;
       reason: string;
@@ -115,7 +115,11 @@ export class StoreWhatsAppIncomingImportService {
     let pvpSaved = 0;
 
     for (const line of plan.lines) {
-      if (!line.parsed || line.matched <= 0 || line.issues.includes('ambiguous_rareza')) {
+      if (
+        !line.parsed ||
+        line.matched <= 0 ||
+        line.issues.includes('ambiguous_rareza')
+      ) {
         if (line.requested > 0) {
           skipped.push({
             line_index: line.index,
@@ -138,7 +142,9 @@ export class StoreWhatsAppIncomingImportService {
           line.parsed.language,
           line.resolved_rareza,
           line.matched,
-          typeof pvpCop === 'number' && pvpCop > 0 ? Math.round(pvpCop) : undefined,
+          typeof pvpCop === 'number' && pvpCop > 0
+            ? Math.round(pvpCop)
+            : undefined,
         );
         created.push({
           card_id: line.parsed.card_id,
@@ -230,7 +236,11 @@ export class StoreWhatsAppIncomingImportService {
       );
       const cupo = resolved?.cupo ?? 0;
       const matched = Math.min(parsed.quantity, cupo);
-      if (parsed.quantity > 0 && cupo <= 0 && !issues.includes('ambiguous_rareza')) {
+      if (
+        parsed.quantity > 0 &&
+        cupo <= 0 &&
+        !issues.includes('ambiguous_rareza')
+      ) {
         issues.push('insufficient_incoming');
       } else if (matched < parsed.quantity && matched > 0) {
         issues.push('insufficient_incoming');
@@ -249,7 +259,8 @@ export class StoreWhatsAppIncomingImportService {
         parsed.unit_price_cop != null && parsed.unit_price_cop > 0
           ? parsed.unit_price_cop
           : null;
-      const suggested = fromMessage ?? (fromTable != null && fromTable > 0 ? fromTable : null);
+      const suggested =
+        fromMessage ?? (fromTable != null && fromTable > 0 ? fromTable : null);
       if (suggested == null || suggested <= 0) {
         issues.push('no_pvp');
       }
@@ -270,8 +281,10 @@ export class StoreWhatsAppIncomingImportService {
           card_name: v.card_name,
           image_url: v.image_url,
         })),
-        suggested_pvp_cop: suggested != null && suggested > 0 ? suggested : null,
-        card_name: resolved?.card_name ?? cardNameFromRaw(raw) ?? parsed.card_id,
+        suggested_pvp_cop:
+          suggested != null && suggested > 0 ? suggested : null,
+        card_name:
+          resolved?.card_name ?? cardNameFromRaw(raw) ?? parsed.card_id,
         image_url: resolved?.image_url,
         issues,
       });
@@ -287,7 +300,8 @@ export class StoreWhatsAppIncomingImportService {
       lines_partial: lines.filter(
         (l) => l.matched > 0 && l.matched < l.requested,
       ).length,
-      lines_failed: lines.filter((l) => l.requested > 0 && l.matched <= 0).length,
+      lines_failed: lines.filter((l) => l.requested > 0 && l.matched <= 0)
+        .length,
       units_reserved: lines.reduce((s, l) => s + l.matched, 0),
     };
 
@@ -338,9 +352,12 @@ export class StoreWhatsAppIncomingImportService {
 
     if (overrideRareza === null) {
       const found = variants.find((v) => v.rareza == null);
-      if (!found && variants.length === 1) return { resolved: variants[0], issues };
+      if (!found && variants.length === 1)
+        return { resolved: variants[0], issues };
       if (!found) {
-        issues.push(variants.length > 1 ? 'ambiguous_rareza' : 'insufficient_incoming');
+        issues.push(
+          variants.length > 1 ? 'ambiguous_rareza' : 'insufficient_incoming',
+        );
         return { resolved: undefined, issues };
       }
       return { resolved: found, issues };

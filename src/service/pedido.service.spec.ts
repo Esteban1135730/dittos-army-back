@@ -100,7 +100,15 @@ describe('PedidoService', () => {
       tagRepo,
       pedidoAbonoRepo,
     );
-    return { svc, pedidoRepo, reservaRepo, saleRepo, stockRepo, clientRepo, pedidoAbonoRepo };
+    return {
+      svc,
+      pedidoRepo,
+      reservaRepo,
+      saleRepo,
+      stockRepo,
+      clientRepo,
+      pedidoAbonoRepo,
+    };
   }
 
   it('valida entrega en tienda vs envío', async () => {
@@ -231,7 +239,9 @@ describe('PedidoService', () => {
   });
 
   it('entregar solo desde pagado', async () => {
-    const reserved = makeService({ pedido: makePedido({ status: 'reservado' }) });
+    const reserved = makeService({
+      pedido: makePedido({ status: 'reservado' }),
+    });
     await expect(reserved.svc.entregar(PEDIDO_ID)).rejects.toBeInstanceOf(
       ConflictException,
     );
@@ -351,8 +361,9 @@ describe('PedidoService', () => {
       findById: jest.fn().mockResolvedValue(null),
     } as unknown as ClientRepository;
     const { svc } = makeService();
-    (svc as unknown as { clientRepository: ClientRepository }).clientRepository =
-      clientRepo;
+    (
+      svc as unknown as { clientRepository: ClientRepository }
+    ).clientRepository = clientRepo;
     await expect(
       svc.create({
         client_id: CLIENT_ID,
@@ -382,9 +393,9 @@ describe('PedidoService', () => {
 
     it('from > to → 400; rango de 63 días → 400', async () => {
       const { svc } = makeService();
-      await expect(svc.listCalendario('2026-08-31', '2026-08-01')).rejects.toBeInstanceOf(
-        BadRequestException,
-      );
+      await expect(
+        svc.listCalendario('2026-08-31', '2026-08-01'),
+      ).rejects.toBeInstanceOf(BadRequestException);
       await expect(
         svc.listCalendario('2026-01-01', '2026-03-05'),
       ).rejects.toBeInstanceOf(BadRequestException);
@@ -421,9 +432,11 @@ describe('PedidoService', () => {
 
       const res = await svc.listCalendario(from, to);
       expect(res.items.map((i) => i.id).sort()).toEqual(['p-pag', 'p-res']);
-      expect(res.items.every((i) => i.status === 'reservado' || i.status === 'pagado')).toBe(
-        true,
-      );
+      expect(
+        res.items.every(
+          (i) => i.status === 'reservado' || i.status === 'pagado',
+        ),
+      ).toBe(true);
       expect(res.items.some((i) => 'lines' in i)).toBe(false);
     });
 
@@ -458,8 +471,12 @@ describe('PedidoService', () => {
         futurePedido,
       ]);
 
-      const rangeFrom = new Date(Date.UTC(ty, tm - 1, td - 5)).toISOString().slice(0, 10);
-      const rangeTo = new Date(Date.UTC(ty, tm - 1, td + 5)).toISOString().slice(0, 10);
+      const rangeFrom = new Date(Date.UTC(ty, tm - 1, td - 5))
+        .toISOString()
+        .slice(0, 10);
+      const rangeTo = new Date(Date.UTC(ty, tm - 1, td + 5))
+        .toISOString()
+        .slice(0, 10);
       const res = await svc.listCalendario(rangeFrom, rangeTo);
       expect(res.today).toBe(today);
       expect(res.items.find((i) => i.id === 'p-past')?.overdue).toBe(true);
@@ -489,10 +506,7 @@ describe('PedidoService', () => {
     });
 
     it('ciudad Bogotá / bogota / BOGOTÁ D.C. → domicilio_bogota; Medellín → omitido/fuera_bogota', async () => {
-      const mkShip = (
-        id: string,
-        ciudad: string,
-      ): PedidoDocument =>
+      const mkShip = (id: string, ciudad: string): PedidoDocument =>
         makePedido({
           _id: id,
           entrega_en_tienda: false,

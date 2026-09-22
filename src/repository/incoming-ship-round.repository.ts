@@ -11,7 +11,9 @@ export class IncomingShipRoundRepository {
   constructor(private readonly ownerModels: OwnerModelsService) {}
 
   private get roundModel(): Model<IncomingShipRoundDocument> {
-    return this.ownerModels.getModel<IncomingShipRoundDocument>(IncomingShipRound.name);
+    return this.ownerModels.getModel<IncomingShipRoundDocument>(
+      IncomingShipRound.name,
+    );
   }
 
   async create(data: {

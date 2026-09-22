@@ -40,9 +40,9 @@ describe('store-image-localize', () => {
       'https://www.cardtrader.com/uploads/blueprints/image/1/show_x.jpg';
     expect(isUsableStockImageUrl(ct)).toBe(true);
     expect(isBlockedVendorImageUrl(ct)).toBe(true);
-    expect(isUsableStockImageUrl('http://localhost:3000/card-images/a.png')).toBe(
-      false,
-    );
+    expect(
+      isUsableStockImageUrl('http://localhost:3000/card-images/a.png'),
+    ).toBe(false);
   });
 
   it('parsea ruta relativa de /card-images/', () => {
@@ -51,9 +51,9 @@ describe('store-image-localize', () => {
         'http://localhost:3000/card-images/swsh3/swsh3-136.png',
       ),
     ).toBe('swsh3/swsh3-136.png');
-    expect(
-      parseCardImagesRelativePath('/card-images/S4a-ja/S4a-291.png'),
-    ).toBe('S4a-ja/S4a-291.png');
+    expect(parseCardImagesRelativePath('/card-images/S4a-ja/S4a-291.png')).toBe(
+      'S4a-ja/S4a-291.png',
+    );
   });
 
   it('no trata /card-images/ relativo como listo: copia o cae a remota', async () => {
@@ -248,9 +248,9 @@ describe('store-image-localize', () => {
   });
 
   it('identifica assets usados por la tienda', () => {
-    expect(
-      [...usedStoreAssetRelativePaths(['/assets/cards/swsh3/swsh3-136.png'])],
-    ).toEqual(['swsh3/swsh3-136.png']);
+    expect([
+      ...usedStoreAssetRelativePaths(['/assets/cards/swsh3/swsh3-136.png']),
+    ]).toEqual(['swsh3/swsh3-136.png']);
   });
 
   it('elimina imágenes que el catálogo ya no referencia', async () => {

@@ -151,6 +151,7 @@ export function usesPaddedLocalIdsForSet(
   if (/^me(\d|[.])/i.test(id) || lower === 'mep' || lower === 'mee') {
     return true;
   }
+  if (lower === '30th' || lower === '30th-c') return true;
   if (/^sv[\d.]/i.test(id) || id === 'Svpromo') return true;
   return false;
 }
@@ -177,7 +178,9 @@ const SWSH_TRAINER_GALLERY_BY_PARENT: Record<string, string> = {
   swsh12: 'swsh12.5tg',
 };
 
-export function isTrainerGalleryLocalId(localId: string | null | undefined): boolean {
+export function isTrainerGalleryLocalId(
+  localId: string | null | undefined,
+): boolean {
   return /^TG\d+/i.test(String(localId ?? '').trim());
 }
 
@@ -186,7 +189,9 @@ const SWSH_GALARIAN_GALLERY_BY_PARENT: Record<string, string> = {
   'swsh12.5': 'swsh12.5gg',
 };
 
-export function isGalarianGalleryLocalId(localId: string | null | undefined): boolean {
+export function isGalarianGalleryLocalId(
+  localId: string | null | undefined,
+): boolean {
   return /^GG\d+/i.test(String(localId ?? '').trim());
 }
 
@@ -333,6 +338,58 @@ export function remapSetIdForGallerySubset(
     remapSetIdForTrainerGallery(setId, localId),
     localId,
   );
+}
+
+/**
+ * CardTrader lista la Classic Collection dentro de "30th Celebration"
+ * con números de la carta original (BS 4, TEU 33…). TCGdex las separa en 30th-c.
+ */
+const CELEBRATION_30TH_CLASSIC_LOCAL_ID: Record<string, string> = {
+  bs4: '001',
+  rs5: '002',
+  ds11: '003',
+  plb97: '004',
+  gh18: '005',
+  trr19: '006',
+  ng25: '007',
+  teu33: '008',
+  bkp41: '009',
+  la43: '010',
+  pl47: '011',
+  viv50: '012',
+  cin57: '013',
+  bs58: '014',
+  gc69: '015',
+  drx85: '016',
+  sum89: '017',
+  tm94: '018',
+  tm99: '019',
+  tm100: '020',
+  nvi101: '021',
+  ge106: '022',
+  prc106: '023',
+  nde106: '024',
+  uf108: '025',
+  fst114: '026',
+  brs123: '027',
+  ssh138: '028',
+  aq149: '029',
+  pal203: '030',
+};
+
+export function remap30thCelebrationCard(
+  setId: string,
+  localId: string | null | undefined,
+): { setId: string; localId: string | null } {
+  const trimmedSet = setId.trim();
+  const rawLocal = String(localId ?? '').trim();
+  if (!rawLocal || trimmedSet.toLowerCase() !== '30th') {
+    return { setId: trimmedSet, localId: rawLocal || null };
+  }
+  const compact = rawLocal.toLowerCase().replace(/\s+/g, '');
+  const classic = CELEBRATION_30TH_CLASSIC_LOCAL_ID[compact];
+  if (!classic) return { setId: trimmedSet, localId: rawLocal };
+  return { setId: '30th-c', localId: classic };
 }
 
 /** Local `swsh11.5tg` vs producción `swsh11tg`, más el padre `swsh11`. */
@@ -527,7 +584,11 @@ export function localeIdFromEn(
   const target = enId.trim().toLowerCase();
   if (!target) return null;
   for (const [lid, mapped] of Object.entries(locMap)) {
-    if (String(mapped ?? '').trim().toLowerCase() === target) {
+    if (
+      String(mapped ?? '')
+        .trim()
+        .toLowerCase() === target
+    ) {
       return lid;
     }
   }
@@ -547,7 +608,9 @@ export function localeIdVariants(code: string, catalog: string): string[] {
 /** Normaliza ids tipo sv08 / SV8 / me02 / ME02 para emparejar catálogos EN↔JA. */
 export function normalizeCrossLocaleSetToken(id: string): string | null {
   const trimmed = id.trim();
-  const m = /^(sv|me|swsh|sm|xy|dp|pt|bw|base|gym|neo)(\d+[a-z0-9.]*)$/i.exec(trimmed);
+  const m = /^(sv|me|swsh|sm|xy|dp|pt|bw|base|gym|neo)(\d+[a-z0-9.]*)$/i.exec(
+    trimmed,
+  );
   if (!m) return null;
   const prefix = m[1].toLowerCase();
   const suffix = m[2].replace(/^0+(?=\d)/, '');

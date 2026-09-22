@@ -17,7 +17,7 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AppModule } from 'src/app.module';
 import { Stock, StockDocument } from 'src/schema/stock.schema';
-import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
+import { TCGDexService } from 'src/pokemon';
 
 function parseArgs() {
   const argv = process.argv.slice(2);

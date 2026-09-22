@@ -56,7 +56,14 @@ export function resolveSetEnglishLabelsPath(): string | null {
   const cwd = process.cwd();
   const candidates = [
     path.join(cwd, '..', 'cards-database', 'meta', 'set-english-labels.json'),
-    path.join(cwd, '..', '..', 'cards-database', 'meta', 'set-english-labels.json'),
+    path.join(
+      cwd,
+      '..',
+      '..',
+      'cards-database',
+      'meta',
+      'set-english-labels.json',
+    ),
     path.join(cwd, 'data', 'set_name_homologs.json'),
   ];
   for (const candidate of candidates) {
@@ -72,7 +79,11 @@ export function resolveCardTraderHomologPath(): string | null {
   if (fromEnv && fs.existsSync(fromEnv)) {
     return fromEnv;
   }
-  const candidate = path.join(process.cwd(), 'data', 'cardtrader_tcgdex_homolog.json');
+  const candidate = path.join(
+    process.cwd(),
+    'data',
+    'cardtrader_tcgdex_homolog.json',
+  );
   return fs.existsSync(candidate) ? candidate : null;
 }
 
@@ -85,8 +96,23 @@ export function resolveSetLocaleMapPath(): string | null {
   const cwd = process.cwd();
   const candidates = [
     path.join(cwd, 'data', 'set_locale_map.json'),
-    path.join(cwd, '..', 'scripts', 'card-trader', 'data', 'set_locale_map.json'),
-    path.join(cwd, '..', '..', 'scripts', 'card-trader', 'data', 'set_locale_map.json'),
+    path.join(
+      cwd,
+      '..',
+      'scripts',
+      'card-trader',
+      'data',
+      'set_locale_map.json',
+    ),
+    path.join(
+      cwd,
+      '..',
+      '..',
+      'scripts',
+      'card-trader',
+      'data',
+      'set_locale_map.json',
+    ),
   ];
   for (const candidate of candidates) {
     if (fs.existsSync(candidate)) {
@@ -191,7 +217,9 @@ export function buildTcgdexSetResolveIndex(
     const setId = entry.tcgdex_set_id?.trim();
     if (!setId) continue;
     const locale =
-      entry.locale?.trim() || mapKey.split(':')[0]?.trim() || inferPrimaryLocale(setId, sets);
+      entry.locale?.trim() ||
+      mapKey.split(':')[0]?.trim() ||
+      inferPrimaryLocale(setId, sets);
     const meta: SetResolveMeta = { tcgdex_set_id: setId, locale };
     registerSetMeta(index, meta, collectSetNames(entry), entry.cardtrader?.id);
   }
@@ -238,12 +266,7 @@ export function buildTcgdexSetResolveIndex(
     const setId = ctCodeToSetId(code);
     const locale = /^cbb/i.test(code) ? 'zh-cn' : 'ja';
     const meta: SetResolveMeta = { tcgdex_set_id: setId, locale };
-    registerSetMeta(
-      index,
-      meta,
-      [name, name.split(':')[0]?.trim()],
-      item.id,
-    );
+    registerSetMeta(index, meta, [name, name.split(':')[0]?.trim()], item.id);
     registerLocaleAliasBucket(index.localeAliases, name, locale, setId);
   }
 
@@ -252,10 +275,7 @@ export function buildTcgdexSetResolveIndex(
       if (!idMap || typeof idMap !== 'object') continue;
       for (const setId of Object.keys(idMap)) {
         if (!index.setLocaleById.has(setId)) {
-          index.setLocaleById.set(
-            setId,
-            catalog === 'ko' ? 'ja' : catalog,
-          );
+          index.setLocaleById.set(setId, catalog === 'ko' ? 'ja' : catalog);
         }
       }
     }
@@ -269,7 +289,9 @@ export function loadTcgdexSetResolveIndex(): TcgdexSetResolveIndex {
   const labelsPath = resolveSetEnglishLabelsPath();
   if (labelsPath) {
     try {
-      labels = JSON.parse(fs.readFileSync(labelsPath, 'utf8')) as SetEnglishLabelsFile;
+      labels = JSON.parse(
+        fs.readFileSync(labelsPath, 'utf8'),
+      ) as SetEnglishLabelsFile;
     } catch {
       labels = {};
     }
@@ -282,7 +304,9 @@ export function loadTcgdexSetResolveIndex(): TcgdexSetResolveIndex {
   const ctPath = resolveCardTraderHomologPath();
   if (ctPath) {
     try {
-      cardtraderHomolog = JSON.parse(fs.readFileSync(ctPath, 'utf8')) as typeof cardtraderHomolog;
+      cardtraderHomolog = JSON.parse(
+        fs.readFileSync(ctPath, 'utf8'),
+      ) as typeof cardtraderHomolog;
     } catch {
       cardtraderHomolog = {};
     }

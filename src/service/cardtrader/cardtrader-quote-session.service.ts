@@ -5,9 +5,7 @@ import {
 } from '@nestjs/common';
 import { isValidObjectId } from 'mongoose';
 import { CardtraderQuoteSessionRepository } from '../../repository/cardtrader-quote-session.repository';
-import type {
-  QuoteSessionStatus,
-} from '../../schema/cardtrader-quote-session.schema';
+import type { QuoteSessionStatus } from '../../schema/cardtrader-quote-session.schema';
 import {
   buildQuoteSessionLines,
   parsePickBlueprint,
@@ -73,7 +71,9 @@ export class CardTraderQuoteSessionService {
         throw new BadRequestException('status debe ser completed o cancelled');
       }
       if (doc.status !== 'in_progress') {
-        throw new BadRequestException('solo se puede cerrar una sesión in_progress');
+        throw new BadRequestException(
+          'solo se puede cerrar una sesión in_progress',
+        );
       }
       doc.status = next;
     }
@@ -91,7 +91,11 @@ export class CardTraderQuoteSessionService {
       throw new BadRequestException('la sesión no está in_progress');
     }
     const lineIndex = Number(lineIndexRaw);
-    if (!Number.isInteger(lineIndex) || lineIndex < 0 || lineIndex >= doc.lines.length) {
+    if (
+      !Number.isInteger(lineIndex) ||
+      lineIndex < 0 ||
+      lineIndex >= doc.lines.length
+    ) {
       throw new NotFoundException('línea no encontrada');
     }
     const action = String(body.action ?? '').trim();

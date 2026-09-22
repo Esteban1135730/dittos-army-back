@@ -30,7 +30,7 @@ import {
   resolveIncomingBatchItemImageUrl,
   type TcgDexBatchEnrichment,
 } from 'src/utils/incoming-batch-item-meta';
-import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
+import { TCGDexService } from 'src/pokemon';
 import { StockRepository } from 'src/repository/stock.repository';
 import { StockDto } from 'src/Dto/stock.dto';
 import { IncomingReservationService } from 'src/service/incoming-reservation.service';
@@ -264,7 +264,9 @@ export class IncomingController {
       total_eur_cards_cost: batch.total_eur_cards_cost,
       total_cop_cards_cost: batch.total_cop_cards_cost,
       real_euro_rate_cop_per_eur: batch.real_euro_rate_cop_per_eur,
-      cards_cost_currency: normalizeCardsCostCurrency(batch.cards_cost_currency),
+      cards_cost_currency: normalizeCardsCostCurrency(
+        batch.cards_cost_currency,
+      ),
       created_at: batch.created_at,
     };
   }

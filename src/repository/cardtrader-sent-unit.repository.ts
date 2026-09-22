@@ -11,7 +11,9 @@ export class CardtraderSentUnitRepository {
   constructor(private readonly ownerModels: OwnerModelsService) {}
 
   private get model(): Model<CardtraderSentUnitDocument> {
-    return this.ownerModels.getModel<CardtraderSentUnitDocument>(CardtraderSentUnit.name);
+    return this.ownerModels.getModel<CardtraderSentUnitDocument>(
+      CardtraderSentUnit.name,
+    );
   }
 
   async upsertMany(

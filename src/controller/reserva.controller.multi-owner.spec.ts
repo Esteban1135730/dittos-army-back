@@ -78,7 +78,9 @@ describe('ReservaController multi-owner (044)', () => {
         {
           provide: PedidoService,
           useValue: {
-            requireReservadoPedido: jest.fn().mockResolvedValue({ _id: pedidoId }),
+            requireReservadoPedido: jest
+              .fn()
+              .mockResolvedValue({ _id: pedidoId }),
             assertReservaLineMutable: jest.fn().mockResolvedValue(undefined),
             pagarReservadoDeCliente: jest.fn(),
           },

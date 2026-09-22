@@ -1,15 +1,20 @@
 import 'dotenv/config';
+import { RequestMethod } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { mkdirSync } from 'fs';
 import { AppModule } from './app.module';
-import { resolveCardImagesRoot } from './service/tcgdex/local-card-images.service';
+import { resolveCardImagesRoot } from './pokemon';
 
 async function bootstrap() {
   const imagesDir = resolveCardImagesRoot();
   mkdirSync(imagesDir, { recursive: true });
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // Product API under /pokemon; health (Render) and static /card-images/ stay at root.
+  app.setGlobalPrefix('pokemon', {
+    exclude: [{ path: 'health', method: RequestMethod.GET }],
+  });
   app.useStaticAssets(imagesDir, { prefix: '/card-images/' });
 
   // Configurar CORS

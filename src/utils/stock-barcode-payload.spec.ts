@@ -35,9 +35,7 @@ describe('stock-barcode-payload', () => {
       owner: 'esteban',
       prefixUsed: 'ESTEBAN-STOCK:',
     });
-    const loose = parseStockQrPayloadMulti(
-      `ESTEBAN'STOCKÑ${validId}`,
-    );
+    const loose = parseStockQrPayloadMulti(`ESTEBAN'STOCKÑ${validId}`);
     expect(loose).toEqual({
       stockId: validId,
       owner: 'esteban',

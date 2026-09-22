@@ -9,12 +9,9 @@ import { CardtraderTransitLotRepository } from '../repository/cardtrader-transit
 import { CardtraderTransitLineRepository } from '../repository/cardtrader-transit-line.repository';
 import { isSyntheticQuantityCardId } from '../constants/bulk-product';
 import { sanitizeCardImageUrl } from '../utils/card-image-url';
-import { TCGDexService } from './tcgdex/tcgdex.service';
-import { LocalCardImagesService } from './tcgdex/local-card-images.service';
-import {
-  OWNERS_CONFIG,
-  type OwnerKey,
-} from '../config/owners.config';
+import { TCGDexService } from '../pokemon';
+import { LocalCardImagesService } from '../pokemon';
+import { OWNERS_CONFIG, type OwnerKey } from '../config/owners.config';
 import { runWithOwnerAsync } from '../owner/owner-context';
 import {
   effectiveOperationalRarezaFromStock,
@@ -248,18 +245,13 @@ export class StoreInventoryService {
     cardId: string,
     rareza: string | null,
   ): { pvp: number; pvp_currency: string } | undefined {
-    const pablo = resolvePvpForLine(
-      pvpByOwner.pablo.get(cardId) ?? [],
-      rareza,
-    );
+    const pablo = resolvePvpForLine(pvpByOwner.pablo.get(cardId) ?? [], rareza);
     const esteban = resolvePvpForLine(
       pvpByOwner.esteban.get(cardId) ?? [],
       rareza,
     );
     const picked = pickStoreExportPvp(
-      pablo
-        ? { pvp: pablo.pvp, currency: pablo.pvp_currency }
-        : undefined,
+      pablo ? { pvp: pablo.pvp, currency: pablo.pvp_currency } : undefined,
       esteban
         ? { pvp: esteban.pvp, currency: esteban.pvp_currency }
         : undefined,
@@ -429,7 +421,11 @@ export class StoreInventoryService {
       const inventoryRaw: StoreInventoryItem[] = groups
         .map((g) => {
           const item = firstByLine.get(g.lineId);
-          const pvpData = this.resolveExportPvp(pvpByOwner, g.card_id, g.rareza);
+          const pvpData = this.resolveExportPvp(
+            pvpByOwner,
+            g.card_id,
+            g.rareza,
+          );
           const pvpCop =
             pvpData != null
               ? this.pvpToCop(pvpData.pvp, pvpData.pvp_currency)
@@ -464,12 +460,13 @@ export class StoreInventoryService {
 
       const demandCounts = await this.loadDemandCountsAllOwners();
       const tagMap = await this.loadTagMapAllOwners(cardIds);
-      const inventoryWithDemand = applySoldUnits90d(inventoryRaw, demandCounts).map(
-        (row) => {
-          const tags = toStorePublicTags(tagMap.get(row.card_id));
-          return tags ? { ...row, tags } : row;
-        },
-      );
+      const inventoryWithDemand = applySoldUnits90d(
+        inventoryRaw,
+        demandCounts,
+      ).map((row) => {
+        const tags = toStorePublicTags(tagMap.get(row.card_id));
+        return tags ? { ...row, tags } : row;
+      });
       const inventory = await this.localizeImagesForStore(inventoryWithDemand);
       await this.writeInventory(outputPath, inventory);
       await this.pruneUnusedStoreCardImages();

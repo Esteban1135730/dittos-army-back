@@ -23,9 +23,7 @@ export class CardtraderQuoteSessionRepository {
     return this.model.create(data);
   }
 
-  async findById(
-    id: string,
-  ): Promise<CardtraderQuoteSessionDocument | null> {
+  async findById(id: string): Promise<CardtraderQuoteSessionDocument | null> {
     return this.model.findById(id).exec();
   }
 

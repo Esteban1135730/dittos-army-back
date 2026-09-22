@@ -1,7 +1,7 @@
 import { Stock, StockDocument } from '../schema/stock.schema';
 import { Injectable } from '@nestjs/common';
+import { isValidObjectId, Model } from 'mongoose';
 import { OwnerModelsService } from '../owner/owner-models.service';
-import { Model } from 'mongoose';
 import { StockDto } from 'src/Dto/stock.dto';
 
 @Injectable()
@@ -24,8 +24,7 @@ export class StockRepository {
     const createdStock = new this.stockModel({
       ...rest,
       card_name: stockDto.card_name ?? '',
-      stocked_at:
-        (rest as { stocked_at?: Date }).stocked_at ?? new Date(),
+      stocked_at: (rest as { stocked_at?: Date }).stocked_at ?? new Date(),
     });
     return createdStock.save();
   }
@@ -69,6 +68,24 @@ export class StockRepository {
 
   async findAll(): Promise<Stock[]> {
     return this.stockModel.find().exec();
+  }
+
+  /**
+   * Búsqueda puntual (móvil): por `_id` o por nombre.
+   * No sustituye `findAll` del listado completo.
+   */
+  async searchByQuery(q: string, limit = 50): Promise<Stock[]> {
+    const trimmed = q.trim();
+    if (!trimmed) return [];
+    if (isValidObjectId(trimmed)) {
+      const one = await this.findById(trimmed);
+      return one ? [one] : [];
+    }
+    const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return this.stockModel
+      .find({ card_name: { $regex: escaped, $options: 'i' } })
+      .limit(limit)
+      .exec();
   }
 
   async findById(id: string): Promise<Stock | null> {
@@ -160,7 +177,9 @@ export class StockRepository {
     cardIds: string[],
     states: string[],
   ): Promise<Stock[]> {
-    const ids = [...new Set(cardIds.map((c) => String(c ?? '').trim()).filter(Boolean))];
+    const ids = [
+      ...new Set(cardIds.map((c) => String(c ?? '').trim()).filter(Boolean)),
+    ];
     if (ids.length === 0 || states.length === 0) return [];
     return this.stockModel
       .find({ card_id: { $in: ids }, card_state: { $in: states } })

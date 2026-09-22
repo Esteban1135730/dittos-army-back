@@ -14,14 +14,20 @@ describe('tcgdex-homolog-loader', () => {
     const resolved = resolveSetEnglishLabelsPath();
     expect(resolved).not.toBeNull();
     expect(fs.existsSync(resolved!)).toBe(true);
-    expect(resolved!).toMatch(/set-english-labels\.json|set_name_homologs\.json$/);
+    expect(resolved!).toMatch(
+      /set-english-labels\.json|set_name_homologs\.json$/,
+    );
   });
 
   it('construye un índice amplio desde el JSON del repo', () => {
     const labelsPath = resolveSetEnglishLabelsPath();
     expect(labelsPath).not.toBeNull();
     const labels = JSON.parse(fs.readFileSync(labelsPath!, 'utf8'));
-    const ctPath = path.join(process.cwd(), 'data', 'cardtrader_tcgdex_homolog.json');
+    const ctPath = path.join(
+      process.cwd(),
+      'data',
+      'cardtrader_tcgdex_homolog.json',
+    );
     const ct = fs.existsSync(ctPath)
       ? JSON.parse(fs.readFileSync(ctPath, 'utf8'))
       : {};
@@ -48,6 +54,31 @@ describe('tcgdex-homolog-loader', () => {
     expect(inferPrimaryLocale('base1', {})).toBe('en');
   });
 
+  it('homologa los sets de 30th Celebration con CardTrader', () => {
+    const index = loadTcgdexSetResolveIndex();
+    expect(index.byCtExpansionName.get('30th celebration')).toEqual({
+      tcgdex_set_id: '30th',
+      locale: 'en',
+    });
+    expect(index.byCtExpansionName.get('30th classic collection')).toEqual({
+      tcgdex_set_id: '30th-c',
+      locale: 'en',
+    });
+    expect(index.byCtExpansionName.get('30th celebration jp')).toEqual({
+      tcgdex_set_id: 'M6a',
+      locale: 'ja',
+    });
+    expect(
+      index.byCtExpansionName.get('30th celebration premium deck set'),
+    ).toEqual({
+      tcgdex_set_id: 'MF',
+      locale: 'ja',
+    });
+    expect(index.byCtExpansionId.get(4679)?.tcgdex_set_id).toBe('30th');
+    expect(index.byCtExpansionId.get(4678)?.tcgdex_set_id).toBe('M6a');
+    expect(index.byCtExpansionId.get(4856)?.tcgdex_set_id).toBe('MF');
+  });
+
   it('loadTcgdexSetResolveIndex carga sin error en el repo', () => {
     const index = loadTcgdexSetResolveIndex();
     expect(index.setLocaleById.get('M2')).toBe('ja');
@@ -69,8 +100,8 @@ describe('tcgdex-homolog-loader', () => {
     ) as SetLocaleMapFile;
     const index = buildTcgdexSetResolveIndex({}, undefined, localeMap);
     expect(index.setLocaleById.get('SV8')).toBe('ja');
-    expect(Object.keys(index.localeMap?.expansion_to_en_set ?? {}).length).toBeGreaterThan(
-      500,
-    );
+    expect(
+      Object.keys(index.localeMap?.expansion_to_en_set ?? {}).length,
+    ).toBeGreaterThan(500);
   });
 });

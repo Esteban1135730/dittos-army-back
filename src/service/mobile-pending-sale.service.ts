@@ -6,10 +6,7 @@ import {
 } from '@nestjs/common';
 import { isValidObjectId } from 'mongoose';
 import { isQuantityKind } from 'src/constants/bulk-product';
-import {
-  type OwnerKey,
-  isOwnerKey,
-} from 'src/config/owners.config';
+import { type OwnerKey, isOwnerKey } from 'src/config/owners.config';
 import { getCurrentOwner, runWithOwnerAsync } from 'src/owner/owner-context';
 import { MobilePendingSaleRepository } from 'src/repository/mobile-pending-sale.repository';
 import { StockRepository } from 'src/repository/stock.repository';
@@ -84,7 +81,9 @@ function toView(doc: MobilePendingSaleDocument): MobilePendingSaleView {
   };
 }
 
-function isVendible(stock: Stock): { ok: true } | { ok: false; reason: string } {
+function isVendible(
+  stock: Stock,
+): { ok: true } | { ok: false; reason: string } {
   const cardState = (stock as { card_state?: string }).card_state ?? '';
   const productKind = (stock as { product_kind?: string }).product_kind;
   const isQty = isQuantityKind(productKind);
@@ -182,9 +181,7 @@ export class MobilePendingSaleService {
       this.pendingRepository.findOpenPendingByStockId(stockId),
     );
     if (duplicate) {
-      throw new ConflictException(
-        'Ya hay una venta pendiente para este stock',
-      );
+      throw new ConflictException('Ya hay una venta pendiente para este stock');
     }
 
     const notes = dto.notes?.trim() || undefined;
@@ -196,8 +193,10 @@ export class MobilePendingSaleService {
           amount_cop: Math.round(amount),
           notes,
           client_sale_id: clientSaleId,
-          card_name: dto.card_name?.trim() || located.stock.card_name || undefined,
-          image_url: dto.image_url?.trim() || located.stock.image_url || undefined,
+          card_name:
+            dto.card_name?.trim() || located.stock.card_name || undefined,
+          image_url:
+            dto.image_url?.trim() || located.stock.image_url || undefined,
           card_id: dto.card_id?.trim() || located.stock.card_id || undefined,
         }),
       );

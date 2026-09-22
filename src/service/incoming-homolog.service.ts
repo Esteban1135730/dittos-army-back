@@ -19,7 +19,7 @@ import { IncomingHomologNovedadStockRepository } from '../repository/incoming-ho
 import { StockRepository } from '../repository/stock.repository';
 import { ReservaRepository } from '../repository/reserva.repository';
 import { CardTraderTcgdexResolveService } from './cardtrader/cardtrader-tcgdex-resolve.service';
-import { TCGDexService } from './tcgdex/tcgdex.service';
+import { TCGDexService } from '../pokemon';
 import { CardtraderTransitLineRepository } from '../repository/cardtrader-transit-line.repository';
 import { CardtraderTransitLotRepository } from '../repository/cardtrader-transit-lot.repository';
 import {
@@ -55,7 +55,10 @@ import {
 } from '../utils/novedad-card-resolve';
 import { IncomingReservationService } from './incoming-reservation.service';
 import type { StockDto } from '../Dto/stock.dto';
-import { isUsableStockImageUrl, normalizeTcgdexCdnImageUrl } from '../utils/store-image-localize';
+import {
+  isUsableStockImageUrl,
+  normalizeTcgdexCdnImageUrl,
+} from '../utils/store-image-localize';
 import {
   isOwnerKey,
   OWNERS_CONFIG,
@@ -87,10 +90,11 @@ export class IncomingHomologService {
   ) {}
 
   async getActiveSession() {
-    let session =
+    const session =
       (await this.sessionRepository.findActive()) ??
       (await this.sessionRepository.findLatestConverted());
-    if (!session) return { session: null, panel_items: [], batches_summary: [] };
+    if (!session)
+      return { session: null, panel_items: [], batches_summary: [] };
     const enriched = await this.enrichSessionUnits(session);
     const panelItems = await this.loadPanelItems({ units: enriched });
     const batchesSummary = await this.loadBatchesSummary();
@@ -401,8 +405,10 @@ export class IncomingHomologService {
 
     const items = Array.isArray(raw)
       ? raw
-      : raw && typeof raw === 'object' && Array.isArray((raw as { data?: unknown }).data)
-        ? ((raw as { data: unknown[] }).data)
+      : raw &&
+          typeof raw === 'object' &&
+          Array.isArray((raw as { data?: unknown }).data)
+        ? (raw as { data: unknown[] }).data
         : [];
 
     const productByCt0Id = new Map<number, number>();
@@ -445,10 +451,14 @@ export class IncomingHomologService {
     const session = await this.requireSession(sessionId);
     this.assertSessionEditable(session);
 
-    const transitLine = await this.transitLineRepository.findById(transitLineId);
-    if (!transitLine) throw new NotFoundException('Línea de tránsito no encontrada');
+    const transitLine =
+      await this.transitLineRepository.findById(transitLineId);
+    if (!transitLine)
+      throw new NotFoundException('Línea de tránsito no encontrada');
     if (transitLine.remaining_quantity <= 0) {
-      throw new BadRequestException('Esta línea de tránsito no tiene unidades disponibles');
+      throw new BadRequestException(
+        'Esta línea de tránsito no tiene unidades disponibles',
+      );
     }
 
     const usedOnLine = (session.units ?? []).filter(
@@ -470,7 +480,8 @@ export class IncomingHomologService {
     const unitIdx = (session.units ?? []).findIndex(
       (u) => u.sent_unit_key === sentUnitKey,
     );
-    if (unitIdx < 0) throw new NotFoundException('Carta sent no encontrada en sesión');
+    if (unitIdx < 0)
+      throw new NotFoundException('Carta sent no encontrada en sesión');
 
     const homologUnit = session.units[unitIdx];
     const lotCurrency = normalizeCardsCostCurrency(lot.cards_cost_currency);
@@ -482,7 +493,8 @@ export class IncomingHomologService {
     const purchaseCurrency = purchaseFx != null ? ctCurrency : lotCurrency;
     const unitCostCop =
       purchaseFx != null && purchaseFx > 0
-        ? (copFromFxUnit(purchaseFx, lot.real_fx_rate_cop) ?? transitLine.unit_cost_cop)
+        ? (copFromFxUnit(purchaseFx, lot.real_fx_rate_cop) ??
+          transitLine.unit_cost_cop)
         : transitLine.unit_cost_cop;
 
     const updated = await this.persistUnitPatch(sessionId, sentUnitKey, {
@@ -566,7 +578,11 @@ export class IncomingHomologService {
     });
 
     if (!transitLine) {
-      await this.upsertNovedadStockTracking(sessionId, homologUnit, notes.trim());
+      await this.upsertNovedadStockTracking(
+        sessionId,
+        homologUnit,
+        notes.trim(),
+      );
     }
 
     return {
@@ -629,7 +645,9 @@ export class IncomingHomologService {
   }
 
   async createPanelNovedad(body: CreateBatchNovedadDto) {
-    const batchItem = await this.batchItemRepository.findById(body.batch_item_id);
+    const batchItem = await this.batchItemRepository.findById(
+      body.batch_item_id,
+    );
     if (!batchItem) throw new NotFoundException('batch_item no encontrado');
 
     const row = await this.novedadRepository.create({
@@ -751,8 +769,9 @@ export class IncomingHomologService {
     );
 
     let created = 0;
-    const results: ReturnType<IncomingHomologService['serializeNovedadStockRow']>[] =
-      [];
+    const results: ReturnType<
+      IncomingHomologService['serializeNovedadStockRow']
+    >[] = [];
 
     for (const item of plan) {
       const homologUnit = unitByKey.get(item.sent_unit_key);
@@ -819,7 +838,9 @@ export class IncomingHomologService {
     session_id?: string;
     tracking_ids?: string[];
   }) {
-    const trackingIds = (body.tracking_ids ?? []).map((id) => id.trim()).filter(Boolean);
+    const trackingIds = (body.tracking_ids ?? [])
+      .map((id) => id.trim())
+      .filter(Boolean);
     let rows;
     if (trackingIds.length > 0) {
       rows = await this.novedadStockRepository.findInStockByIds(trackingIds);
@@ -839,10 +860,14 @@ export class IncomingHomologService {
       return { reverted: 0, failed: [], items: [] as unknown[] };
     }
 
-    const reverted: ReturnType<IncomingHomologService['serializeNovedadStockRow']>[] =
-      [];
-    const failed: Array<{ tracking_id: string; card_name: string; reason: string }> =
-      [];
+    const reverted: ReturnType<
+      IncomingHomologService['serializeNovedadStockRow']
+    >[] = [];
+    const failed: Array<{
+      tracking_id: string;
+      card_name: string;
+      reason: string;
+    }> = [];
 
     for (const row of rows) {
       const stockId = row.stock_id?.trim();
@@ -858,8 +883,13 @@ export class IncomingHomologService {
       const stock = await this.stockRepository.findById(stockId);
       if (!stock) {
         await this.novedadStockRepository.revertToPending(row._id.toString());
-        await this.clearHomologUnitCostAfterUndo(row.session_id, row.sent_unit_key);
-        const updated = await this.novedadStockRepository.findById(row._id.toString());
+        await this.clearHomologUnitCostAfterUndo(
+          row.session_id,
+          row.sent_unit_key,
+        );
+        const updated = await this.novedadStockRepository.findById(
+          row._id.toString(),
+        );
         if (updated) reverted.push(this.serializeNovedadStockRow(updated));
         continue;
       }
@@ -887,7 +917,10 @@ export class IncomingHomologService {
       const updated = await this.novedadStockRepository.revertToPending(
         row._id.toString(),
       );
-      await this.clearHomologUnitCostAfterUndo(row.session_id, row.sent_unit_key);
+      await this.clearHomologUnitCostAfterUndo(
+        row.session_id,
+        row.sent_unit_key,
+      );
       if (updated) reverted.push(this.serializeNovedadStockRow(updated));
     }
 
@@ -1033,17 +1066,15 @@ export class IncomingHomologService {
         !u.batch_item_id?.trim(),
     );
     if (orphanNovedad.length > 0) {
-      const pendingStock = await this.novedadStockRepository.findPendingBySession(
-        sessionId,
-      );
+      const pendingStock =
+        await this.novedadStockRepository.findPendingBySession(sessionId);
       if (pendingStock.length > 0) {
         throw new BadRequestException(
           `Hay ${pendingStock.length} novedad(es) sin pasar a stock. Materializa el paso 1 antes de crear la tanda.`,
         );
       }
-      const inStock = await this.novedadStockRepository.findInStockBySession(
-        sessionId,
-      );
+      const inStock =
+        await this.novedadStockRepository.findInStockBySession(sessionId);
       const inStockKeys = new Set(inStock.map((r) => r.sent_unit_key));
       const missing = orphanNovedad.filter(
         (u) => !inStockKeys.has(u.sent_unit_key),
@@ -1068,24 +1099,35 @@ export class IncomingHomologService {
     const unitKeys = new Set(units.map((u) => u.sent_unit_key));
     for (const card of cards) {
       if (!unitKeys.has(card.sent_unit_key)) {
-        throw new BadRequestException(`sent_unit_key desconocido: ${card.sent_unit_key}`);
+        throw new BadRequestException(
+          `sent_unit_key desconocido: ${card.sent_unit_key}`,
+        );
       }
       const lineId = resolveLineId(card);
       if (card.is_novedad) {
         if (!lineId) continue;
       } else if (!lineId) {
-        throw new BadRequestException('transit_line_id requerido por carta verificada');
+        throw new BadRequestException(
+          'transit_line_id requerido por carta verificada',
+        );
       }
-      if (!Number.isFinite(card.purchase_price_eur) || card.purchase_price_eur <= 0) {
+      if (
+        !Number.isFinite(card.purchase_price_eur) ||
+        card.purchase_price_eur <= 0
+      ) {
         throw new BadRequestException('purchase_price_eur inválido');
       }
-      if (!card.is_novedad && (!Number.isFinite(card.unit_cost_cop) || card.unit_cost_cop <= 0)) {
+      if (
+        !card.is_novedad &&
+        (!Number.isFinite(card.unit_cost_cop) || card.unit_cost_cop <= 0)
+      ) {
         throw new BadRequestException('unit_cost_cop inválido');
       }
     }
 
     const usesLegacyBatch = cards.some(
-      (c) => !c.is_novedad && c.batch_item_id?.trim() && !c.transit_line_id?.trim(),
+      (c) =>
+        !c.is_novedad && c.batch_item_id?.trim() && !c.transit_line_id?.trim(),
     );
 
     if (usesLegacyBatch) {
@@ -1095,7 +1137,9 @@ export class IncomingHomologService {
     const transitLinesInRoute =
       await this.transitLineRepository.findByRemainingQuantityGreaterThanZero();
     if (transitLinesInRoute.length === 0) {
-      throw new BadRequestException('No hay cartas en tránsito CardTrader en el panel');
+      throw new BadRequestException(
+        'No hay cartas en tránsito CardTrader en el panel',
+      );
     }
 
     const arrivedByTransitLine = new Map<string, number>();
@@ -1114,7 +1158,9 @@ export class IncomingHomologService {
     for (const [lineId, count] of arrivedByTransitLine) {
       const line = transitLineMap.get(lineId);
       if (!line) {
-        throw new BadRequestException(`transit_line ${lineId} no está en tránsito`);
+        throw new BadRequestException(
+          `transit_line ${lineId} no está en tránsito`,
+        );
       }
       if (count > line.remaining_quantity) {
         throw new BadRequestException(
@@ -1139,7 +1185,9 @@ export class IncomingHomologService {
       const lineId = resolveLineId(card);
       const line = transitLineMap.get(lineId);
       if (!line) {
-        throw new BadRequestException(`transit_line ${lineId} no está en tránsito`);
+        throw new BadRequestException(
+          `transit_line ${lineId} no está en tránsito`,
+        );
       }
       const cardId = line.card_id?.trim();
       if (!cardId) {
@@ -1179,7 +1227,10 @@ export class IncomingHomologService {
     }
 
     for (const [lineId, count] of arrivedByTransitLine) {
-      await this.transitLineRepository.decrementRemainingQuantity(lineId, count);
+      await this.transitLineRepository.decrementRemainingQuantity(
+        lineId,
+        count,
+      );
     }
 
     const createdStocks = await this.createTandaStocksByOwner(stockItems);
@@ -1215,7 +1266,9 @@ export class IncomingHomologService {
     const batchItemsInRoute =
       await this.batchItemRepository.findByRemainingQuantityGreaterThanZero();
     if (batchItemsInRoute.length === 0) {
-      throw new BadRequestException('No hay cartas en camino legacy en el panel');
+      throw new BadRequestException(
+        'No hay cartas en camino legacy en el panel',
+      );
     }
 
     const arrivedByBatchItem = new Map<string, number>();
@@ -1234,7 +1287,8 @@ export class IncomingHomologService {
     );
     for (const [batchItemId, count] of arrivedByBatchItem) {
       const bi = batchItemMap.get(batchItemId);
-      if (!bi) throw new BadRequestException(`batch_item ${batchItemId} no en camino`);
+      if (!bi)
+        throw new BadRequestException(`batch_item ${batchItemId} no en camino`);
       if (count > bi.remaining_quantity) {
         throw new BadRequestException(
           `arrived_quantity excede remaining para ${bi.card_name ?? bi.card_id}`,
@@ -1286,7 +1340,9 @@ export class IncomingHomologService {
   async cancelSession(sessionId: string) {
     const session = await this.requireSession(sessionId);
     if (session.status === 'converted') {
-      throw new BadRequestException('No se puede cancelar una sesión convertida');
+      throw new BadRequestException(
+        'No se puede cancelar una sesión convertida',
+      );
     }
     await this.sessionRepository.cancel(sessionId);
     return { success: true };
@@ -1296,7 +1352,9 @@ export class IncomingHomologService {
   async revertConversion(sessionId: string) {
     const session = await this.requireSession(sessionId);
     if (session.status !== 'converted') {
-      throw new BadRequestException('Solo se puede restaurar una sesión convertida');
+      throw new BadRequestException(
+        'Solo se puede restaurar una sesión convertida',
+      );
     }
 
     const roundId = session.ship_round_id?.trim();
@@ -1306,7 +1364,9 @@ export class IncomingHomologService {
       );
       const restored = await this.restoreTransitQuantitiesFromSession(session);
       if (!restored) {
-        throw new BadRequestException('La sesión no tiene tanda ni recepción transit asociada');
+        throw new BadRequestException(
+          'La sesión no tiene tanda ni recepción transit asociada',
+        );
       }
       return {
         success: true,
@@ -1383,7 +1443,11 @@ export class IncomingHomologService {
   ): Promise<{ card_name: string; image_url: string; card_id: string }> {
     const fallbackName = String(fallback.card_name ?? '').trim() || cardId;
     const locales = [language, 'en']
-      .map((l) => String(l ?? '').trim().toLowerCase())
+      .map((l) =>
+        String(l ?? '')
+          .trim()
+          .toLowerCase(),
+      )
       .filter((l, i, arr) => l.length > 0 && arr.indexOf(l) === i);
 
     let cardName = fallbackName;
@@ -1398,14 +1462,22 @@ export class IncomingHomologService {
       }
       const fromCard = this.pickPublicStockImageUrl(card);
       if (fromCard) {
-        return { card_name: cardName, image_url: fromCard, card_id: resolvedCardId };
+        return {
+          card_name: cardName,
+          image_url: fromCard,
+          card_id: resolvedCardId,
+        };
       }
       const fromCdn = await this.fetchTcgdexCdnImageUrl(
         resolvedCardId || cardId,
         locale,
       );
       if (fromCdn) {
-        return { card_name: cardName, image_url: fromCdn, card_id: resolvedCardId };
+        return {
+          card_name: cardName,
+          image_url: fromCdn,
+          card_id: resolvedCardId,
+        };
       }
     }
 
@@ -1427,7 +1499,11 @@ export class IncomingHomologService {
       const blueprint = await this.fetchBlueprintMeta(blueprintId);
       const ctImage = readBlueprintImageUrl(blueprint);
       if (isUsableStockImageUrl(ctImage)) {
-        return { card_name: cardName, image_url: ctImage, card_id: resolvedCardId };
+        return {
+          card_name: cardName,
+          image_url: ctImage,
+          card_id: resolvedCardId,
+        };
       }
     }
 
@@ -1460,7 +1536,10 @@ export class IncomingHomologService {
     cardId: string,
     locale: string,
   ): Promise<string> {
-    const loc = String(locale || 'en').trim().toLowerCase() || 'en';
+    const loc =
+      String(locale || 'en')
+        .trim()
+        .toLowerCase() || 'en';
     const url = `https://api.tcgdex.net/v2/${encodeURIComponent(loc)}/cards/${encodeURIComponent(cardId)}`;
     try {
       const res = await fetch(url);
@@ -1580,7 +1659,9 @@ export class IncomingHomologService {
         .map((row) => ({ stock_id: row.stock_id.trim(), owner: row.owner }));
     }
     return (session.created_stock_ids ?? [])
-      .filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
+      .filter(
+        (id): id is string => typeof id === 'string' && id.trim().length > 0,
+      )
       .map((id) => ({
         stock_id: id.trim(),
         owner: OWNERS_CONFIG.defaultOwner,
@@ -1628,7 +1709,10 @@ export class IncomingHomologService {
       return null;
     }
     for (const [lineId, count] of verifiedByLine) {
-      await this.transitLineRepository.incrementRemainingQuantity(lineId, count);
+      await this.transitLineRepository.incrementRemainingQuantity(
+        lineId,
+        count,
+      );
     }
     return this.sessionRepository.revertConverted(sessionId);
   }
@@ -1742,7 +1826,10 @@ export class IncomingHomologService {
     for (const u of session.units ?? []) {
       const lineId = u.transit_line_id ?? u.batch_item_id;
       if (u.status !== 'verified' || !lineId) continue;
-      verifiedCountByLine.set(lineId, (verifiedCountByLine.get(lineId) ?? 0) + 1);
+      verifiedCountByLine.set(
+        lineId,
+        (verifiedCountByLine.get(lineId) ?? 0) + 1,
+      );
     }
 
     return transitLines.map((line) => {
@@ -1770,16 +1857,16 @@ export class IncomingHomologService {
         fx_unit_price: line.fx_unit_price,
         fx_total_lot: line.fx_total_lot,
         unit_cost_cop: line.unit_cost_cop,
-        cards_cost_currency: normalizeCardsCostCurrency(lot?.cards_cost_currency),
+        cards_cost_currency: normalizeCardsCostCurrency(
+          lot?.cards_cost_currency,
+        ),
         lot_purchase_date: lot?.purchase_date ?? null,
         lot_total_fx_cards_cost: lot?.total_fx_cards_cost ?? null,
         lot_total_cop_cards_cost: lot?.total_cop_cards_cost ?? null,
         real_fx_rate_cop: lot?.real_fx_rate_cop ?? null,
         assigned_in_session: assigned,
         available_in_session: Math.max(0, line.remaining_quantity - assigned),
-        owner: isOwnerKey(lot?.owner)
-          ? lot.owner
-          : OWNERS_CONFIG.defaultOwner,
+        owner: isOwnerKey(lot?.owner) ? lot.owner : OWNERS_CONFIG.defaultOwner,
       };
     });
   }
@@ -1801,15 +1888,19 @@ export class IncomingHomologService {
           total_fx_cards_cost: lot.total_fx_cards_cost,
           total_cop_cards_cost: lot.total_cop_cards_cost,
           real_fx_rate_cop: lot.real_fx_rate_cop,
-          cards_cost_currency: normalizeCardsCostCurrency(lot.cards_cost_currency),
+          cards_cost_currency: normalizeCardsCostCurrency(
+            lot.cards_cost_currency,
+          ),
           remaining_total_quantity: remainingTotal,
-          open_items_count: items.filter((it) => it.remaining_quantity > 0).length,
+          open_items_count: items.filter((it) => it.remaining_quantity > 0)
+            .length,
         };
       }),
     );
     return summaries.sort(
       (a, b) =>
-        new Date(b.purchase_date).getTime() - new Date(a.purchase_date).getTime(),
+        new Date(b.purchase_date).getTime() -
+        new Date(a.purchase_date).getTime(),
     );
   }
 
@@ -1858,43 +1949,45 @@ export class IncomingHomologService {
         const unitPriceFx =
           u.unit_price_fx ??
           u.purchase_price_fx ??
-          (u.unit_price_eur != null && u.unit_price_eur > 0 ? u.unit_price_eur : null);
+          (u.unit_price_eur != null && u.unit_price_eur > 0
+            ? u.unit_price_eur
+            : null);
         const rareza = u.rareza ?? inferSentUnitRareza(u.expansion ?? '');
         return {
-        sent_unit_key: u.sent_unit_key,
-        line_key: u.line_key,
-        unit_index: u.unit_index,
-        order_id: u.order_id,
-        order_code: u.order_code,
-        name: u.name,
-        expansion: u.expansion,
-        language: u.language,
-        product_id:
-          typeof u.product_id === 'number' && u.product_id > 0
-            ? u.product_id
-            : null,
-        blueprint_id: u.blueprint_id,
-        unit_price_eur: u.unit_price_eur,
-        unit_price_fx: unitPriceFx,
-        price_currency: u.price_currency ?? 'USD',
-        paid_at: u.paid_at ?? null,
-        rareza,
-        status: u.status,
-        batch_item_id: u.batch_item_id,
-        batch_id: u.batch_id,
-        batch_item_card_id: u.batch_item_card_id,
-        batch_item_card_name: u.batch_item_card_name,
-        transit_line_id: u.transit_line_id,
-        transit_lot_id: u.transit_lot_id,
-        transit_line_card_id: u.transit_line_card_id,
-        transit_line_card_name: u.transit_line_card_name,
-        unit_cost_cop: u.unit_cost_cop,
-        purchase_price_eur: u.purchase_price_eur,
-        purchase_price_fx: u.purchase_price_fx,
-        purchase_price_currency: u.purchase_price_currency,
-        match_score: u.match_score,
-        novedad_notes: u.novedad_notes,
-        verified_at: u.verified_at ?? null,
+          sent_unit_key: u.sent_unit_key,
+          line_key: u.line_key,
+          unit_index: u.unit_index,
+          order_id: u.order_id,
+          order_code: u.order_code,
+          name: u.name,
+          expansion: u.expansion,
+          language: u.language,
+          product_id:
+            typeof u.product_id === 'number' && u.product_id > 0
+              ? u.product_id
+              : null,
+          blueprint_id: u.blueprint_id,
+          unit_price_eur: u.unit_price_eur,
+          unit_price_fx: unitPriceFx,
+          price_currency: u.price_currency ?? 'USD',
+          paid_at: u.paid_at ?? null,
+          rareza,
+          status: u.status,
+          batch_item_id: u.batch_item_id,
+          batch_id: u.batch_id,
+          batch_item_card_id: u.batch_item_card_id,
+          batch_item_card_name: u.batch_item_card_name,
+          transit_line_id: u.transit_line_id,
+          transit_lot_id: u.transit_lot_id,
+          transit_line_card_id: u.transit_line_card_id,
+          transit_line_card_name: u.transit_line_card_name,
+          unit_cost_cop: u.unit_cost_cop,
+          purchase_price_eur: u.purchase_price_eur,
+          purchase_price_fx: u.purchase_price_fx,
+          purchase_price_currency: u.purchase_price_currency,
+          match_score: u.match_score,
+          novedad_notes: u.novedad_notes,
+          verified_at: u.verified_at ?? null,
         };
       }),
       summary,
@@ -2013,8 +2106,7 @@ export class IncomingHomologService {
     tcgdx_resolved: boolean;
     tcgdx_error: string | null;
   }> {
-    const language =
-      normalizeStockLanguage(unit.language) ?? 'en';
+    const language = normalizeStockLanguage(unit.language) ?? 'en';
     const expansion = unit.expansion || ct?.expansion || '';
     const collectorNumber = ct?.collector_number ?? undefined;
 
@@ -2135,7 +2227,9 @@ export class IncomingHomologService {
       0,
     );
     const errorCount = plan.filter((item) => item.errors.length > 0).length;
-    const noTcgdexImageCount = plan.filter((item) => !item.has_tcgdex_image).length;
+    const noTcgdexImageCount = plan.filter(
+      (item) => !item.has_tcgdex_image,
+    ).length;
     const noTcgdexIdCount = plan.filter((item) => !item.tcgdx_resolved).length;
     return {
       total_cards: totalCards,
@@ -2198,7 +2292,8 @@ export class IncomingHomologService {
   ) {
     await this.syncNovedadStockFromSession(sessionId);
 
-    const pending = await this.novedadStockRepository.findPendingBySession(sessionId);
+    const pending =
+      await this.novedadStockRepository.findPendingBySession(sessionId);
     if (pending.length === 0) return [];
 
     const unitKeys = pending.map((p) => p.sent_unit_key);

@@ -309,3 +309,62 @@ describe('StockController.listStockByCardId', () => {
     });
   });
 });
+
+describe('StockController.listStock query', () => {
+  async function setupList() {
+    const stockRepository = {
+      findAll: jest.fn().mockResolvedValue([]),
+      searchByQuery: jest.fn().mockResolvedValue([]),
+    };
+    const moduleRef = await Test.createTestingModule({
+      controllers: [StockController],
+      providers: [
+        { provide: StockRepository, useValue: stockRepository },
+        {
+          provide: CardStockTagRepository,
+          useValue: {
+            findMapByCardIds: jest.fn().mockResolvedValue(new Map()),
+            setTagsForCardId: jest.fn(),
+          },
+        },
+        {
+          provide: PvpRepository,
+          useValue: { findByCardIds: jest.fn().mockResolvedValue([]) },
+        },
+        { provide: StoreInventoryService, useValue: {} },
+        { provide: OpenedSealedStockService, useValue: {} },
+        { provide: ReservaRepository, useValue: {} },
+        { provide: SaleRepository, useValue: {} },
+        {
+          provide: StockScanService,
+          useValue: {
+            listBarcodeExportRows: jest.fn(),
+            listQrExportRows: jest.fn(),
+            getScanView: jest.fn(),
+          },
+        },
+        { provide: StockReviewService, useValue: { listPerdidas: jest.fn() } },
+        { provide: BulkProductService, useValue: { ensureBulk: jest.fn() } },
+      ],
+    }).compile();
+
+    return {
+      controller: moduleRef.get(StockController),
+      stockRepository,
+    };
+  }
+
+  it('sin q usa findAll', async () => {
+    const { controller, stockRepository } = await setupList();
+    await controller.listStock();
+    expect(stockRepository.findAll).toHaveBeenCalled();
+    expect(stockRepository.searchByQuery).not.toHaveBeenCalled();
+  });
+
+  it('con q usa searchByQuery y no el dump completo', async () => {
+    const { controller, stockRepository } = await setupList();
+    await controller.listStock('pikachu');
+    expect(stockRepository.searchByQuery).toHaveBeenCalledWith('pikachu');
+    expect(stockRepository.findAll).not.toHaveBeenCalled();
+  });
+});

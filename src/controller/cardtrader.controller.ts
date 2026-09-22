@@ -219,10 +219,14 @@ export class CardTraderController {
   }
 
   @Get('ct0-box-items')
-  async ct0BoxItems(@Query('quantity_state') quantityState?: string): Promise<unknown> {
+  async ct0BoxItems(
+    @Query('quantity_state') quantityState?: string,
+  ): Promise<unknown> {
     const clean = quantityState?.trim();
     if (clean && !CT0_QUANTITY_STATES.has(clean)) {
-      throw new BadRequestException('quantity_state debe ser ok, pending o missing');
+      throw new BadRequestException(
+        'quantity_state debe ser ok, pending o missing',
+      );
     }
     const raw = await this.cardTrader.getCt0BoxItems();
     if (!clean || !Array.isArray(raw)) return raw;
@@ -328,9 +332,7 @@ export class CardTraderController {
   }
 
   @Get('quote-sessions')
-  async listQuoteSessions(
-    @Query('status') status?: string,
-  ): Promise<unknown> {
+  async listQuoteSessions(@Query('status') status?: string): Promise<unknown> {
     return this.quoteSessions.list(status);
   }
 
@@ -390,7 +392,9 @@ export class CardTraderController {
       const expId =
         line?.expansion_id != null ? Number(line.expansion_id) : undefined;
       if (expId !== undefined && (!Number.isInteger(expId) || expId < 1)) {
-        throw new BadRequestException(`expansion_id inválido en línea ${index + 1}`);
+        throw new BadRequestException(
+          `expansion_id inválido en línea ${index + 1}`,
+        );
       }
       if (!expName && expId === undefined) {
         throw new BadRequestException(
@@ -400,7 +404,9 @@ export class CardTraderController {
       const bpId =
         line?.blueprint_id != null ? Number(line.blueprint_id) : undefined;
       if (bpId !== undefined && (!Number.isInteger(bpId) || bpId < 1)) {
-        throw new BadRequestException(`blueprint_id inválido en línea ${index + 1}`);
+        throw new BadRequestException(
+          `blueprint_id inválido en línea ${index + 1}`,
+        );
       }
       return {
         expansionName: expName,

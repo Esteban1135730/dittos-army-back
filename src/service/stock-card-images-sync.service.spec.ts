@@ -1,7 +1,7 @@
 import { mkdtempSync, mkdirSync, writeFileSync, existsSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { LocalCardImagesService } from './local-card-images.service';
+import { LocalCardImagesService } from '../pokemon/tcgdex/local-card-images.service';
 import { StockCardImagesSyncService } from './stock-card-images-sync.service';
 
 const PNG = Buffer.from([

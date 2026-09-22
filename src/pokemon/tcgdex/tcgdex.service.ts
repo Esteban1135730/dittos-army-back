@@ -23,7 +23,7 @@ import {
 import {
   buildTcgdexCardIdLookupCandidates,
   tcgDexCatalogLocaleForExpansion,
-} from '../../utils/tcgdex-set-resolve';
+} from './tcgdex-set-resolve';
 import {
   parseExpansionFromSetField,
   parseSetIdFromSetField,
@@ -473,12 +473,20 @@ export class TCGDexService {
     try {
       const res = await fetch(url);
       if (res.status === 404) {
-        return this.setCached(cacheKey, { status: 'missing' }, this.TTL_CARD_DETAIL_MS);
+        return this.setCached(
+          cacheKey,
+          { status: 'missing' },
+          this.TTL_CARD_DETAIL_MS,
+        );
       }
       if (!res.ok) return { status: 'error' };
       const raw = (await res.json()) as TCGdexCardApiResponse;
       if (!raw || typeof raw !== 'object' || !raw.name) {
-        return this.setCached(cacheKey, { status: 'missing' }, this.TTL_CARD_DETAIL_MS);
+        return this.setCached(
+          cacheKey,
+          { status: 'missing' },
+          this.TTL_CARD_DETAIL_MS,
+        );
       }
       const dto = mapCardFromApi(raw);
       const candidate =
@@ -487,7 +495,11 @@ export class TCGDexService {
         tcgdexJaSwordShieldCdnUrl(raw.set?.id, raw.localId) ||
         '';
       if (!isPublicRemoteImageUrl(candidate)) {
-        return this.setCached(cacheKey, { status: 'missing' }, this.TTL_CARD_DETAIL_MS);
+        return this.setCached(
+          cacheKey,
+          { status: 'missing' },
+          this.TTL_CARD_DETAIL_MS,
+        );
       }
       return this.setCached(
         cacheKey,

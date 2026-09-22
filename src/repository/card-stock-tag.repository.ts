@@ -29,7 +29,9 @@ export class CardStockTagRepository {
   }
 
   async findCardIdsByTag(tag: string): Promise<string[]> {
-    const t = String(tag ?? '').trim().toLowerCase();
+    const t = String(tag ?? '')
+      .trim()
+      .toLowerCase();
     if (!t) return [];
     const docs = await this.model.find({ tags: t }).lean().exec();
     return docs.map((d) => d.card_id).filter(Boolean);

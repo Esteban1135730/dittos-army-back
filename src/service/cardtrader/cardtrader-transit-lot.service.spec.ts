@@ -57,7 +57,9 @@ describe('CardtraderTransitLotService', () => {
 
   it('crea lote sin legacy usando COP / FX del body', async () => {
     lotRepository.findByCt0PackageKey.mockResolvedValue(null);
-    lotRepository.create.mockResolvedValue({ _id: { toString: () => 'lot-1' } });
+    lotRepository.create.mockResolvedValue({
+      _id: { toString: () => 'lot-1' },
+    });
     lineRepository.createMany.mockResolvedValue([]);
 
     const result = await service.createLot({
@@ -98,7 +100,9 @@ describe('CardtraderTransitLotService', () => {
 
   it('crea lote complementos con costos de carta en 0', async () => {
     lotRepository.findByCt0PackageKey.mockResolvedValue(null);
-    lotRepository.create.mockResolvedValue({ _id: { toString: () => 'lot-comp' } });
+    lotRepository.create.mockResolvedValue({
+      _id: { toString: () => 'lot-comp' },
+    });
     lineRepository.createMany.mockResolvedValue([]);
     tcgDexService.getCard.mockResolvedValue({
       name: 'Poké Pad',
@@ -147,7 +151,9 @@ describe('CardtraderTransitLotService', () => {
 
   it('sin owner en create persiste pablo', async () => {
     lotRepository.findByCt0PackageKey.mockResolvedValue(null);
-    lotRepository.create.mockResolvedValue({ _id: { toString: () => 'lot-def' } });
+    lotRepository.create.mockResolvedValue({
+      _id: { toString: () => 'lot-def' },
+    });
     lineRepository.createMany.mockResolvedValue([]);
 
     await service.createLot({
@@ -170,7 +176,9 @@ describe('CardtraderTransitLotService', () => {
 
   it('owner esteban se persiste en create', async () => {
     lotRepository.findByCt0PackageKey.mockResolvedValue(null);
-    lotRepository.create.mockResolvedValue({ _id: { toString: () => 'lot-est' } });
+    lotRepository.create.mockResolvedValue({
+      _id: { toString: () => 'lot-est' },
+    });
     lineRepository.createMany.mockResolvedValue([]);
 
     await service.createLot({
@@ -405,7 +413,9 @@ describe('CardtraderTransitLotService', () => {
     });
     lineRepository.findById.mockResolvedValue(null);
 
-    const result = await service.markNotArrived({ ct0_item_ids: [95921482, 1] });
+    const result = await service.markNotArrived({
+      ct0_item_ids: [95921482, 1],
+    });
 
     expect(result.marked).toEqual([
       { ct0_item_id: 95921482, transit_line_id: 'line-1' },

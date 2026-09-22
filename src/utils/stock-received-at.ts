@@ -33,8 +33,7 @@ export function resolveStockReceivedAt(stock: {
     return { date: null, source: 'missing' };
   }
   try {
-    const oid =
-      raw instanceof Types.ObjectId ? raw : new Types.ObjectId(idStr);
+    const oid = raw instanceof Types.ObjectId ? raw : new Types.ObjectId(idStr);
     return { date: oid.getTimestamp(), source: 'objectid' };
   } catch {
     return { date: null, source: 'missing' };

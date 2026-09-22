@@ -17,7 +17,9 @@ function makeDoc(over: Record<string, unknown> = {}) {
         status: 'matched',
         blueprint_id: 99,
         expansion_id: 1577,
-        candidates: [{ blueprint_id: 99, expansion_id: 1577, name: 'Shroomish' }],
+        candidates: [
+          { blueprint_id: 99, expansion_id: 1577, name: 'Shroomish' },
+        ],
       },
       selected_blueprint: {
         blueprint_id: 99,
@@ -150,13 +152,17 @@ describe('CardTraderQuoteSessionService', () => {
     });
     expect(doc.lines[0].selected_blueprint?.blueprint_id).toBe(1);
     expect(doc.lines[0].line_status).toBe('picked');
-    expect((doc.lines[0].resolve as { candidates: unknown[] }).candidates).toHaveLength(2);
+    expect(
+      (doc.lines[0].resolve as { candidates: unknown[] }).candidates,
+    ).toHaveLength(2);
     expect(doc.markModified).toHaveBeenCalledWith('lines');
 
     await svc.patchLine(SESSION_ID, '0', { action: 'undo_pick' });
     expect(doc.lines[0].selected_blueprint).toBeNull();
     expect(doc.lines[0].line_status).toBe('pending');
-    expect((doc.lines[0].resolve as { candidates: unknown[] }).candidates).toHaveLength(2);
+    expect(
+      (doc.lines[0].resolve as { candidates: unknown[] }).candidates,
+    ).toHaveLength(2);
   });
 
   it('skip y active_index; 404 línea; 400 status desde cancelled', async () => {
@@ -167,9 +173,9 @@ describe('CardTraderQuoteSessionService', () => {
     expect(doc.lines[0].line_status).toBe('skipped');
     await svc.patchSession(SESSION_ID, { active_index: 0 });
     expect(doc.active_index).toBe(0);
-    await expect(svc.patchLine(SESSION_ID, '9', { action: 'skip' })).rejects.toBeInstanceOf(
-      NotFoundException,
-    );
+    await expect(
+      svc.patchLine(SESSION_ID, '9', { action: 'skip' }),
+    ).rejects.toBeInstanceOf(NotFoundException);
     doc.status = 'cancelled';
     await expect(
       svc.patchSession(SESSION_ID, { status: 'completed' }),
@@ -178,8 +184,12 @@ describe('CardTraderQuoteSessionService', () => {
 
   it('getById 400 id inválido y 404 missing', async () => {
     const { svc, repo } = setup();
-    await expect(svc.getById('nope')).rejects.toBeInstanceOf(BadRequestException);
+    await expect(svc.getById('nope')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
     repo.findById.mockResolvedValue(null);
-    await expect(svc.getById(SESSION_ID)).rejects.toBeInstanceOf(NotFoundException);
+    await expect(svc.getById(SESSION_ID)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 });

@@ -19,20 +19,14 @@ import {
   languageLabel,
   operationalRarezaLabel,
 } from 'src/utils/stock-scan-labels';
-import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
+import { TCGDexService } from 'src/pokemon';
 import {
   effectiveProductKind,
   isBulkCardId,
   isQuantityKind,
 } from 'src/constants/bulk-product';
-import {
-  type OwnerKey,
-  isOwnerKey,
-} from 'src/config/owners.config';
-import {
-  getCurrentOwner,
-  runWithOwnerAsync,
-} from 'src/owner/owner-context';
+import { type OwnerKey, isOwnerKey } from 'src/config/owners.config';
+import { getCurrentOwner, runWithOwnerAsync } from 'src/owner/owner-context';
 
 /** Estados con etiqueta QR imprimible (incluye reserva; excluye vendida/propiedad/etc.). */
 const QR_LABEL_STOCK_STATES = new Set([...SELLABLE_STOCK_STATES, 'reserva']);
@@ -232,8 +226,7 @@ export class StockScanService {
 
     if (activeOk && otherOk) {
       // Ambiguous ObjectId: prefer active (even if not sellable if other also not, or prefer sellable active)
-      const pick =
-        activeSellable || !otherSellable ? activeView : otherView;
+      const pick = activeSellable || !otherSellable ? activeView : otherView;
       const pickOwner = pick === activeView ? active : other;
       return {
         ...pick,
@@ -245,13 +238,13 @@ export class StockScanService {
     if (activeOk) {
       // Prefer active even if not sellable when other missing; if not sellable try other already null
       if (!activeSellable && otherOk && otherSellable) {
-        return { ...otherView!, owner: other };
+        return { ...otherView, owner: other };
       }
-      return { ...activeView!, owner: active };
+      return { ...activeView, owner: active };
     }
 
     if (otherOk) {
-      return { ...otherView!, owner: other };
+      return { ...otherView, owner: other };
     }
 
     throw new NotFoundException('Stock no encontrado');

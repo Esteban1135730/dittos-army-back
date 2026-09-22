@@ -23,7 +23,11 @@ function normalizeCardNameForMatch(name: string): string {
 }
 
 export function findLegacyItemByCardName<
-  T extends { card_name?: string | null; unit_cost_cop?: number; eur_unit_price?: number },
+  T extends {
+    card_name?: string | null;
+    unit_cost_cop?: number;
+    eur_unit_price?: number;
+  },
 >(cardName: string, items: T[]): T | undefined {
   const target = normalizeCardNameForMatch(cardName);
   if (!target) return undefined;
@@ -32,7 +36,8 @@ export function findLegacyItemByCardName<
     const candidate = normalizeCardNameForMatch(item.card_name ?? '');
     if (!candidate) continue;
     if (candidate === target) return item;
-    if (candidate.startsWith(target) || target.startsWith(candidate)) return item;
+    if (candidate.startsWith(target) || target.startsWith(candidate))
+      return item;
   }
   return undefined;
 }

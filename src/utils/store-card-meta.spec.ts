@@ -120,7 +120,11 @@ describe('resolveStoreExportCardMeta', () => {
     const meta = resolveStoreExportCardMeta({
       cardId: 's10a-045',
       sourceName: 'Snorunt',
-      localized: { name: 'ユキカブリ', image: '', expansion: 'ダークファンタズマ' },
+      localized: {
+        name: 'ユキカブリ',
+        image: '',
+        expansion: 'ダークファンタズマ',
+      },
       english: {
         name: 'Snorunt',
         image: 'https://assets.tcgdex.net/en/swsh/swsh10/45/low.png',

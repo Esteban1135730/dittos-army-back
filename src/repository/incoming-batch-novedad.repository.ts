@@ -11,7 +11,9 @@ export class IncomingBatchNovedadRepository {
   constructor(private readonly ownerModels: OwnerModelsService) {}
 
   private get model(): Model<IncomingBatchNovedadDocument> {
-    return this.ownerModels.getModel<IncomingBatchNovedadDocument>(IncomingBatchNovedad.name);
+    return this.ownerModels.getModel<IncomingBatchNovedadDocument>(
+      IncomingBatchNovedad.name,
+    );
   }
 
   async create(
@@ -28,10 +30,7 @@ export class IncomingBatchNovedadRepository {
   }
 
   async listUnresolved(): Promise<IncomingBatchNovedadDocument[]> {
-    return this.model
-      .find({ resolved: false })
-      .sort({ created_at: -1 })
-      .exec();
+    return this.model.find({ resolved: false }).sort({ created_at: -1 }).exec();
   }
 
   async listByBatchItem(

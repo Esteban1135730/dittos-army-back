@@ -5,9 +5,9 @@ import { ClientRepository } from 'src/repository/client.repository';
 import { StockRepository } from 'src/repository/stock.repository';
 import { PvpRepository } from 'src/repository/pvp.repository';
 import { ReservaRepository } from 'src/repository/reserva.repository';
-import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
+import { TCGDexService } from 'src/pokemon';
 import { CardStockTagRepository } from 'src/repository/card-stock-tag.repository';
-import { StockCardImagesSyncService } from 'src/service/tcgdex/stock-card-images-sync.service';
+import { StockCardImagesSyncService } from 'src/service/stock-card-images-sync.service';
 import { SaleBatchService } from 'src/service/sale-batch.service';
 
 const stockId = '507f1f77bcf86cd799439011';
@@ -38,7 +38,10 @@ describe('SaleController quantity products', () => {
         { provide: ClientRepository, useValue: {} },
         { provide: StockRepository, useValue: stockRepository },
         { provide: PvpRepository, useValue: {} },
-        { provide: ReservaRepository, useValue: { deleteByStockId: jest.fn() } },
+        {
+          provide: ReservaRepository,
+          useValue: { deleteByStockId: jest.fn() },
+        },
         { provide: TCGDexService, useValue: {} },
         {
           provide: CardStockTagRepository,

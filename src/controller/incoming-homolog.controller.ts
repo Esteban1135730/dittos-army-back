@@ -63,7 +63,8 @@ export class IncomingHomologController {
     @Param('sentUnitKey') sentUnitKey: string,
     @Body() body: VerifyHomologUnitDto,
   ) {
-    const transitLineId = body.transit_line_id?.trim() || body.batch_item_id?.trim();
+    const transitLineId =
+      body.transit_line_id?.trim() || body.batch_item_id?.trim();
     if (!transitLineId) {
       throw new BadRequestException('transit_line_id es requerido');
     }
@@ -151,7 +152,9 @@ export class IncomingHomologController {
   }
 
   @Post('novedad-stock/preview')
-  async previewMaterializeNovedadStock(@Body() body: MaterializeNovedadStockDto) {
+  async previewMaterializeNovedadStock(
+    @Body() body: MaterializeNovedadStockDto,
+  ) {
     return this.homologService.previewMaterializeNovedadStock(body);
   }
 

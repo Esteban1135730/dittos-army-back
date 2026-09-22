@@ -233,14 +233,12 @@ export class MetricsAnalyticsService {
   }): Promise<MetricsAnalyticsResponse> {
     try {
       const defaults = defaultMetricsPeriod();
-      const fromStr = (query.from?.trim() || defaults.from) as string;
-      const toStr = (query.to?.trim() || defaults.to) as string;
+      const fromStr = query.from?.trim() || defaults.from;
+      const toStr = query.to?.trim() || defaults.to;
       const fromDate = parseYmdToUtcStart(fromStr);
       const toDate = parseYmdToUtcEnd(toStr);
       if (fromDate.getTime() > toDate.getTime()) {
-        throw new BadRequestException(
-          '`from` no puede ser posterior a `to`.',
-        );
+        throw new BadRequestException('`from` no puede ser posterior a `to`.');
       }
 
       const [sales, allStock] = await Promise.all([
@@ -354,7 +352,7 @@ export class MetricsAnalyticsService {
       (sale as SaleDocument & { tags_snapshot?: string[] }).tags_snapshot,
     );
     let tags = tagSnap;
-    let tagsFromSnapshot = tagSnap.length > 0;
+    const tagsFromSnapshot = tagSnap.length > 0;
     if (!tagsFromSnapshot) {
       tags = normalizeTags(tagsByCard.get(String(sale.card_id ?? '').trim()));
     }
@@ -676,8 +674,7 @@ export class MetricsAnalyticsService {
 
     const fromMs = parseYmdToUtcStart(fromStr).getTime();
     const toMs = parseYmdToUtcEnd(toStr).getTime();
-    const lossItems: MetricsAnalyticsResponse['inventory_losses']['items'] =
-      [];
+    const lossItems: MetricsAnalyticsResponse['inventory_losses']['items'] = [];
     for (const stock of allStock) {
       const state = String(stock.card_state ?? '').toLowerCase();
       if (state !== 'perdida') continue;
@@ -759,14 +756,10 @@ export class MetricsAnalyticsService {
       const cid = String(stock.card_id ?? '').trim();
       if (!cid) continue;
       const qty =
-        stock.product_kind === 'quantity' &&
-        typeof stock.quantity === 'number'
+        stock.product_kind === 'quantity' && typeof stock.quantity === 'number'
           ? Math.max(0, stock.quantity)
           : 1;
-      remainingUnitsByCard.set(
-        cid,
-        (remainingUnitsByCard.get(cid) ?? 0) + qty,
-      );
+      remainingUnitsByCard.set(cid, (remainingUnitsByCard.get(cid) ?? 0) + qty);
     }
 
     type ReconsiderLine = {
@@ -798,8 +791,7 @@ export class MetricsAnalyticsService {
 
       const cost = stockLineCostCop(stock);
       const qty =
-        stock.product_kind === 'quantity' &&
-        typeof stock.quantity === 'number'
+        stock.product_kind === 'quantity' && typeof stock.quantity === 'number'
           ? Math.max(0, stock.quantity)
           : 1;
       if (stock.product_kind === 'quantity') {
@@ -834,9 +826,7 @@ export class MetricsAnalyticsService {
           : null;
       const medianTypeDays = typeMedianDays.get(cardId) ?? null;
       const typeMedianRounded =
-        medianTypeDays == null
-          ? null
-          : Math.round(medianTypeDays * 100) / 100;
+        medianTypeDays == null ? null : Math.round(medianTypeDays * 100) / 100;
       const cardTags = normalizeTags(tagsByCard.get(cardId));
       const isVintage = cardTags.includes('vintage');
 
@@ -867,8 +857,7 @@ export class MetricsAnalyticsService {
       const pvpCop = resolvedPvp
         ? pvpToCop(resolvedPvp.pvp, resolvedPvp.pvp_currency ?? 'COP')
         : null;
-      const potentialMargin =
-        pvpCop != null ? roundCop(pvpCop - cost) : null;
+      const potentialMargin = pvpCop != null ? roundCop(pvpCop - cost) : null;
       const potentialMarginPct =
         pvpCop != null && pvpCop > 0 && potentialMargin != null
           ? Math.round((potentialMargin / pvpCop) * 10000) / 100
@@ -879,11 +868,7 @@ export class MetricsAnalyticsService {
       if (typeRotatesWell) reasonCodes.push('alta_rotacion_tipo');
 
       let unitSlowerThanType = false;
-      if (
-        daysInStock != null &&
-        salesInPeriod > 0 &&
-        medianTypeDays != null
-      ) {
+      if (daysInStock != null && salesInPeriod > 0 && medianTypeDays != null) {
         const outlierThreshold = Math.max(
           medianTypeDays * 2,
           medianTypeDays + TYPE_OUTLIER_EXTRA_DAYS,
@@ -937,10 +922,7 @@ export class MetricsAnalyticsService {
 
       if (cost >= RECONSIDER_HIGH_COST_COP) {
         reasonCodes.push('capital_alto');
-      } else if (
-        cost >= RECONSIDER_MIN_COST_COP &&
-        !typeRotatesWell
-      ) {
+      } else if (cost >= RECONSIDER_MIN_COST_COP && !typeRotatesWell) {
         reasonCodes.push('capital_medio');
       }
 
@@ -1071,9 +1053,7 @@ export class MetricsAnalyticsService {
 
       const img = String(stock.image_url ?? '').trim();
       reconsiderLines.push({
-        stock_id: stockDocId(
-          stock as Stock & { _id?: { toString(): string } },
-        ),
+        stock_id: stockDocId(stock as Stock & { _id?: { toString(): string } }),
         card_id: stock.card_id,
         card_name: stock.card_name?.trim() ? stock.card_name : null,
         image_url: img || null,

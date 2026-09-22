@@ -11,6 +11,7 @@ import {
   remapSetIdForTrainerGallery,
   remapSetIdForGalarianGallery,
   remapSetIdForGallerySubset,
+  remap30thCelebrationCard,
   trainerGallerySetIdAliases,
   galarianGallerySetIdAliases,
   resolveSetFromLocaleAliases,
@@ -90,7 +91,11 @@ describe('tcgdex-set-resolve', () => {
       expect.arrayContaining(['swsh11.5tg', 'swsh11tg', 'swsh11']),
     );
     expect(buildTcgdexCardIdLookupCandidates('swsh11-TG23', 'it')).toEqual(
-      expect.arrayContaining(['swsh11.5tg-TG23', 'swsh11tg-TG23', 'swsh11-TG23']),
+      expect.arrayContaining([
+        'swsh11.5tg-TG23',
+        'swsh11tg-TG23',
+        'swsh11-TG23',
+      ]),
     );
   });
 
@@ -204,7 +209,7 @@ describe('set_locale_map', () => {
       language: 'jp',
       localeMap: {
         locale_set_to_en: { ja: { SV8: 'SV8' } },
-        expansion_to_en_set: { '超電突圍': 'SV8' },
+        expansion_to_en_set: { 超電突圍: 'SV8' },
       },
     });
     expect(hit?.tcgdex_set_id).toBe('SV8');
@@ -284,7 +289,7 @@ describe('set_locale_map', () => {
     ).toBeNull();
   });
 
-  it('mapea Team Magma\'s Groudon Celebrations vía blueprint → cel25cc-CC011', () => {
+  it("mapea Team Magma's Groudon Celebrations vía blueprint → cel25cc-CC011", () => {
     expect(
       resolveKnownCardTraderPrint({
         expansionName: 'Celebrations',
@@ -304,5 +309,35 @@ describe('set_locale_map', () => {
         collectorNumber: '009',
       }),
     ).toBeNull();
+  });
+
+  it('rellena localId de 30th Celebration a 3 dígitos', () => {
+    expect(usesPaddedLocalIdsForSet('30th')).toBe(true);
+    expect(usesPaddedLocalIdsForSet('30th-c')).toBe(true);
+    expect(formatLocalIdForLocale('4', 'en', '30th')).toBe('004');
+    expect(formatLocalIdForLocale('R', 'en', '30th')).toBe('R');
+  });
+
+  it('manda la Classic Collection de 30th Celebration al set 30th-c', () => {
+    expect(remap30thCelebrationCard('30th', 'BS 4')).toEqual({
+      setId: '30th-c',
+      localId: '001',
+    });
+    expect(remap30thCelebrationCard('30th', 'TEU 33')).toEqual({
+      setId: '30th-c',
+      localId: '008',
+    });
+    expect(remap30thCelebrationCard('30th', 'TM 99')).toEqual({
+      setId: '30th-c',
+      localId: '019',
+    });
+    expect(remap30thCelebrationCard('30th', '001')).toEqual({
+      setId: '30th',
+      localId: '001',
+    });
+    expect(remap30thCelebrationCard('30th', 'R')).toEqual({
+      setId: '30th',
+      localId: 'R',
+    });
   });
 });

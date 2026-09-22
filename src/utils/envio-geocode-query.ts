@@ -6,7 +6,11 @@ export function buildEnvioGeocodeQuery(fields: {
 }): string {
   const seen = new Set<string>();
   const parts: string[] = [];
-  for (const raw of [fields.direccion_o_punto, fields.notas_entrega, fields.ciudad]) {
+  for (const raw of [
+    fields.direccion_o_punto,
+    fields.notas_entrega,
+    fields.ciudad,
+  ]) {
     const part = raw?.trim().replace(/\s+/g, ' ') ?? '';
     if (part.length < 2) continue;
     const key = part.toLowerCase();

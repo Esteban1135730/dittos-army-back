@@ -11,7 +11,9 @@ export class CardtraderReceiptLineRepository {
   constructor(private readonly ownerModels: OwnerModelsService) {}
 
   private get lineModel(): Model<CardtraderReceiptLineDocument> {
-    return this.ownerModels.getModel<CardtraderReceiptLineDocument>(CardtraderReceiptLine.name);
+    return this.ownerModels.getModel<CardtraderReceiptLineDocument>(
+      CardtraderReceiptLine.name,
+    );
   }
 
   async createMany(

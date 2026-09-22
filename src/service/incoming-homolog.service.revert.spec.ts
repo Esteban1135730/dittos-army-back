@@ -62,10 +62,16 @@ describe('IncomingHomologService.revertConversion (CT multi-owner)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     transitLineRepo.incrementRemainingQuantity.mockResolvedValue(undefined);
-    transitLineRepo.findByRemainingQuantityGreaterThanZero.mockResolvedValue([]);
+    transitLineRepo.findByRemainingQuantityGreaterThanZero.mockResolvedValue(
+      [],
+    );
     transitLotRepo.findOpenLots.mockResolvedValue([]);
     sessionRepo.revertConverted.mockResolvedValue(
-      convertedSession({ status: 'in_progress', created_stock_ids: [], created_stocks: [] }),
+      convertedSession({
+        status: 'in_progress',
+        created_stock_ids: [],
+        created_stocks: [],
+      }),
     );
     stockRepo.deleteById.mockResolvedValue(true);
     reservaRepo.deleteByStockId.mockResolvedValue(undefined);

@@ -19,7 +19,9 @@ export function isLatLngInBogota(lat: number, lng: number): boolean {
   );
 }
 
-export function textMentionsBogota(...values: Array<string | null | undefined>): boolean {
+export function textMentionsBogota(
+  ...values: Array<string | null | undefined>
+): boolean {
   return values.some((v) => isCiudadBogota(v));
 }
 

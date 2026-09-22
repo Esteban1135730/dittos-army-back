@@ -21,10 +21,7 @@ import { ReservaRepository } from 'src/repository/reserva.repository';
 import { SaleRepository } from 'src/repository/sale.repository';
 import { StockRepository } from 'src/repository/stock.repository';
 import { CardStockTagRepository } from 'src/repository/card-stock-tag.repository';
-import {
-  PedidoDocument,
-  PedidoLineSnapshot,
-} from 'src/schema/pedido.schema';
+import { PedidoDocument, PedidoLineSnapshot } from 'src/schema/pedido.schema';
 import { Reserva } from 'src/schema/reserva.schema';
 import { Stock } from 'src/schema/stock.schema';
 import { precioToCop } from 'src/utils/precio-to-cop';
@@ -38,10 +35,7 @@ import {
   isTiendaEntregaId,
 } from 'src/utils/tiendas-entrega';
 import type { OwnerKey } from 'src/config/owners.config';
-import {
-  stockOwnerFromReserva,
-  withStockOwner,
-} from 'src/owner/stock-owner';
+import { stockOwnerFromReserva, withStockOwner } from 'src/owner/stock-owner';
 
 const CALENDARIO_MAX_DAYS = 62;
 const CALENDARIO_PENDIENTE = new Set(['reservado', 'pagado']);
@@ -50,7 +44,11 @@ const ESTADO_VENDIDA = 'vendida';
 const ESTADO_DISPONIBLE = 'disponible';
 
 function reservaQty(quantity: number | undefined): number {
-  if (typeof quantity === 'number' && Number.isInteger(quantity) && quantity >= 1) {
+  if (
+    typeof quantity === 'number' &&
+    Number.isInteger(quantity) &&
+    quantity >= 1
+  ) {
     return quantity;
   }
   return 1;
@@ -200,10 +198,7 @@ export class PedidoService {
     }
 
     const entrega = this.validateEntrega(dto);
-    const fecha = this.parseFechaDia(
-      dto.fecha_tentativa_entrega,
-      true,
-    ) as Date;
+    const fecha = this.parseFechaDia(dto.fecha_tentativa_entrega, true) as Date;
 
     const created = await this.pedidoRepository.create({
       client_id: clientId,
@@ -221,8 +216,7 @@ export class PedidoService {
     if (!client) {
       throw new NotFoundException('Cliente no encontrado');
     }
-    const reservado =
-      await this.pedidoRepository.findReservadoByClientId(id);
+    const reservado = await this.pedidoRepository.findReservadoByClientId(id);
     if (reservado) {
       await this.attachOrphansToPedido(id, String(reservado._id));
     }
@@ -233,10 +227,7 @@ export class PedidoService {
   async getById(id: string): Promise<PedidoResponseDto> {
     const pedido = await this.requirePedido(id);
     if (pedido.status === 'reservado') {
-      await this.attachOrphansToPedido(
-        pedido.client_id,
-        String(pedido._id),
-      );
+      await this.attachOrphansToPedido(pedido.client_id, String(pedido._id));
     }
     return this.toResponse(pedido);
   }
@@ -251,8 +242,7 @@ export class PedidoService {
 
     const entregaSource: PedidoCreateDto = {
       client_id: pedido.client_id,
-      entrega_en_tienda:
-        dto.entrega_en_tienda ?? pedido.entrega_en_tienda,
+      entrega_en_tienda: dto.entrega_en_tienda ?? pedido.entrega_en_tienda,
       store_id: dto.store_id ?? pedido.store_id,
       ciudad: dto.ciudad ?? pedido.ciudad,
       direccion_o_punto: dto.direccion_o_punto ?? pedido.direccion_o_punto,
@@ -302,7 +292,10 @@ export class PedidoService {
         this.stockRepository.findById(reserva.stock_id),
       );
       const reservaId = String((reserva as { _id?: unknown })._id ?? '');
-      if (stock && isQuantityKind((stock as { product_kind?: string }).product_kind)) {
+      if (
+        stock &&
+        isQuantityKind((stock as { product_kind?: string }).product_kind)
+      ) {
         const held = reservaQty(reserva.quantity);
         await withStockOwner(stockOwner, () =>
           this.stockRepository.incrementQuantityAtomic(reserva.stock_id, held),
@@ -350,9 +343,7 @@ export class PedidoService {
         this.stockRepository.findById(reserva.stock_id),
       );
       if (!stock) {
-        throw new NotFoundException(
-          `Stock no encontrado: ${reserva.stock_id}`,
-        );
+        throw new NotFoundException(`Stock no encontrado: ${reserva.stock_id}`);
       }
       const amountCop = precioToCop(reserva.precio, reserva.currency ?? 'COP');
       const tagsMap = await withStockOwner(stockOwner, () =>
@@ -427,9 +418,7 @@ export class PedidoService {
   }
 
   /** Solo lectura: no adjunta huérfanas. */
-  async findOpenByClientId(
-    clientId: string,
-  ): Promise<PedidoDocument | null> {
+  async findOpenByClientId(clientId: string): Promise<PedidoDocument | null> {
     return this.pedidoRepository.findOpenByClientId(clientId);
   }
 
@@ -441,14 +430,10 @@ export class PedidoService {
     if (pedidoId) {
       const pedido = await this.requirePedido(pedidoId);
       if (pedido.client_id !== cid) {
-        throw new BadRequestException(
-          'El pedido no pertenece a este cliente',
-        );
+        throw new BadRequestException('El pedido no pertenece a este cliente');
       }
       if (pedido.status !== 'reservado') {
-        throw new ConflictException(
-          'Crea o reabre un pedido reservado',
-        );
+        throw new ConflictException('Crea o reabre un pedido reservado');
       }
       await this.attachOrphansToPedido(cid, String(pedido._id));
       return pedido;
@@ -499,7 +484,11 @@ export class PedidoService {
       return {
         success: true,
         vendidas: paid.lines.reduce(
-          (n, l) => n + (typeof l.quantity === 'number' && l.quantity >= 1 ? l.quantity : 1),
+          (n, l) =>
+            n +
+            (typeof l.quantity === 'number' && l.quantity >= 1
+              ? l.quantity
+              : 1),
           0,
         ),
       };
@@ -639,9 +628,7 @@ export class PedidoService {
     };
   }
 
-  private mapSnapshotLines(
-    snapshot: PedidoLineSnapshot[],
-  ): PedidoLineDto[] {
+  private mapSnapshotLines(snapshot: PedidoLineSnapshot[]): PedidoLineDto[] {
     return snapshot.map((l) => ({
       stock_id: l.stock_id,
       card_id: l.card_id,
@@ -689,7 +676,11 @@ export class PedidoService {
     return linked.map((sale) => {
       const stock =
         stockById.get(sale.stock_id) ??
-        ({ card_id: sale.card_id ?? '', card_name: '', image_url: '' } as Stock);
+        ({
+          card_id: sale.card_id ?? '',
+          card_name: '',
+          image_url: '',
+        } as Stock);
       return {
         stock_id: sale.stock_id,
         card_id: sale.card_id ?? stock.card_id ?? '',

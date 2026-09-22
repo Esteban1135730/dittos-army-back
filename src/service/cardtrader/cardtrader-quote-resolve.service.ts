@@ -1,6 +1,6 @@
 import { Injectable, Optional } from '@nestjs/common';
 import { CardTraderService } from './cardtrader.service';
-import { TCGDexService } from '../tcgdex/tcgdex.service';
+import { TCGDexService } from '../../pokemon';
 import {
   matchBlueprintsForQuoteLine,
   normalizeBlueprintsExport,
@@ -15,7 +15,10 @@ import {
   type QuoteExpansionHit,
   type QuoteExpansionIndex,
 } from './cardtrader-quote-homolog';
-import { adjustSetIdForCatalog, normalizeMangledAsiaSetId } from '../../utils/tcgdex-set-resolve';
+import {
+  adjustSetIdForCatalog,
+  normalizeMangledAsiaSetId,
+} from '../../pokemon';
 import {
   mapQuoteConditionLabel,
   mapQuoteLanguageLabel,
@@ -245,7 +248,11 @@ export class CardTraderQuoteResolveService {
     for (const id of variants) {
       const trimmed = String(id ?? '').trim();
       if (!trimmed) continue;
-      for (const hit of listExpansionsForTcgdexSet(this.index, trimmed, locale)) {
+      for (const hit of listExpansionsForTcgdexSet(
+        this.index,
+        trimmed,
+        locale,
+      )) {
         if (seen.has(hit.expansionId)) continue;
         seen.add(hit.expansionId);
         out.push(hit);

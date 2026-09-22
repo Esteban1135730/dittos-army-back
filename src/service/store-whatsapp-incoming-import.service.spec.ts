@@ -52,7 +52,9 @@ describe('StoreWhatsAppIncomingImportService', () => {
       ],
     };
     const incomingReservationService = {
-      listVariantCupos: jest.fn(async (cardId: string) => variants[cardId] ?? []),
+      listVariantCupos: jest.fn(
+        async (cardId: string) => variants[cardId] ?? [],
+      ),
       addQuantityByCardVariant: jest.fn().mockResolvedValue({}),
     };
     const pvpRepository = {
@@ -87,17 +89,12 @@ describe('StoreWhatsAppIncomingImportService', () => {
     const result = await svc.import('c1', sampleMessage, [
       { index: 0, pvp_cop: 4500 },
     ]);
-    expect(incomingReservationService.addQuantityByCardVariant).toHaveBeenCalledTimes(
-      2,
-    );
-    expect(incomingReservationService.addQuantityByCardVariant).toHaveBeenCalledWith(
-      'c1',
-      'me05-066',
-      'en',
-      null,
-      2,
-      4500,
-    );
+    expect(
+      incomingReservationService.addQuantityByCardVariant,
+    ).toHaveBeenCalledTimes(2);
+    expect(
+      incomingReservationService.addQuantityByCardVariant,
+    ).toHaveBeenCalledWith('c1', 'me05-066', 'en', null, 2, 4500);
     expect(pvpRepository.update).toHaveBeenCalledTimes(1);
     expect(pvpRepository.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -124,14 +121,9 @@ describe('StoreWhatsAppIncomingImportService', () => {
     expect(plan.lines[0].issues).not.toContain('no_pvp');
 
     await svc.import('c1', message, []);
-    expect(incomingReservationService.addQuantityByCardVariant).toHaveBeenCalledWith(
-      'c1',
-      'me05-066',
-      'en',
-      null,
-      2,
-      4000,
-    );
+    expect(
+      incomingReservationService.addQuantityByCardVariant,
+    ).toHaveBeenCalledWith('c1', 'me05-066', 'en', null, 2, 4000);
   });
 
   it('no reserva si no hay cupo en camino', async () => {
@@ -139,10 +131,12 @@ describe('StoreWhatsAppIncomingImportService', () => {
       variants: { 'me05-066': [], 'me05-067': [] },
     });
     const result = await svc.import('c1', sampleMessage, []);
-    expect(incomingReservationService.addQuantityByCardVariant).not.toHaveBeenCalled();
+    expect(
+      incomingReservationService.addQuantityByCardVariant,
+    ).not.toHaveBeenCalled();
     expect(result.created).toHaveLength(0);
-    expect(result.lines.every((l) => l.issues.includes('insufficient_incoming'))).toBe(
-      true,
-    );
+    expect(
+      result.lines.every((l) => l.issues.includes('insufficient_incoming')),
+    ).toBe(true);
   });
 });

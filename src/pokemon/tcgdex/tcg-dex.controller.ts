@@ -5,13 +5,13 @@ import {
   Param,
   Query,
 } from '@nestjs/common';
-import { CardDto } from 'src/service/tcgdex/dto/card.dto';
-import { CardResumeDto } from 'src/service/tcgdex/dto/card.resume.dto';
-import { SetResumeDto } from 'src/service/tcgdex/dto/set.resume.dto';
+import { CardDto } from './dto/card.dto';
+import { CardResumeDto } from './dto/card.resume.dto';
+import { SetResumeDto } from './dto/set.resume.dto';
 import {
   TCGDEX_SUPPORTED_LOCALES,
   TCGDexService,
-} from 'src/service/tcgdex/tcgdex.service';
+} from './tcgdex.service';
 
 @Controller('tcg-dex')
 export class TcgDexController {

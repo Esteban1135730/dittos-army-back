@@ -1,7 +1,5 @@
 /** Descarta el arte roto del SDK TCGdex cuando la carta no tiene `image` (`undefined/low.png`). */
-export function sanitizeCardImageUrl(
-  url: string | null | undefined,
-): string {
+export function sanitizeCardImageUrl(url: string | null | undefined): string {
   const trimmed = String(url ?? '').trim();
   if (!trimmed) return '';
   if (/^undefined(\/|$)/i.test(trimmed)) return '';

@@ -27,9 +27,7 @@ import { OpenedSealedStockService } from 'src/service/opened-sealed-stock.servic
 import { StockScanService } from 'src/service/stock-scan.service';
 import { StockReviewService } from 'src/service/stock-review.service';
 import { BulkProductService } from 'src/service/bulk-product.service';
-import {
-  effectiveProductKind,
-} from 'src/constants/bulk-product';
+import { effectiveProductKind } from 'src/constants/bulk-product';
 import {
   effectiveOperationalRarezaFromStock,
   groupPvpsByCardId,
@@ -45,10 +43,7 @@ import {
   normalizeInventoryCardState,
   SELLABLE_STOCK_STATES,
 } from 'src/utils/stock-sellable';
-import {
-  FeatureAclGuard,
-  RequireFeature,
-} from 'src/owner/feature-acl.guard';
+import { FeatureAclGuard, RequireFeature } from 'src/owner/feature-acl.guard';
 
 const ALLOWED_STOCK_LANGUAGES = new Set([
   'es',
@@ -264,8 +259,11 @@ export class StockController {
   }
 
   @Get()
-  async listStock(): Promise<Stock[] | null> {
-    const stockItems: any[] = await this.stockRepository.findAll();
+  async listStock(@Query('q') q?: string): Promise<Stock[] | null> {
+    const query = q?.trim() ?? '';
+    const stockItems: any[] = query
+      ? await this.stockRepository.searchByQuery(query)
+      : await this.stockRepository.findAll();
     const cardIds = [...new Set(stockItems.map((s) => s.card_id))];
     const tagByCardId =
       await this.cardStockTagRepository.findMapByCardIds(cardIds);
@@ -352,12 +350,37 @@ export class StockController {
       const tagMap = await this.cardStockTagRepository.findMapByCardIds([
         findCard.card_id,
       ]);
+      let pvp: number | undefined;
+      let pvp_currency: string | undefined;
+      try {
+        const pvps = await this.pvpRepository.findByCardIds([findCard.card_id]);
+        const list = groupPvpsByCardId(pvps).get(findCard.card_id) ?? [];
+        const pvpData = resolvePvpForLine(
+          list,
+          effectiveOperationalRarezaFromStock(findCard),
+        );
+        pvp = pvpData?.pvp;
+        pvp_currency = pvpData?.pvp_currency;
+      } catch {
+        // PVP opcional
+      }
+      const product_kind = effectiveProductKind(findCard.product_kind);
+      const quantity =
+        product_kind === 'quantity'
+          ? typeof findCard.quantity === 'number'
+            ? findCard.quantity
+            : 0
+          : null;
       return {
         ...findCard._doc,
         card_name: findCard.card_name ?? '',
         tags: this.resolveTagsForLine(findCard.card_id, tagMap, findCard.tags),
         card_cost:
           findCard.shipment / findCard.cards_in_shipmet + findCard.unity_cost,
+        pvp,
+        pvp_currency,
+        product_kind,
+        quantity,
       };
     }
     return null;

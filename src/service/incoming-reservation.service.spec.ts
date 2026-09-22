@@ -111,12 +111,14 @@ describe('IncomingReservationService.materializeForNewStockLines', () => {
   });
 
   it('deja la reserva sin pedido_id si el cliente no tiene pedido reservado', async () => {
-    const { svc, reservaRepository } = makeMaterializeService({ pedidoId: null });
+    const { svc, reservaRepository } = makeMaterializeService({
+      pedidoId: null,
+    });
     await svc.materializeForNewStockLines(
       [{ _id: 's1', card_id: 'sv1-1' }] as any,
       ['line1'],
     );
-    const arg = (reservaRepository.create as jest.Mock).mock.calls[0][0];
+    const arg = reservaRepository.create.mock.calls[0][0];
     expect(arg.client_id).toBe('c1');
     expect(arg.pedido_id).toBeUndefined();
   });

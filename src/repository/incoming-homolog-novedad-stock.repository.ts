@@ -12,7 +12,9 @@ export class IncomingHomologNovedadStockRepository {
   constructor(private readonly ownerModels: OwnerModelsService) {}
 
   private get model(): Model<IncomingHomologNovedadStockDocument> {
-    return this.ownerModels.getModel<IncomingHomologNovedadStockDocument>(IncomingHomologNovedadStock.name);
+    return this.ownerModels.getModel<IncomingHomologNovedadStockDocument>(
+      IncomingHomologNovedadStock.name,
+    );
   }
 
   async upsertBySentUnitKey(
@@ -57,9 +59,7 @@ export class IncomingHomologNovedadStockRepository {
   async findPendingBySession(
     sessionId: string,
   ): Promise<IncomingHomologNovedadStockDocument[]> {
-    return this.model
-      .find({ session_id: sessionId, status: 'pending' })
-      .exec();
+    return this.model.find({ session_id: sessionId, status: 'pending' }).exec();
   }
 
   async findInStockBySession(
@@ -97,9 +97,7 @@ export class IncomingHomologNovedadStockRepository {
     prefix: string,
   ): Promise<IncomingHomologNovedadStockDocument[]> {
     const escaped = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return this.model
-      .find({ card_id: { $regex: `^${escaped}` } })
-      .exec();
+    return this.model.find({ card_id: { $regex: `^${escaped}` } }).exec();
   }
 
   async updateCardMeta(
@@ -147,7 +145,9 @@ export class IncomingHomologNovedadStockRepository {
       .exec();
   }
 
-  async resolve(id: string): Promise<IncomingHomologNovedadStockDocument | null> {
+  async resolve(
+    id: string,
+  ): Promise<IncomingHomologNovedadStockDocument | null> {
     const now = new Date();
     return this.model
       .findByIdAndUpdate(

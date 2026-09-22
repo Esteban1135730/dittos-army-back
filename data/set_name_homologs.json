@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "generated_at": "2026-06-10T04:34:05.670Z",
+  "generated_at": "2026-09-22T21:56:13.721Z",
   "sources": [
     "cards-database/data-asia",
     "cards-database/scripts/utils-data/jp_set_translations.ts",
@@ -1268,6 +1268,94 @@
         }
       }
     },
+    "ja:M5": {
+      "tcgdex_set_id": "M5",
+      "locale": "ja",
+      "names": {
+        "en_cardtrader": "Abyss Eye",
+        "database": {
+          "id": "M5",
+          "ja": "2026-05-22"
+        }
+      }
+    },
+    "ko:M5": {
+      "tcgdex_set_id": "M5",
+      "locale": "ko",
+      "names": {
+        "en_cardtrader": "Abyss Eye",
+        "database": {
+          "id": "M5",
+          "ja": "2026-05-22"
+        }
+      }
+    },
+    "ja:M6a": {
+      "tcgdex_set_id": "M6a",
+      "locale": "ja",
+      "names": {
+        "en_cardtrader": "30th Celebration JP",
+        "database": {
+          "id": "M6a",
+          "ja": "2026-09-16"
+        }
+      }
+    },
+    "ko:M6a": {
+      "tcgdex_set_id": "M6a",
+      "locale": "ko",
+      "names": {
+        "en_cardtrader": "30th Celebration JP",
+        "database": {
+          "id": "M6a",
+          "ja": "2026-09-16"
+        }
+      }
+    },
+    "ja:MC": {
+      "tcgdex_set_id": "MC",
+      "locale": "ja",
+      "names": {
+        "en_cardtrader": "Starter Decks 100 Battle Collection",
+        "database": {
+          "id": "MC",
+          "ja": "2025-12-19"
+        }
+      }
+    },
+    "ko:MC": {
+      "tcgdex_set_id": "MC",
+      "locale": "ko",
+      "names": {
+        "en_cardtrader": "Starter Decks 100 Battle Collection",
+        "database": {
+          "id": "MC",
+          "ja": "2025-12-19"
+        }
+      }
+    },
+    "ja:MF": {
+      "tcgdex_set_id": "MF",
+      "locale": "ja",
+      "names": {
+        "en_cardtrader": "30th Celebration Premium Deck Set",
+        "database": {
+          "id": "MF",
+          "ja": "2026-09-16"
+        }
+      }
+    },
+    "ko:MF": {
+      "tcgdex_set_id": "MF",
+      "locale": "ko",
+      "names": {
+        "en_cardtrader": "30th Celebration Premium Deck Set",
+        "database": {
+          "id": "MF",
+          "ja": "2026-09-16"
+        }
+      }
+    },
     "ja:neo1": {
       "tcgdex_set_id": "neo1",
       "locale": "ja",
@@ -2333,11 +2421,11 @@
         }
       }
     },
-    "zh-tw:sv1a": {
-      "tcgdex_set_id": "sv1a",
+    "zh-tw:CS3D": {
+      "tcgdex_set_id": "CS3D",
       "locale": "zh-tw",
       "names": {
-        "en_cardtrader": "Triplet Beat",
+        "en_cardtrader": "Primordial Arts",
         "database": {
           "id": "Hantaman Triplet",
           "ja": "トリプレットビート",
@@ -2348,11 +2436,11 @@
         }
       }
     },
-    "ja:sv1a": {
-      "tcgdex_set_id": "sv1a",
+    "ja:CS3D": {
+      "tcgdex_set_id": "CS3D",
       "locale": "ja",
       "names": {
-        "en_cardtrader": "Triplet Beat",
+        "en_cardtrader": "Primordial Arts",
         "database": {
           "id": "Hantaman Triplet",
           "ja": "トリプレットビート",
@@ -2363,11 +2451,11 @@
         }
       }
     },
-    "ko:sv1a": {
-      "tcgdex_set_id": "sv1a",
+    "ko:CS3D": {
+      "tcgdex_set_id": "CS3D",
       "locale": "ko",
       "names": {
-        "en_cardtrader": "Triplet Beat",
+        "en_cardtrader": "Primordial Arts",
         "database": {
           "id": "Hantaman Triplet",
           "ja": "トリプレットビート",
@@ -2603,6 +2691,51 @@
           "id": "CS4bC",
           "ja": "CS4b: Nine Colors Gathering - Origin",
           "en": "Nine Colors Gathering - Origin"
+        }
+      }
+    },
+    "zh-tw:CS4Da": {
+      "tcgdex_set_id": "CS4Da",
+      "locale": "zh-tw",
+      "names": {
+        "en_cardtrader": "Nine Colors Gathering",
+        "database": {
+          "id": "Hantaman Triplet",
+          "ja": "トリプレットビート",
+          "ko": "트리플렛비트",
+          "th": "ทริปเปิลบีต",
+          "zh-tw": "三連音爆",
+          "en": "Triplet Beat"
+        }
+      }
+    },
+    "ja:CS4Da": {
+      "tcgdex_set_id": "CS4Da",
+      "locale": "ja",
+      "names": {
+        "en_cardtrader": "Nine Colors Gathering",
+        "database": {
+          "id": "Hantaman Triplet",
+          "ja": "トリプレットビート",
+          "ko": "트리플렛비트",
+          "th": "ทริปเปิลบีต",
+          "zh-tw": "三連音爆",
+          "en": "Triplet Beat"
+        }
+      }
+    },
+    "ko:CS4Da": {
+      "tcgdex_set_id": "CS4Da",
+      "locale": "ko",
+      "names": {
+        "en_cardtrader": "Nine Colors Gathering",
+        "database": {
+          "id": "Hantaman Triplet",
+          "ja": "トリプレットビート",
+          "ko": "트리플렛비트",
+          "th": "ทริปเปิลบีต",
+          "zh-tw": "三連音爆",
+          "en": "Triplet Beat"
         }
       }
     },
@@ -3035,6 +3168,51 @@
           "id": "CS6bC",
           "ja": "CS6b: Azure Shadow - Pursuit",
           "en": "Azure Shadow - Pursuit"
+        }
+      }
+    },
+    "zh-tw:CSA": {
+      "tcgdex_set_id": "CSA",
+      "locale": "zh-tw",
+      "names": {
+        "en_cardtrader": "Triplet Beat",
+        "database": {
+          "id": "Hantaman Triplet",
+          "ja": "トリプレットビート",
+          "ko": "트리플렛비트",
+          "th": "ทริปเปิลบีต",
+          "zh-tw": "三連音爆",
+          "en": "Triplet Beat"
+        }
+      }
+    },
+    "ja:CSA": {
+      "tcgdex_set_id": "CSA",
+      "locale": "ja",
+      "names": {
+        "en_cardtrader": "Triplet Beat",
+        "database": {
+          "id": "Hantaman Triplet",
+          "ja": "トリプレットビート",
+          "ko": "트리플렛비트",
+          "th": "ทริปเปิลบีต",
+          "zh-tw": "三連音爆",
+          "en": "Triplet Beat"
+        }
+      }
+    },
+    "ko:CSA": {
+      "tcgdex_set_id": "CSA",
+      "locale": "ko",
+      "names": {
+        "en_cardtrader": "Triplet Beat",
+        "database": {
+          "id": "Hantaman Triplet",
+          "ja": "トリプレットビート",
+          "ko": "트리플렛비트",
+          "th": "ทริปเปิลบีต",
+          "zh-tw": "三連音爆",
+          "en": "Triplet Beat"
         }
       }
     },
@@ -5627,26 +5805,26 @@
         }
       }
     },
-    "ja:sn10a": {
-      "tcgdex_set_id": "sn10a",
+    "ja:SM10a": {
+      "tcgdex_set_id": "SM10a",
       "locale": "ja",
       "names": {
         "en_cardtrader": "GG End",
         "database": {
-          "id": "sn10a",
+          "id": "SM10a",
           "ja": "ジージーエンド",
           "ko": "GG엔드",
           "en": "GG End"
         }
       }
     },
-    "ko:sn10a": {
-      "tcgdex_set_id": "sn10a",
+    "ko:SM10a": {
+      "tcgdex_set_id": "SM10a",
       "locale": "ko",
       "names": {
         "en_cardtrader": "GG End",
         "database": {
-          "id": "sn10a",
+          "id": "SM10a",
           "ja": "ジージーエンド",
           "ko": "GG엔드",
           "en": "GG End"
@@ -5679,26 +5857,26 @@
         }
       }
     },
-    "ja:sn11": {
-      "tcgdex_set_id": "sn11",
+    "ja:SM11": {
+      "tcgdex_set_id": "SM11",
       "locale": "ja",
       "names": {
         "en_cardtrader": "Miracle Twin",
         "database": {
-          "id": "sn11",
+          "id": "SM11",
           "ja": "ミラクルツイン",
           "ko": "미라클트윈",
           "en": "Miracle Twin"
         }
       }
     },
-    "ko:sn11": {
-      "tcgdex_set_id": "sn11",
+    "ko:SM11": {
+      "tcgdex_set_id": "SM11",
       "locale": "ko",
       "names": {
         "en_cardtrader": "Miracle Twin",
         "database": {
-          "id": "sn11",
+          "id": "SM11",
           "ja": "ミラクルツイン",
           "ko": "미라클트윈",
           "en": "Miracle Twin"
@@ -5835,6 +6013,28 @@
         }
       }
     },
+    "ja:SM1p": {
+      "tcgdex_set_id": "SM1p",
+      "locale": "ja",
+      "names": {
+        "en_cardtrader": "Sun and Moon plus",
+        "database": {
+          "id": "SM1p",
+          "ja": "2017-01-27"
+        }
+      }
+    },
+    "ko:SM1p": {
+      "tcgdex_set_id": "SM1p",
+      "locale": "ko",
+      "names": {
+        "en_cardtrader": "Sun and Moon plus",
+        "database": {
+          "id": "SM1p",
+          "ja": "2017-01-27"
+        }
+      }
+    },
     "ja:SM1S": {
       "tcgdex_set_id": "SM1S",
       "locale": "ja",
@@ -5937,6 +6137,28 @@
         }
       }
     },
+    "ja:SM2p": {
+      "tcgdex_set_id": "SM2p",
+      "locale": "ja",
+      "names": {
+        "en_cardtrader": "Let's Face New Trials",
+        "database": {
+          "id": "SM2p",
+          "ja": "2017-04-21"
+        }
+      }
+    },
+    "ko:SM2p": {
+      "tcgdex_set_id": "SM2p",
+      "locale": "ko",
+      "names": {
+        "en_cardtrader": "Let's Face New Trials",
+        "database": {
+          "id": "SM2p",
+          "ja": "2017-04-21"
+        }
+      }
+    },
     "ja:SM3+": {
       "tcgdex_set_id": "SM3+",
       "locale": "ja",
@@ -6011,6 +6233,28 @@
         }
       }
     },
+    "ja:SM3p": {
+      "tcgdex_set_id": "SM3p",
+      "locale": "ja",
+      "names": {
+        "en_cardtrader": "Shining Legends",
+        "database": {
+          "id": "SM3p",
+          "ja": "2017-07-15"
+        }
+      }
+    },
+    "ko:SM3p": {
+      "tcgdex_set_id": "SM3p",
+      "locale": "ko",
+      "names": {
+        "en_cardtrader": "Shining Legends",
+        "database": {
+          "id": "SM3p",
+          "ja": "2017-07-15"
+        }
+      }
+    },
     "ja:SM4+": {
       "tcgdex_set_id": "SM4+",
       "locale": "ja",
@@ -6058,6 +6302,28 @@
           "id": "SM4A",
           "ja": "Ultradimensional Beasts",
           "en": "Beasts from the Ultradimension"
+        }
+      }
+    },
+    "ja:SM4p": {
+      "tcgdex_set_id": "SM4p",
+      "locale": "ja",
+      "names": {
+        "en_cardtrader": "GX Battle Boost",
+        "database": {
+          "id": "SM4p",
+          "ja": "2017-10-20"
+        }
+      }
+    },
+    "ko:SM4p": {
+      "tcgdex_set_id": "SM4p",
+      "locale": "ko",
+      "names": {
+        "en_cardtrader": "GX Battle Boost",
+        "database": {
+          "id": "SM4p",
+          "ja": "2017-10-20"
         }
       }
     },
@@ -6136,6 +6402,28 @@
           "ja": "ウルトラムーン",
           "ko": "울트라문",
           "en": "Ultra Moon"
+        }
+      }
+    },
+    "ja:SM5p": {
+      "tcgdex_set_id": "SM5p",
+      "locale": "ja",
+      "names": {
+        "en_cardtrader": "Ultra Force",
+        "database": {
+          "id": "SM5p",
+          "ja": "2018-01-19"
+        }
+      }
+    },
+    "ko:SM5p": {
+      "tcgdex_set_id": "SM5p",
+      "locale": "ko",
+      "names": {
+        "en_cardtrader": "Ultra Force",
+        "database": {
+          "id": "SM5p",
+          "ja": "2018-01-19"
         }
       }
     },
@@ -6756,6 +7044,35 @@
         "en_cardtrader": "Scarlet & Violet Promos",
         "database": {
           "id": "2023-03-03",
+          "ja": "2022-11-29",
+          "th": "2023-02-24",
+          "zh-tw": "2023-01-26",
+          "en": "Scarlet & Violet Promos"
+        }
+      }
+    },
+    "ja:SV-P": {
+      "tcgdex_set_id": "SV-P",
+      "locale": "ja",
+      "names": {
+        "en_cardtrader": "Scarlet & Violet Promos",
+        "database": {
+          "id": "2023-03-03",
+          "ja": "2022-11-29",
+          "th": "2023-02-24",
+          "zh-tw": "2023-01-26",
+          "en": "Scarlet & Violet Promos"
+        }
+      }
+    },
+    "ko:SV-P": {
+      "tcgdex_set_id": "SV-P",
+      "locale": "ko",
+      "names": {
+        "en_cardtrader": "Scarlet & Violet Promos",
+        "database": {
+          "id": "2023-03-03",
+          "ja": "2022-11-29",
           "th": "2023-02-24",
           "zh-tw": "2023-01-26",
           "en": "Scarlet & Violet Promos"
@@ -8455,6 +8772,32 @@
         }
       }
     },
+    "ja:XY5b": {
+      "tcgdex_set_id": "XY5b",
+      "locale": "ja",
+      "names": {
+        "en_cardtrader": "Tidal Storm",
+        "database": {
+          "id": "XY5b",
+          "ja": "タイダルストーム",
+          "ko": "타이달스톰",
+          "en": "Gaia Volcano"
+        }
+      }
+    },
+    "ko:XY5b": {
+      "tcgdex_set_id": "XY5b",
+      "locale": "ko",
+      "names": {
+        "en_cardtrader": "Tidal Storm",
+        "database": {
+          "id": "XY5b",
+          "ja": "タイダルストーム",
+          "ko": "타이달스톰",
+          "en": "Gaia Volcano"
+        }
+      }
+    },
     "ja:XY6": {
       "tcgdex_set_id": "XY6",
       "locale": "ja",
@@ -8775,14 +9118,6 @@
         }
       }
     },
-    "ja:MC": {
-      "tcgdex_set_id": "MC",
-      "locale": "ja",
-      "names": {
-        "en_cardtrader": "Starter Decks 100 Battle Collection",
-        "database": {}
-      }
-    },
     "ja:MP1": {
       "tcgdex_set_id": "MP1",
       "locale": "ja",
@@ -9071,27 +9406,11 @@
         "database": {}
       }
     },
-    "ja:SM11": {
-      "tcgdex_set_id": "SM11",
-      "locale": "ja",
-      "names": {
-        "en_cardtrader": "Miracle Twin",
-        "database": {}
-      }
-    },
     "ja:SMM": {
       "tcgdex_set_id": "SMM",
       "locale": "ja",
       "names": {
         "en_cardtrader": "Tag Team GX Starter Sets",
-        "database": {}
-      }
-    },
-    "ja:SM10a": {
-      "tcgdex_set_id": "SM10a",
-      "locale": "ja",
-      "names": {
-        "en_cardtrader": "GG End",
         "database": {}
       }
     },
@@ -9151,14 +9470,6 @@
         "database": {}
       }
     },
-    "ja:SM5p": {
-      "tcgdex_set_id": "SM5p",
-      "locale": "ja",
-      "names": {
-        "en_cardtrader": "Ultra Force",
-        "database": {}
-      }
-    },
     "ja:SMF": {
       "tcgdex_set_id": "SMF",
       "locale": "ja",
@@ -9175,30 +9486,6 @@
         "database": {}
       }
     },
-    "ja:SM4p": {
-      "tcgdex_set_id": "SM4p",
-      "locale": "ja",
-      "names": {
-        "en_cardtrader": "GX Battle Boost",
-        "database": {}
-      }
-    },
-    "ja:SM3p": {
-      "tcgdex_set_id": "SM3p",
-      "locale": "ja",
-      "names": {
-        "en_cardtrader": "Shining Legends",
-        "database": {}
-      }
-    },
-    "ja:SM2p": {
-      "tcgdex_set_id": "SM2p",
-      "locale": "ja",
-      "names": {
-        "en_cardtrader": "Let's Face New Trials",
-        "database": {}
-      }
-    },
     "ja:SMD": {
       "tcgdex_set_id": "SMD",
       "locale": "ja",
@@ -9212,14 +9499,6 @@
       "locale": "ja",
       "names": {
         "en_cardtrader": "Starter Set Tapu Bulu-GX",
-        "database": {}
-      }
-    },
-    "ja:SM1p": {
-      "tcgdex_set_id": "SM1p",
-      "locale": "ja",
-      "names": {
-        "en_cardtrader": "Sun and Moon plus",
         "database": {}
       }
     },
@@ -11683,19 +11962,19 @@
         "code": "aoa"
       }
     },
-    "en:pl4-ct-ar": {
-      "tcgdex_set_id": "pl4",
-      "locale": "en",
+    "ja:sn11": {
+      "tcgdex_set_id": "sn11",
+      "locale": "ja",
       "names": {
-        "en_cardtrader": "Platinum Arceus",
+        "en_cardtrader": "Miracle Twin",
         "database": {
-          "en": "Arceus"
+          "ja": "ミラクルツイン"
         },
-        "englishName": "Platinum Arceus"
+        "englishName": "Miracle Twin"
       },
       "cardtrader": {
-        "id": 1878,
-        "code": "ar"
+        "id": 2071,
+        "code": "sm11"
       }
     },
     "en:swsh3": {
@@ -12028,6 +12307,21 @@
         "code": "mew"
       }
     },
+    "ja:sn10a": {
+      "tcgdex_set_id": "sn10a",
+      "locale": "ja",
+      "names": {
+        "en_cardtrader": "GG End",
+        "database": {
+          "ja": "ジージーエンド"
+        },
+        "englishName": "GG End"
+      },
+      "cardtrader": {
+        "id": 3450,
+        "code": "sm10a"
+      }
+    },
     "en:sv04": {
       "tcgdex_set_id": "sv04",
       "locale": "en",
@@ -12326,6 +12620,66 @@
       "cardtrader": {
         "id": 4546,
         "code": "cri"
+      }
+    },
+    "en:me05": {
+      "tcgdex_set_id": "me05",
+      "locale": "en",
+      "names": {
+        "en_cardtrader": "Pitch Black",
+        "database": {
+          "en": "Pitch Black"
+        },
+        "englishName": null
+      },
+      "cardtrader": {
+        "id": 4639,
+        "code": "pbl"
+      }
+    },
+    "en:ex15": {
+      "tcgdex_set_id": "ex15",
+      "locale": "en",
+      "names": {
+        "en_cardtrader": "EX Dragon Frontiers",
+        "database": {
+          "en": "Dragon Frontiers"
+        },
+        "englishName": null
+      },
+      "cardtrader": {
+        "id": 1514,
+        "code": "df"
+      }
+    },
+    "en:30th-c": {
+      "tcgdex_set_id": "30th-c",
+      "locale": "en",
+      "names": {
+        "en_cardtrader": "30th Celebration",
+        "database": {
+          "en": "30th Classic Collection"
+        },
+        "englishName": null
+      },
+      "cardtrader": {
+        "id": 4679,
+        "code": "30c"
+      }
+    },
+    "en:30th": {
+      "tcgdex_set_id": "30th",
+      "locale": "en",
+      "names": {
+        "en_cardtrader": "30th Celebration",
+        "database": {
+          "en": "30th Celebration"
+        },
+        "englishName": null
+      },
+      "cardtrader": {
+        "id": 4679,
+        "code": "30c"
       }
     },
     "ja:Pr1": {
@@ -14096,8 +14450,8 @@
         "database": {}
       }
     },
-    "ja:CSM2.5_alias_fix": {
-      "tcgdex_set_id": "CSM2.5",
+    "ja:Csm25": {
+      "tcgdex_set_id": "Csm25",
       "locale": "ja",
       "names": {
         "en_cardtrader": "CSM2.5: Striking Competition",
@@ -14105,7 +14459,7 @@
       }
     },
     "ja:Csm2a": {
-      "tcgdex_set_id": "CSM2a",
+      "tcgdex_set_id": "Csm2a",
       "locale": "ja",
       "names": {
         "en_cardtrader": "CSM2a: Shining Synergy - Shower",
@@ -14113,7 +14467,7 @@
       }
     },
     "ja:Csm2b": {
-      "tcgdex_set_id": "CSM2b",
+      "tcgdex_set_id": "Csm2b",
       "locale": "ja",
       "names": {
         "en_cardtrader": "CSM2b: Shining Synergy - Supreme",
@@ -14121,7 +14475,7 @@
       }
     },
     "zh-cn:CSM2C": {
-      "tcgdex_set_id": "CSM2c",
+      "tcgdex_set_id": "CSM2C",
       "locale": "zh-cn",
       "names": {
         "en_cardtrader": "CSM2c: Shining Synergy - Summon",
@@ -14129,7 +14483,7 @@
       }
     },
     "ja:Csm1a": {
-      "tcgdex_set_id": "CSM1a",
+      "tcgdex_set_id": "Csm1a",
       "locale": "ja",
       "names": {
         "en_cardtrader": "CSM1a: Storming Emergence - Radiant",
@@ -14137,7 +14491,7 @@
       }
     },
     "ja:Csm1b": {
-      "tcgdex_set_id": "CSM1b",
+      "tcgdex_set_id": "Csm1b",
       "locale": "ja",
       "names": {
         "en_cardtrader": "CSM1b: Storming Emergence - Verdant",
@@ -14145,7 +14499,7 @@
       }
     },
     "zh-cn:CSM1C": {
-      "tcgdex_set_id": "CSM1c",
+      "tcgdex_set_id": "CSM1C",
       "locale": "zh-cn",
       "names": {
         "en_cardtrader": "CSM1c: Storming Emergence - Abundant",
@@ -14225,7 +14579,7 @@
       }
     },
     "ja:Csm15": {
-      "tcgdex_set_id": "CSM1.5",
+      "tcgdex_set_id": "Csm15",
       "locale": "ja",
       "names": {
         "en_cardtrader": "CSM1.5: Battle Elite",
@@ -14373,14 +14727,6 @@
       "locale": "ja",
       "names": {
         "en_cardtrader": "Quick Starter Gift Set 1998",
-        "database": {}
-      }
-    },
-    "ja:Csv2": {
-      "tcgdex_set_id": "Csv2",
-      "locale": "ja",
-      "names": {
-        "en_cardtrader": "CSV2: Miracle Journey",
         "database": {}
       }
     },
@@ -14625,7 +14971,7 @@
       }
     },
     "ja:Csm2d": {
-      "tcgdex_set_id": "CSM2d",
+      "tcgdex_set_id": "Csm2d",
       "locale": "ja",
       "names": {
         "en_cardtrader": "CSM2d: Shining Synergy GX Starter Deck",
@@ -14953,7 +15299,7 @@
       }
     },
     "ja:Csm1d": {
-      "tcgdex_set_id": "CSM1d",
+      "tcgdex_set_id": "Csm1d",
       "locale": "ja",
       "names": {
         "en_cardtrader": "CSM1d: Storming Emergence GX Starter Deck",
@@ -15056,14 +15402,6 @@
         "database": {}
       }
     },
-    "ja:M5": {
-      "tcgdex_set_id": "M5",
-      "locale": "ja",
-      "names": {
-        "en_cardtrader": "Abyss Eye",
-        "database": {}
-      }
-    },
     "ja:Csv9": {
       "tcgdex_set_id": "Csv9",
       "locale": "ja",
@@ -15110,36 +15448,6 @@
       "names": {
         "en_cardtrader": "VMAX Starter Deck: Grimmsnarl VMAX",
         "database": {}
-      }
-    },
-    "en:me05": {
-      "tcgdex_set_id": "me05",
-      "locale": "en",
-      "names": {
-        "en_cardtrader": "Pitch Black",
-        "database": {
-          "en": "Pitch Black"
-        },
-        "englishName": null
-      },
-      "cardtrader": {
-        "id": 4639,
-        "code": "pbl"
-      }
-    },
-    "en:ex15": {
-      "tcgdex_set_id": "ex15",
-      "locale": "en",
-      "names": {
-        "en_cardtrader": "EX Dragon Frontiers",
-        "database": {
-          "en": "Dragon Frontiers"
-        },
-        "englishName": null
-      },
-      "cardtrader": {
-        "id": 1514,
-        "code": "df"
       }
     }
   },
@@ -15360,6 +15668,22 @@
       "ja": "M4",
       "ko": "M4"
     },
+    "abyss eye": {
+      "ja": "M5",
+      "ko": "M5"
+    },
+    "30th celebration jp": {
+      "ja": "M6a",
+      "ko": "M6a"
+    },
+    "starter decks 100 battle collection": {
+      "ja": "MC",
+      "ko": "MC"
+    },
+    "30th celebration premium deck set": {
+      "ja": "MF",
+      "ko": "MF"
+    },
     "neo genesis": {
       "ja": "neo1",
       "ko": "neo1"
@@ -15491,10 +15815,10 @@
       "ko": "CS3bC",
       "zh-cn": "CS3bC"
     },
-    "triplet beat": {
-      "zh-tw": "SV1a",
-      "ja": "SV1a",
-      "ko": "SV1a"
+    "primordial arts": {
+      "zh-tw": "CS3D",
+      "ja": "CS3D",
+      "ko": "CS3D"
     },
     "final flame dance": {
       "ja": "CS4.5C",
@@ -15534,6 +15858,11 @@
       "ja": "CS4bC",
       "ko": "CS4bC",
       "zh-cn": "CS4bC"
+    },
+    "nine colors gathering": {
+      "zh-tw": "CS4Da",
+      "ja": "CS4Da",
+      "ko": "CS4Da"
     },
     "shadow of glory": {
       "zh-cn": "CS5.5C",
@@ -15672,6 +16001,11 @@
       "zh-cn": "CS6bC",
       "ja": "CS6bC",
       "ko": "CS6bC"
+    },
+    "triplet beat": {
+      "zh-tw": "SV1a",
+      "ja": "SV1a",
+      "ko": "SV1a"
     },
     "sword & shield promos": {
       "en": "S-P"
@@ -16121,6 +16455,10 @@
       "ja": "SM1M",
       "ko": "SM1M"
     },
+    "sun and moon plus": {
+      "ja": "SM1p",
+      "ko": "SM1p"
+    },
     "collection sun": {
       "ja": "SM1S",
       "ko": "SM1S"
@@ -16136,6 +16474,10 @@
     "alolan moonlight": {
       "ja": "SM2L",
       "ko": "SM2L"
+    },
+    "let's face new trials": {
+      "ja": "SM2p",
+      "ko": "SM2p"
     },
     "shining legends": {
       "ja": "SM3+",
@@ -16264,9 +16606,9 @@
     },
     "scarlet & violet promos": {
       "zh-tw": "SV9a",
-      "zh-cn": "SV9a",
       "ja": "SV9a",
-      "ko": "SV9a"
+      "ko": "SV9a",
+      "zh-cn": "SV9a"
     },
     "glory of team rocket": {
       "zh-cn": "SV10",
@@ -16488,6 +16830,10 @@
       "ja": "XY5a",
       "ko": "XY5a"
     },
+    "tidal storm": {
+      "ja": "Xy5t",
+      "ko": "Xy5t"
+    },
     "emerald break": {
       "ja": "XY6",
       "ko": "XY6"
@@ -16535,10 +16881,6 @@
     "rage of the broken heaven": {
       "ja": "XY9",
       "ko": "XY9"
-    },
-    "starter decks 100 battle collection": {
-      "ja": "MC",
-      "ko": "MC"
     },
     "starter decks 100 battle collection corociao ver.": {
       "ja": "MP1",
@@ -16701,10 +17043,6 @@
       "ja": "SME",
       "ko": "SME"
     },
-    "let's face new trials": {
-      "ja": "SM2p",
-      "ko": "SM2p"
-    },
     "ash vs team rocket half decks": {
       "ja": "SMD",
       "ko": "SMD"
@@ -16712,10 +17050,6 @@
     "starter set tapu bulu-gx": {
       "ja": "SMC",
       "ko": "SMC"
-    },
-    "sun and moon plus": {
-      "ja": "SM1p",
-      "ko": "SM1p"
     },
     "rockruff full strength deck": {
       "ja": "SMP1",
@@ -16776,10 +17110,6 @@
     "mega rayquaza-ex deck": {
       "ja": "XYD",
       "ko": "XYD"
-    },
-    "tidal storm": {
-      "ja": "Xy5t",
-      "ko": "Xy5t"
     },
     "xerneas-ex and yveltal-ex deck": {
       "ja": "XYC",
@@ -17543,6 +17873,9 @@
       "ja": "PCG10",
       "ko": "PCG10"
     },
+    "platinum arceus": {
+      "en": "pl4"
+    },
     "arceus": {
       "en": "pl4"
     },
@@ -18079,6 +18412,29 @@
     "prismatic evolutions": {
       "en": "sv08.5"
     },
+    "prismatic evolutions - poké ball reverse holo": {
+      "en": "sv08.5"
+    },
+    "2025-09-26": {
+      "ja": "M2",
+      "ko": "M2"
+    },
+    "csv2: miracle journey": {
+      "zh-cn": "CSV2C"
+    },
+    "csv2": {
+      "zh-cn": "CSV2C",
+      "ja": "M-csv2",
+      "ko": "M-csv2"
+    },
+    "csv2:": {
+      "zh-cn": "CSV2C",
+      "ja": "M-csv2",
+      "ko": "M-csv2"
+    },
+    "csv2c": {
+      "zh-cn": "CSV2C"
+    },
     "ウルトラフォース": {
       "ja": "SM5+",
       "ko": "SM5+"
@@ -18217,6 +18573,27 @@
     },
     "chaos rising": {
       "en": "me04"
+    },
+    "pitch black": {
+      "en": "me05"
+    },
+    "ex dragon frontiers": {
+      "en": "ex15"
+    },
+    "dragon frontiers": {
+      "en": "ex15"
+    },
+    "30th celebration": {
+      "en": "30th",
+      "ja": "M6a",
+      "ko": "M6a"
+    },
+    "30th classic collection": {
+      "en": "30th-c"
+    },
+    "30th celebration プレミアムデッキセット エーフィ・ブラッキー": {
+      "ja": "MF",
+      "ko": "MF"
     },
     "wizards of the coast era promos": {
       "ja": "Pr1",
@@ -19074,82 +19451,82 @@
       "ko": "151c"
     },
     "csm2.5: striking competition": {
-      "ja": "CSM2.5",
-      "ko": "CSM2.5"
+      "ja": "Csm25",
+      "ko": "Csm25"
     },
     "csm2.5": {
-      "ja": "CSM2.5",
-      "ko": "CSM2.5"
+      "ja": "Csm25",
+      "ko": "Csm25"
     },
     "csm2.5:": {
-      "ja": "CSM2.5",
-      "ko": "CSM2.5"
+      "ja": "Csm25",
+      "ko": "Csm25"
     },
     "csm2a: shining synergy - shower": {
-      "ja": "CSM2a",
-      "ko": "CSM2a"
+      "ja": "Csm2a",
+      "ko": "Csm2a"
     },
     "csm2a": {
-      "ja": "CSM2a",
-      "ko": "CSM2a"
+      "ja": "Csm2a",
+      "ko": "Csm2a"
     },
     "csm2a:": {
-      "ja": "CSM2a",
-      "ko": "CSM2a"
+      "ja": "Csm2a",
+      "ko": "Csm2a"
     },
     "csm2b: shining synergy - supreme": {
-      "ja": "CSM2b",
-      "ko": "CSM2b"
+      "ja": "Csm2b",
+      "ko": "Csm2b"
     },
     "csm2b": {
-      "ja": "CSM2b",
-      "ko": "CSM2b"
+      "ja": "Csm2b",
+      "ko": "Csm2b"
     },
     "csm2b:": {
-      "ja": "CSM2b",
-      "ko": "CSM2b"
+      "ja": "Csm2b",
+      "ko": "Csm2b"
     },
     "csm2c: shining synergy - summon": {
-      "zh-cn": "CSM2c"
+      "zh-cn": "CSM2C"
     },
     "csm2c": {
-      "zh-cn": "CSM2c"
+      "zh-cn": "CSM2C"
     },
     "csm2c:": {
-      "zh-cn": "CSM2c"
+      "zh-cn": "CSM2C"
     },
     "csm1a: storming emergence - radiant": {
-      "ja": "CSM1a",
-      "ko": "CSM1a"
+      "ja": "Csm1a",
+      "ko": "Csm1a"
     },
     "csm1a": {
-      "ja": "CSM1a",
-      "ko": "CSM1a"
+      "ja": "Csm1a",
+      "ko": "Csm1a"
     },
     "csm1a:": {
-      "ja": "CSM1a",
-      "ko": "CSM1a"
+      "ja": "Csm1a",
+      "ko": "Csm1a"
     },
     "csm1b: storming emergence - verdant": {
-      "ja": "CSM1b",
-      "ko": "CSM1b"
+      "ja": "Csm1b",
+      "ko": "Csm1b"
     },
     "csm1b": {
-      "ja": "CSM1b",
-      "ko": "CSM1b"
+      "ja": "Csm1b",
+      "ko": "Csm1b"
     },
     "csm1b:": {
-      "ja": "CSM1b",
-      "ko": "CSM1b"
+      "ja": "Csm1b",
+      "ko": "Csm1b"
     },
     "csm1c: storming emergence - abundant": {
-      "zh-cn": "CSM1c"
+      "zh-cn": "CSM1C"
     },
     "csm1c": {
-      "zh-cn": "CSM1c"
+      "zh-cn": "CSM1C"
     },
     "csm1c:": {
-      "zh-cn": "CSM1c"
+      "zh-cn": "CSM1C"
     },
     "csm: brave stars promo pack": {
       "ja": "Csm",
@@ -19244,16 +19621,16 @@
       "ko": "Cs3b"
     },
     "csm1.5: battle elite": {
-      "ja": "CSM1.5",
-      "ko": "CSM1.5"
+      "ja": "Csm15",
+      "ko": "Csm15"
     },
     "csm1.5": {
-      "ja": "CSM1.5",
-      "ko": "CSM1.5"
+      "ja": "Csm15",
+      "ko": "Csm15"
     },
     "csm1.5:": {
-      "ja": "CSM1.5",
-      "ko": "CSM1.5"
+      "ja": "Csm15",
+      "ko": "Csm15"
     },
     "starter set ex steven's beldum & metagross ex": {
       "ja": "Svod",
@@ -19330,18 +19707,6 @@
     "quick starter gift set 1998": {
       "ja": "Qs1998",
       "ko": "Qs1998"
-    },
-    "csv2: miracle journey": {
-      "ja": "Csv2",
-      "ko": "Csv2"
-    },
-    "csv2": {
-      "ja": "M-csv2",
-      "ko": "M-csv2"
-    },
-    "csv2:": {
-      "ja": "M-csv2",
-      "ko": "M-csv2"
     },
     "csv2: miracle journey - master ball reverse holo": {
       "ja": "M-csv2",
@@ -19509,16 +19874,16 @@
       "zh-cn": "CBB4C"
     },
     "csm2d: shining synergy gx starter deck": {
-      "ja": "CSM2d",
-      "ko": "CSM2d"
+      "ja": "Csm2d",
+      "ko": "Csm2d"
     },
     "csm2d": {
-      "ja": "CSM2d",
-      "ko": "CSM2d"
+      "ja": "Csm2d",
+      "ko": "Csm2d"
     },
     "csm2d:": {
-      "ja": "CSM2d",
-      "ko": "CSM2d"
+      "ja": "Csm2d",
+      "ko": "Csm2d"
     },
     "csmpac: battle party combo": {
       "zh-cn": "CSMPAC"
@@ -19781,16 +20146,16 @@
       "ko": "Wcd2025"
     },
     "csm1d: storming emergence gx starter deck": {
-      "ja": "CSM1d",
-      "ko": "CSM1d"
+      "ja": "Csm1d",
+      "ko": "Csm1d"
     },
     "csm1d": {
-      "ja": "CSM1d",
-      "ko": "CSM1d"
+      "ja": "Csm1d",
+      "ko": "Csm1d"
     },
     "csm1d:": {
-      "ja": "CSM1d",
-      "ko": "CSM1d"
+      "ja": "Csm1d",
+      "ko": "Csm1d"
     },
     "beginning set plus": {
       "ja": "Hs+",
@@ -19905,10 +20270,6 @@
       "ja": "Cs1",
       "ko": "Cs1"
     },
-    "abyss eye": {
-      "ja": "M5",
-      "ko": "M5"
-    },
     "csv9: stellar crystal": {
       "ja": "Csv9",
       "ko": "Csv9"
@@ -19920,9 +20281,6 @@
     "csv9:": {
       "ja": "Csv9-m",
       "ko": "Csv9-m"
-    },
-    "pitch black": {
-      "en": "me05"
     },
     "csv9: poké ball reverse": {
       "ja": "Csv9-p",
@@ -19959,12 +20317,6 @@
     "vmax starter deck: grimmsnarl vmax": {
       "ja": "Scjp-g",
       "ko": "Scjp-g"
-    },
-    "ex dragon frontiers": {
-      "en": "ex15"
-    },
-    "dragon frontiers": {
-      "en": "ex15"
     }
   }
 }

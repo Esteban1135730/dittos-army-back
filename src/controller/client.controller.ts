@@ -30,9 +30,7 @@ export class ClientController {
   @Post()
   async create(@Body() dto: ClientDto): Promise<Client> {
     if (!dto.nombre || !dto.metodo_contacto) {
-      throw new BadRequestException(
-        'nombre y metodo_contacto son requeridos',
-      );
+      throw new BadRequestException('nombre y metodo_contacto son requeridos');
     }
     const contactErr = getClientContactValidationError(dto);
     if (contactErr) {

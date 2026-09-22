@@ -22,7 +22,10 @@ describe('StoreWhatsAppReservationImportService', () => {
     >;
     reservas?: Array<{ stock_id: string; stock_owner?: string }>;
     reservasByOwner?: Partial<
-      Record<'pablo' | 'esteban', Array<{ stock_id: string; stock_owner?: string }>>
+      Record<
+        'pablo' | 'esteban',
+        Array<{ stock_id: string; stock_owner?: string }>
+      >
     >;
     pvps?: Array<{
       card_id: string;
@@ -49,8 +52,7 @@ describe('StoreWhatsAppReservationImportService', () => {
       deps.reservasByOwner?.[owner] ??
       (owner === 'pablo' ? (deps.reservas ?? []) : []);
     const pvpsFor = (owner: 'pablo' | 'esteban') =>
-      deps.pvpsByOwner?.[owner] ??
-      (owner === 'pablo' ? (deps.pvps ?? []) : []);
+      deps.pvpsByOwner?.[owner] ?? (owner === 'pablo' ? (deps.pvps ?? []) : []);
 
     const clientRepository = {
       findById: jest.fn().mockResolvedValue({ _id: 'c1', nombre: 'Cliente' }),
@@ -63,7 +65,9 @@ describe('StoreWhatsAppReservationImportService', () => {
       }),
       findById: jest.fn(async (id: string) => {
         const { getCurrentOwner } = require('src/owner/owner-context');
-        return stockFor(getCurrentOwner()).find((s) => String(s._id) === id) ?? null;
+        return (
+          stockFor(getCurrentOwner()).find((s) => String(s._id) === id) ?? null
+        );
       }),
       updateCardState: jest.fn().mockResolvedValue({}),
     } as unknown as StockRepository;
@@ -307,7 +311,9 @@ describe('StoreWhatsAppReservationImportService', () => {
         ],
       },
       pvpsByOwner: {
-        pablo: [{ card_id: 'sv08-130', pvp: 8000, currency: 'COP', rareza: null }],
+        pablo: [
+          { card_id: 'sv08-130', pvp: 8000, currency: 'COP', rareza: null },
+        ],
         esteban: [
           { card_id: 'sv08-130', pvp: 9000, currency: 'COP', rareza: null },
         ],
@@ -351,7 +357,9 @@ describe('StoreWhatsAppReservationImportService', () => {
         ],
       },
       pvpsByOwner: {
-        pablo: [{ card_id: 'sv08-130', pvp: 8000, currency: 'COP', rareza: null }],
+        pablo: [
+          { card_id: 'sv08-130', pvp: 8000, currency: 'COP', rareza: null },
+        ],
         esteban: [
           { card_id: 'sv08-130', pvp: 9000, currency: 'COP', rareza: null },
         ],
@@ -435,7 +443,9 @@ describe('StoreWhatsAppReservationImportService', () => {
 
   it('sin pedidos + tienda+fecha → create y reservas con el id creado', async () => {
     const { svc, reservaRepository, pedidoService } = makeService(stockReady);
-    (pedidoService.findReservadoByClientId as jest.Mock).mockResolvedValue(null);
+    (pedidoService.findReservadoByClientId as jest.Mock).mockResolvedValue(
+      null,
+    );
     (pedidoService.findOpenByClientId as jest.Mock).mockResolvedValue(null);
 
     const result = await svc.import('c1', deliveryMessage);
@@ -474,7 +484,9 @@ describe('StoreWhatsAppReservationImportService', () => {
 
   it('sin entrega y sin reservado → reservas huérfanas; no require ni create', async () => {
     const { svc, reservaRepository, pedidoService } = makeService(stockReady);
-    (pedidoService.findReservadoByClientId as jest.Mock).mockResolvedValue(null);
+    (pedidoService.findReservadoByClientId as jest.Mock).mockResolvedValue(
+      null,
+    );
     (pedidoService.findOpenByClientId as jest.Mock).mockResolvedValue(null);
 
     const result = await svc.import('c1', sampleMessage);
@@ -521,7 +533,9 @@ describe('StoreWhatsAppReservationImportService', () => {
 
   it('pagado abierto sin reservado → preview blocked_pagado; import 409', async () => {
     const { svc, reservaRepository, pedidoService } = makeService(stockReady);
-    (pedidoService.findReservadoByClientId as jest.Mock).mockResolvedValue(null);
+    (pedidoService.findReservadoByClientId as jest.Mock).mockResolvedValue(
+      null,
+    );
     (pedidoService.findOpenByClientId as jest.Mock).mockResolvedValue({
       _id: 'p-paid',
       status: 'pagado',

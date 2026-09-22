@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { resolveCardTraderHomologPath } from '../../utils/tcgdex-homolog-loader';
+import { resolveCardTraderHomologPath } from '../../pokemon';
 
 export type QuoteExpansionHit = {
   expansionId: number;
@@ -79,14 +79,19 @@ function pushSetHit(
   const list = map.get(key) ?? [];
   if (list.some((x) => x.expansionId === hit.expansionId)) {
     if (preferFront) {
-      map.set(key, [hit, ...list.filter((x) => x.expansionId !== hit.expansionId)]);
+      map.set(key, [
+        hit,
+        ...list.filter((x) => x.expansionId !== hit.expansionId),
+      ]);
     }
     return;
   }
   map.set(key, preferFront ? [hit, ...list] : [...list, hit]);
 }
 
-export function buildQuoteExpansionIndex(file: HomologFile): QuoteExpansionIndex {
+export function buildQuoteExpansionIndex(
+  file: HomologFile,
+): QuoteExpansionIndex {
   const byEnCardtrader = new Map<string, QuoteExpansionHit[]>();
   const byOtherNames = new Map<string, QuoteExpansionHit[]>();
   const byTcgdexSetId = new Map<string, QuoteExpansionHit[]>();
@@ -103,7 +108,9 @@ export function buildQuoteExpansionIndex(file: HomologFile): QuoteExpansionIndex
     locale?: string | null,
   ) => {
     if (!Number.isInteger(expansionId) || expansionId < 1) return;
-    const display = String(enCardtrader ?? otherNames.find(Boolean) ?? '').trim();
+    const display = String(
+      enCardtrader ?? otherNames.find(Boolean) ?? '',
+    ).trim();
     const hit: QuoteExpansionHit = {
       expansionId,
       expansionName: display || `Expansion ${expansionId}`,
@@ -241,12 +248,26 @@ export function listExpansionsForTcgdexSet(
   if (!setId) return [];
   const out: QuoteExpansionHit[] = [];
   const seen = new Set<number>();
-  const loc = String(locale ?? '').trim().toLowerCase();
+  const loc = String(locale ?? '')
+    .trim()
+    .toLowerCase();
   if (loc) {
-    pushHits(out, seen, index.byTcgdexSetId.get(foldExpansionKey(`${loc}:${setId}`)));
+    pushHits(
+      out,
+      seen,
+      index.byTcgdexSetId.get(foldExpansionKey(`${loc}:${setId}`)),
+    );
     if (loc === 'zh' || loc === 'zh-cn' || loc === 'zh-tw') {
-      pushHits(out, seen, index.byTcgdexSetId.get(foldExpansionKey(`zh-tw:${setId}`)));
-      pushHits(out, seen, index.byTcgdexSetId.get(foldExpansionKey(`zh-cn:${setId}`)));
+      pushHits(
+        out,
+        seen,
+        index.byTcgdexSetId.get(foldExpansionKey(`zh-tw:${setId}`)),
+      );
+      pushHits(
+        out,
+        seen,
+        index.byTcgdexSetId.get(foldExpansionKey(`zh-cn:${setId}`)),
+      );
     }
   }
   pushHits(out, seen, index.byTcgdexSetId.get(foldExpansionKey(setId)));

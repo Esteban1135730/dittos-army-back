@@ -43,7 +43,7 @@ describe('PedidoAbonoService', () => {
     const pedidoRepo = {
       findById: jest.fn(async () =>
         Object.prototype.hasOwnProperty.call(opts, 'pedido')
-          ? opts.pedido ?? null
+          ? (opts.pedido ?? null)
           : makePedido(),
       ),
     } as unknown as PedidoRepository;
@@ -62,7 +62,9 @@ describe('PedidoAbonoService', () => {
         abonos = [doc, ...abonos];
         return doc;
       }),
-      findById: jest.fn(async (id: string) => abonos.find((a) => a._id === id) ?? null),
+      findById: jest.fn(
+        async (id: string) => abonos.find((a) => a._id === id) ?? null,
+      ),
       deleteById: jest.fn(async (id: string) => {
         const before = abonos.length;
         abonos = abonos.filter((a) => a._id !== id);
@@ -177,9 +179,9 @@ describe('PedidoAbonoService', () => {
         },
       ],
     });
-    await expect(other.svc.deleteAbono(PEDIDO_ID, ABONO_B)).rejects.toBeInstanceOf(
-      NotFoundException,
-    );
+    await expect(
+      other.svc.deleteAbono(PEDIDO_ID, ABONO_B),
+    ).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('pedido inexistente → 404; id inválido → 400', async () => {

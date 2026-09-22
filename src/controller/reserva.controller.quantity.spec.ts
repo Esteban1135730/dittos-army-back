@@ -265,7 +265,9 @@ describe('ReservaController quantity products', () => {
   it('finalizar venta de bulk delega en PedidoService', async () => {
     const res = await controller.finalizarVenta(clientId);
 
-    expect(pedidoService.pagarReservadoDeCliente).toHaveBeenCalledWith(clientId);
+    expect(pedidoService.pagarReservadoDeCliente).toHaveBeenCalledWith(
+      clientId,
+    );
     expect(res.success).toBe(true);
     expect(res.vendidas).toBe(3);
   });

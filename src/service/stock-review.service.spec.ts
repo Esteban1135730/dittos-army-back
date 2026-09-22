@@ -84,13 +84,16 @@ describe('StockReviewService', () => {
         rareza: 'holofoil',
       } as any,
     ]);
-    sessionRepository.create.mockImplementation(async (data) => ({
-      _id: sessionId,
-      ...data,
-      created_at: new Date(),
-      updated_at: new Date(),
-      save: jest.fn(),
-    }) as any);
+    sessionRepository.create.mockImplementation(
+      async (data) =>
+        ({
+          _id: sessionId,
+          ...data,
+          created_at: new Date(),
+          updated_at: new Date(),
+          save: jest.fn(),
+        }) as any,
+    );
 
     const view = await service.createSession({
       scope: 'tag',
@@ -122,13 +125,16 @@ describe('StockReviewService', () => {
         card_state: 'reserva',
       } as any,
     ]);
-    sessionRepository.create.mockImplementation(async (data) => ({
-      _id: sessionId,
-      ...data,
-      created_at: new Date(),
-      updated_at: new Date(),
-      save: jest.fn(),
-    }) as any);
+    sessionRepository.create.mockImplementation(
+      async (data) =>
+        ({
+          _id: sessionId,
+          ...data,
+          created_at: new Date(),
+          updated_at: new Date(),
+          save: jest.fn(),
+        }) as any,
+    );
 
     const view = await service.createSession({ scope: 'all' });
 
@@ -147,13 +153,16 @@ describe('StockReviewService', () => {
     sessionRepository.findActive.mockResolvedValue(null);
     cardStockTagRepository.findCardIdsByTag.mockResolvedValue(['sv1-2']);
     stockRepository.findByCardIdsInStates.mockResolvedValue([]);
-    sessionRepository.create.mockImplementation(async (data) => ({
-      _id: sessionId,
-      ...data,
-      created_at: new Date(),
-      updated_at: new Date(),
-      save: jest.fn(),
-    }) as any);
+    sessionRepository.create.mockImplementation(
+      async (data) =>
+        ({
+          _id: sessionId,
+          ...data,
+          created_at: new Date(),
+          updated_at: new Date(),
+          save: jest.fn(),
+        }) as any,
+    );
 
     const view = await service.createSession({ scope: 'tag', tag: 'brillo' });
 
@@ -354,9 +363,9 @@ describe('StockReviewService', () => {
       await expect(
         service.scanItem(sessionId, soldStockId),
       ).rejects.toBeInstanceOf(ConflictException);
-      await expect(
-        service.scanItem(sessionId, soldStockId),
-      ).rejects.toThrow(/EN/);
+      await expect(service.scanItem(sessionId, soldStockId)).rejects.toThrow(
+        /EN/,
+      );
       expect(doc.items[0].verified).toBe(false);
     });
 
@@ -372,9 +381,9 @@ describe('StockReviewService', () => {
         language: 'ja',
       } as any);
 
-      await expect(
-        service.scanItem(sessionId, soldStockId),
-      ).rejects.toThrow(/no está en la sesión/);
+      await expect(service.scanItem(sessionId, soldStockId)).rejects.toThrow(
+        /no está en la sesión/,
+      );
     });
 
     it('404 si el stock_id no existe ni en la sesión ni en stock', async () => {
@@ -387,9 +396,9 @@ describe('StockReviewService', () => {
       await expect(
         service.scanItem(sessionId, soldStockId),
       ).rejects.toBeInstanceOf(NotFoundException);
-      await expect(service.scanItem(sessionId, 'no-es-objectid')).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(
+        service.scanItem(sessionId, 'no-es-objectid'),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
 
     it('ignora obsoletas y líneas ya resueltas al elegir candidata', async () => {
@@ -413,9 +422,9 @@ describe('StockReviewService', () => {
       doc.status = 'pendiente_resolucion';
       sessionRepository.findById.mockResolvedValue(doc);
 
-      await expect(
-        service.scanItem(sessionId, stockId),
-      ).rejects.toBeInstanceOf(BadRequestException);
+      await expect(service.scanItem(sessionId, stockId)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
     });
   });
 

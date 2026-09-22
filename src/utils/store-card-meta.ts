@@ -1,9 +1,9 @@
-import type { CardDto } from '../service/tcgdex/dto/card.dto';
+import type { CardDto } from '../pokemon/tcgdex/dto/card.dto';
 import { sanitizeCardImageUrl } from './card-image-url';
 import {
   buildTcgdexCardIdLookupCandidates,
   catalogLocaleForLanguage,
-} from './tcgdex-set-resolve';
+} from '../pokemon/tcgdex/tcgdex-set-resolve';
 
 export type StoreCardExportMeta = {
   name: string;

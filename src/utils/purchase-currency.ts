@@ -34,7 +34,12 @@ export function copFromFxUnit(
   fxAmount: number | null | undefined,
   copPerFxUnit: number | null | undefined,
 ): number | null {
-  if (fxAmount == null || copPerFxUnit == null || fxAmount <= 0 || copPerFxUnit <= 0) {
+  if (
+    fxAmount == null ||
+    copPerFxUnit == null ||
+    fxAmount <= 0 ||
+    copPerFxUnit <= 0
+  ) {
     return null;
   }
   return fxAmount * copPerFxUnit;

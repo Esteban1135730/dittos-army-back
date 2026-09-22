@@ -25,7 +25,10 @@ export class StockReviewController {
   @Post('sessions')
   async createSession(
     @Body()
-    body: { scope: 'all' | 'tag'; tag?: string },
+    body: {
+      scope: 'all' | 'tag';
+      tag?: string;
+    },
   ) {
     const session = await this.stockReviewService.createSession(body);
     return { session };

@@ -1,4 +1,9 @@
-import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ESTEBAN_CONNECTION_NAME, OWNERS_CONFIG } from './config/owners.config';
@@ -43,10 +48,8 @@ import { IncomingBatchRepository } from './repository/incoming-batch.repository'
 import { IncomingBatchItemRepository } from './repository/incoming-batch-item.repository';
 import { IncomingRoundRepository } from './repository/incoming-round.repository';
 import { IncomingRoundItemRepository } from './repository/incoming-round-item.repository';
-import { TCGDexService } from './service/tcgdex/tcgdex.service';
-import { SetNameHomologsService } from './service/tcgdex/set-name-homologs.service';
-import { LocalCardImagesService } from './service/tcgdex/local-card-images.service';
-import { StockCardImagesSyncService } from './service/tcgdex/stock-card-images-sync.service';
+import { PokemonModule } from './pokemon';
+import { StockCardImagesSyncService } from './service/stock-card-images-sync.service';
 import { StoreInventoryService } from './service/store-inventory.service';
 import { OpenedSealedStockService } from './service/opened-sealed-stock.service';
 import { PvpCardRowsService } from './service/pvp-card-rows.service';
@@ -56,8 +59,6 @@ import { StoreWhatsAppReservationImportService } from './service/store-whatsapp-
 import { StoreWhatsAppIncomingImportService } from './service/store-whatsapp-incoming-import.service';
 import { StockController } from './controller/stock.controller';
 import { PvpController } from './controller/pvp.controller';
-import { CardController } from './controller/card.controller';
-import { TcgDexController } from './controller/tcg-dex.controller';
 import { SaleController } from './controller/sale.controller';
 import { ClientController } from './controller/client.controller';
 import { ReservaController } from './controller/reserva.controller';
@@ -158,10 +159,7 @@ import {
   CardtraderReceiptLineSchema,
 } from './schema/cardtrader-receipt-line.schema';
 import { Pedido, PedidoSchema } from './schema/pedido.schema';
-import {
-  PedidoAbono,
-  PedidoAbonoSchema,
-} from './schema/pedido-abono.schema';
+import { PedidoAbono, PedidoAbonoSchema } from './schema/pedido-abono.schema';
 import {
   CardtraderQuoteSession,
   CardtraderQuoteSessionSchema,
@@ -228,8 +226,6 @@ const MONGOOSE_FEATURE_MODELS = [
     PvpController,
     SaleController,
     MobilePendingSaleController,
-    CardController,
-    TcgDexController,
     ClientController,
     ReservaController,
     IncomingController,
@@ -248,10 +244,7 @@ const MONGOOSE_FEATURE_MODELS = [
     OwnerModelsService,
     { provide: APP_GUARD, useClass: FeatureAclGuard },
     { provide: APP_GUARD, useClass: SyncTokenGuard },
-    SetNameHomologsService,
-    LocalCardImagesService,
     StockCardImagesSyncService,
-    TCGDexService,
     StoreInventoryService,
     OpenedSealedStockService,
     PvpCardRowsService,
@@ -306,6 +299,7 @@ const MONGOOSE_FEATURE_MODELS = [
     CardTraderQuoteSessionService,
   ],
   imports: [
+    PokemonModule,
     MongooseModule.forRootAsync({
       useFactory: () => {
         const uri = process.env.MONGO_URI?.trim();

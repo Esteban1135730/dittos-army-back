@@ -11,7 +11,9 @@ export class CardtraderReceiptSessionRepository {
   constructor(private readonly ownerModels: OwnerModelsService) {}
 
   private get sessionModel(): Model<CardtraderReceiptSessionDocument> {
-    return this.ownerModels.getModel<CardtraderReceiptSessionDocument>(CardtraderReceiptSession.name);
+    return this.ownerModels.getModel<CardtraderReceiptSessionDocument>(
+      CardtraderReceiptSession.name,
+    );
   }
 
   async create(data: {

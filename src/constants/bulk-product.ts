@@ -70,9 +70,7 @@ export function isBulkCardId(cardId: string | null | undefined): boolean {
  * ganancia = 0 en stock, reservas, ventas y métricas.
  * Domicilio sí tiene 100% de ganancia (costo 0).
  */
-export function isZeroProfitCardId(
-  cardId: string | null | undefined,
-): boolean {
+export function isZeroProfitCardId(cardId: string | null | undefined): boolean {
   return String(cardId ?? '').trim() === ENVIO_CARD_ID;
 }
 

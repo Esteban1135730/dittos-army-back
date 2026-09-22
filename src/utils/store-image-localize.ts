@@ -1,4 +1,12 @@
-import { copyFile, mkdir, readdir, readFile, rmdir, unlink, writeFile } from 'fs/promises';
+import {
+  copyFile,
+  mkdir,
+  readdir,
+  readFile,
+  rmdir,
+  unlink,
+  writeFile,
+} from 'fs/promises';
 import { existsSync } from 'fs';
 import * as path from 'path';
 
@@ -365,7 +373,9 @@ export function imageUrlsFromCatalogItems(items: unknown): string[] {
   return urls;
 }
 
-export async function readCatalogImageUrls(filePath: string): Promise<string[]> {
+export async function readCatalogImageUrls(
+  filePath: string,
+): Promise<string[]> {
   try {
     const raw = await readFile(filePath, 'utf8');
     return imageUrlsFromCatalogItems(JSON.parse(raw) as unknown);

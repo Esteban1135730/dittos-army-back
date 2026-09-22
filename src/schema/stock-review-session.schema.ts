@@ -2,8 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 import type { StockTag } from '../constants/stock-tags';
 
-export type StockReviewSessionDocument =
-  HydratedDocument<StockReviewSession>;
+export type StockReviewSessionDocument = HydratedDocument<StockReviewSession>;
 
 export type StockReviewOutcome =
   | 'perdida'

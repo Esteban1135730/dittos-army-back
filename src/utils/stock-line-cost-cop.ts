@@ -19,10 +19,12 @@ export function amountToCop(amount: number, currency: string): number {
  * `(shipment / cards_in_shipmet) + unity_cost` → FX a COP.
  * Usa `cards_in_shipmet || 1` para evitar división por cero.
  */
-export function stockLineCostCop(stock: Pick<
-  Stock,
-  'shipment' | 'unity_cost' | 'cards_in_shipmet' | 'currency'
->): number {
+export function stockLineCostCop(
+  stock: Pick<
+    Stock,
+    'shipment' | 'unity_cost' | 'cards_in_shipmet' | 'currency'
+  >,
+): number {
   const cardsInShipment = stock.cards_in_shipmet || 1;
   const unitCost =
     (stock.shipment ?? 0) / cardsInShipment + (stock.unity_cost ?? 0);

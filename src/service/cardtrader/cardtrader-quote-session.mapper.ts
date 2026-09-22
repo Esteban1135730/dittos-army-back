@@ -104,7 +104,9 @@ function normalizeResolve(
     );
   }
   const candidates = Array.isArray(raw?.candidates)
-    ? raw.candidates.map(asCandidate).filter((c): c is QuoteSessionBlueprintRef => !!c)
+    ? raw.candidates
+        .map(asCandidate)
+        .filter((c): c is QuoteSessionBlueprintRef => !!c)
     : [];
   return {
     status,
@@ -180,15 +182,21 @@ export function buildQuoteSessionLines(
 export function parseRawPaste(raw: unknown): string {
   const paste = String(raw ?? '');
   if (paste.length < 1 || paste.length > 20_000) {
-    throw new BadRequestException('raw_paste debe tener entre 1 y 20000 caracteres');
+    throw new BadRequestException(
+      'raw_paste debe tener entre 1 y 20000 caracteres',
+    );
   }
   return paste;
 }
 
-export function parsePickBlueprint(body: QuoteSessionPickInput): QuoteSessionBlueprintRef {
+export function parsePickBlueprint(
+  body: QuoteSessionPickInput,
+): QuoteSessionBlueprintRef {
   const hit = asCandidate(body);
   if (!hit) {
-    throw new BadRequestException('blueprint_id y expansion_id son obligatorios');
+    throw new BadRequestException(
+      'blueprint_id y expansion_id son obligatorios',
+    );
   }
   return hit;
 }

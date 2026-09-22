@@ -84,7 +84,11 @@ export class EnvioGeocodeService {
         status?: string;
         results?: GoogleGeocodeResult[];
       };
-      if (body.status && body.status !== 'OK' && body.status !== 'ZERO_RESULTS') {
+      if (
+        body.status &&
+        body.status !== 'OK' &&
+        body.status !== 'ZERO_RESULTS'
+      ) {
         return null;
       }
       const results = Array.isArray(body.results) ? body.results : [];
@@ -120,7 +124,10 @@ export class EnvioGeocodeService {
         status?: string;
         results?: GoogleGeocodeResult[];
       };
-      if (body.status === 'REQUEST_DENIED' || body.status === 'INVALID_REQUEST') {
+      if (
+        body.status === 'REQUEST_DENIED' ||
+        body.status === 'INVALID_REQUEST'
+      ) {
         return null;
       }
       const results = Array.isArray(body.results) ? body.results : [];

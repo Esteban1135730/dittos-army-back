@@ -11,7 +11,9 @@ export class IncomingBatchItemRepository {
   constructor(private readonly ownerModels: OwnerModelsService) {}
 
   private get itemModel(): Model<IncomingBatchItemDocument> {
-    return this.ownerModels.getModel<IncomingBatchItemDocument>(IncomingBatchItem.name);
+    return this.ownerModels.getModel<IncomingBatchItemDocument>(
+      IncomingBatchItem.name,
+    );
   }
 
   async createMany(items: Partial<IncomingBatchItem>[]): Promise<any[]> {

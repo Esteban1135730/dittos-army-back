@@ -20,7 +20,7 @@ import {
 import { CardtraderSentUnit } from 'src/schema/cardtrader-sent-unit.schema';
 import { CardTraderService } from 'src/service/cardtrader/cardtrader.service';
 import { CardTraderTcgdexResolveService } from 'src/service/cardtrader/cardtrader-tcgdex-resolve.service';
-import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
+import { TCGDexService } from 'src/pokemon';
 import {
   blueprintIdFromTemporaryCardId,
   buildNovedadTcgdexResolveInput,

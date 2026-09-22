@@ -45,7 +45,10 @@ describe('cardtrader-quote-session.mapper', () => {
       blueprint_id: 99,
       expansion_id: 1577,
     });
-    expect(lines[0].resolve).toMatchObject({ status: 'matched', blueprint_id: 99 });
+    expect(lines[0].resolve).toMatchObject({
+      status: 'matched',
+      blueprint_id: 99,
+    });
   });
 
   it('400 si 0 o 101 líneas, o resolve.status inválido', () => {

@@ -32,7 +32,11 @@ import {
 } from 'src/owner/stock-owner';
 
 function reservaQty(quantity: number | undefined): number {
-  if (typeof quantity === 'number' && Number.isInteger(quantity) && quantity >= 1) {
+  if (
+    typeof quantity === 'number' &&
+    Number.isInteger(quantity) &&
+    quantity >= 1
+  ) {
     return quantity;
   }
   return 1;
@@ -108,7 +112,11 @@ export class ReservaController {
     body: {
       client_id?: string;
       message?: string;
-      lines?: { index: number; rareza?: string | null; pvp_cop?: number | null }[];
+      lines?: {
+        index: number;
+        rareza?: string | null;
+        pvp_cop?: number | null;
+      }[];
     },
   ) {
     const client_id = body?.client_id?.trim();
@@ -390,7 +398,10 @@ export class ReservaController {
       this.stockRepository.findById(stockId),
     );
     const reservaId = String((reserva as { _id?: unknown })._id ?? '');
-    if (stock && isQuantityKind((stock as { product_kind?: string }).product_kind)) {
+    if (
+      stock &&
+      isQuantityKind((stock as { product_kind?: string }).product_kind)
+    ) {
       const held = reservaQty(reserva.quantity);
       await withStockOwner(stockOwner, () =>
         this.stockRepository.incrementQuantityAtomic(stockId, held),

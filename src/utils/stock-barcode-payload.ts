@@ -24,7 +24,7 @@ function loosePrefixRe(prefix: string): RegExp {
   const body = prefix.replace(/:$/, '');
   const withHyphenClass = body.replace(/-/g, '<<HYPHEN>>');
   const escaped = withHyphenClass.replace(/[\\^$*+?.()|[\]{}]/g, '\\$&');
-  const pattern = escaped.replace(/<<HYPHEN>>/g, '[-_\'/ ]?');
+  const pattern = escaped.replace(/<<HYPHEN>>/g, "[-_'/ ]?");
   return new RegExp(`${pattern}[:\\u00D1;>]?([a-f0-9]{24})`, 'i');
 }
 
@@ -62,8 +62,7 @@ export function parseStockQrPayloadMulti(raw: string): ParsedStockQr | null {
   }
 
   for (const entry of PREFIX_ENTRIES) {
-    const loose =
-      entry.loose.exec(trimmed) ?? entry.loose.exec(normalized);
+    const loose = entry.loose.exec(trimmed) ?? entry.loose.exec(normalized);
     if (loose?.[1] && isValidObjectId(loose[1])) {
       return {
         stockId: loose[1],

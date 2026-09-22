@@ -43,7 +43,7 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(byId.tcgdex_card_id).toBe('pl4-35');
   });
 
-  it('resuelve Team Magma\'s Groudon Celebrations vía blueprint → cel25cc-CC011', async () => {
+  it("resuelve Team Magma's Groudon Celebrations vía blueprint → cel25cc-CC011", async () => {
     const hit = await service.resolveTcgdexCardId({
       expansionName: 'Celebrations',
       collectorNumber: '009',
@@ -191,9 +191,7 @@ describe('CardTraderTcgdexResolveService', () => {
         return undefined;
       }),
     };
-    const withProbe = new CardTraderTcgdexResolveService(
-      tcg as never,
-    );
+    const withProbe = new CardTraderTcgdexResolveService(tcg as never);
 
     const mimikyu = await withProbe.resolveTcgdexCardId({
       expansionName: 'MEGA Dream ex',

@@ -109,7 +109,9 @@ export class ReservaRepository {
     const doc = await this.reservaModel.findById(id).exec();
     if (!doc) return null;
     const current =
-      typeof doc.quantity === 'number' && Number.isInteger(doc.quantity) && doc.quantity >= 1
+      typeof doc.quantity === 'number' &&
+      Number.isInteger(doc.quantity) &&
+      doc.quantity >= 1
         ? doc.quantity
         : 1;
     return this.reservaModel
@@ -140,11 +142,7 @@ export class ReservaRepository {
   ): Promise<Reserva | null> {
     if (!id?.trim()) return null;
     return this.reservaModel
-      .findByIdAndUpdate(
-        id,
-        { ...data, updated_at: new Date() },
-        { new: true },
-      )
+      .findByIdAndUpdate(id, { ...data, updated_at: new Date() }, { new: true })
       .exec();
   }
 

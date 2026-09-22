@@ -103,8 +103,10 @@ export class PedidoRepository {
         $set[key] = value;
       }
     }
-    const update: { $set: Record<string, unknown>; $unset?: Record<string, 1> } =
-      { $set };
+    const update: {
+      $set: Record<string, unknown>;
+      $unset?: Record<string, 1>;
+    } = { $set };
     if (Object.keys($unset).length > 0) {
       update.$unset = $unset;
     }

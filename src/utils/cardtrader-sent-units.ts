@@ -53,18 +53,26 @@ function moneyToUnits(money: CtOrderMoney | undefined): number {
   return money.cents / 100;
 }
 
-function readCtLanguage(properties: Record<string, unknown> | undefined): string {
+function readCtLanguage(
+  properties: Record<string, unknown> | undefined,
+): string {
   const lang = properties?.pokemon_language ?? properties?.language;
   return typeof lang === 'string' ? lang.trim() : '';
 }
 
 function inferRarezaFromCtExpansion(expansion: string): string | null {
   const e = expansion.toLowerCase();
-  if (e.includes('master ball') || e.includes('masterball')) return 'masterball';
-  if (e.includes('poke ball') || e.includes('pokeball') || e.includes('poké ball')) {
+  if (e.includes('master ball') || e.includes('masterball'))
+    return 'masterball';
+  if (
+    e.includes('poke ball') ||
+    e.includes('pokeball') ||
+    e.includes('poké ball')
+  ) {
     return 'pokeball';
   }
-  if (e.includes('reverse holo') || e.includes('reverse holofoil')) return 'foil';
+  if (e.includes('reverse holo') || e.includes('reverse holofoil'))
+    return 'foil';
   return null;
 }
 
@@ -73,7 +81,8 @@ function isActiveTruthy(value: unknown): boolean {
   if (value === false || value == null) return false;
   if (typeof value === 'string') {
     const s = value.trim().toLowerCase();
-    if (!s || s === 'false' || s === 'no' || s === 'none' || s === '0') return false;
+    if (!s || s === 'false' || s === 'no' || s === 'none' || s === '0')
+      return false;
     return true;
   }
   if (typeof value === 'number') return value !== 0;
@@ -109,7 +118,10 @@ export function inferSentUnitRareza(
   expansion: string,
   properties?: Record<string, unknown>,
 ): string | null {
-  return inferRarezaFromCtProperties(properties) ?? inferRarezaFromCtExpansion(expansion);
+  return (
+    inferRarezaFromCtProperties(properties) ??
+    inferRarezaFromCtExpansion(expansion)
+  );
 }
 
 function readCollectorNumber(

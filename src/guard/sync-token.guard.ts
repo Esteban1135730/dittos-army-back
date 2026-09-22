@@ -6,9 +6,7 @@ import {
 } from '@nestjs/common';
 import { timingSafeEqual } from 'crypto';
 
-function readHeader(
-  value: string | string[] | undefined,
-): string {
+function readHeader(value: string | string[] | undefined): string {
   if (Array.isArray(value)) return String(value[0] ?? '');
   return String(value ?? '');
 }
@@ -45,7 +43,10 @@ export class SyncTokenGuard implements CanActivate {
       headers?: Record<string, string | string[] | undefined>;
     }>();
     const path = (request.path ?? request.url ?? '').split('?')[0];
-    if (request.method === 'GET' && (path === '/health' || path.endsWith('/health'))) {
+    if (
+      request.method === 'GET' &&
+      (path === '/health' || path.endsWith('/health'))
+    ) {
       return true;
     }
 

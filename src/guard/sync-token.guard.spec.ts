@@ -1,8 +1,5 @@
 import { UnauthorizedException } from '@nestjs/common';
-import {
-  SyncTokenGuard,
-  timingSafeEqualToken,
-} from './sync-token.guard';
+import { SyncTokenGuard, timingSafeEqualToken } from './sync-token.guard';
 
 function httpContext(token?: string, path = '/stock', method = 'GET') {
   return {

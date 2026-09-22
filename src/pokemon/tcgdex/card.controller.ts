@@ -1,8 +1,8 @@
 import { Controller, Get, Param } from '@nestjs/common';
-import { TCGDexService } from '../service/tcgdex/tcgdex.service';
-import { SetResumeDto } from '../service/tcgdex/dto/set.resume.dto';
-import { CardResumeDto } from '../service/tcgdex/dto/card.resume.dto';
-import { CardDto } from '../service/tcgdex/dto/card.dto';
+import { TCGDexService } from './tcgdex.service';
+import { SetResumeDto } from './dto/set.resume.dto';
+import { CardResumeDto } from './dto/card.resume.dto';
+import { CardDto } from './dto/card.dto';
 
 @Controller()
 export class CardController {

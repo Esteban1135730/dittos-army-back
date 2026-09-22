@@ -5,7 +5,10 @@ import type {
   TCGdexPricingVariant,
   TCGdexPricingCardmarket,
 } from './tcgdex-api.types';
-import { fallbackCardImageUrl, sanitizeCardImageUrl } from '../../../utils/card-image-url';
+import {
+  fallbackCardImageUrl,
+  sanitizeCardImageUrl,
+} from '../../../utils/card-image-url';
 
 /** Precio por variante en formato frontend (nombres cortos) */
 export type CardPriceVariant = {

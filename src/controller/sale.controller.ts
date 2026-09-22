@@ -14,18 +14,15 @@ import { ClientRepository } from 'src/repository/client.repository';
 import { StockRepository } from 'src/repository/stock.repository';
 import { ReservaRepository } from 'src/repository/reserva.repository';
 import { SaleDocument } from 'src/schema/sale.schema';
-import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
-import { StockCardImagesSyncService } from 'src/service/tcgdex/stock-card-images-sync.service';
+import { TCGDexService } from 'src/pokemon';
+import { StockCardImagesSyncService } from 'src/service/stock-card-images-sync.service';
 import { isQuantityKind, isZeroProfitCardId } from 'src/constants/bulk-product';
+import { type OwnerKey, isOwnerKey } from 'src/config/owners.config';
+import { getCurrentOwner, runWithOwnerAsync } from 'src/owner/owner-context';
 import {
-  type OwnerKey,
-  isOwnerKey,
-} from 'src/config/owners.config';
-import {
-  getCurrentOwner,
-  runWithOwnerAsync,
-} from 'src/owner/owner-context';
-import { enrichSaleCreatePayload, effectiveSaleCostCop } from 'src/utils/sale-cost-snapshot';
+  enrichSaleCreatePayload,
+  effectiveSaleCostCop,
+} from 'src/utils/sale-cost-snapshot';
 import { CardStockTagRepository } from 'src/repository/card-stock-tag.repository';
 import type { Stock } from 'src/schema/stock.schema';
 import { SaleBatchService } from 'src/service/sale-batch.service';

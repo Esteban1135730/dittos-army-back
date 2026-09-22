@@ -76,7 +76,11 @@ describe('PedidoService multi-owner (044)', () => {
           return { _id: PABLO_STOCK, card_id: 'p-card', card_name: 'Pablo' };
         }
         if (owner === 'esteban' && id === ESTEBAN_STOCK) {
-          return { _id: ESTEBAN_STOCK, card_id: 'e-card', card_name: 'Esteban' };
+          return {
+            _id: ESTEBAN_STOCK,
+            card_id: 'e-card',
+            card_name: 'Esteban',
+          };
         }
         return null;
       }),

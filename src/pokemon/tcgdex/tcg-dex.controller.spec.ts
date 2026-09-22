@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { TcgDexController } from './tcg-dex.controller';
-import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
+import { TCGDexService } from './tcgdex.service';
 
 describe('TcgDexController locale support', () => {
   async function setup() {

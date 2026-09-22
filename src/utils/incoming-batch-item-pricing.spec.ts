@@ -19,7 +19,11 @@ describe('incoming-batch-item-pricing', () => {
 
   it('encuentra ítem legacy por nombre aproximado', () => {
     const item = findLegacyItemByCardName('Petrel', [
-      { card_name: 'Petrel del Team Rocket', unit_cost_cop: 2231, eur_unit_price: 0.89 },
+      {
+        card_name: 'Petrel del Team Rocket',
+        unit_cost_cop: 2231,
+        eur_unit_price: 0.89,
+      },
     ]);
     expect(item?.unit_cost_cop).toBe(2231);
   });

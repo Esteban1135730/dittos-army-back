@@ -64,7 +64,8 @@ export class CardtraderTransitLine {
   created_at: Date;
 }
 
-export const CardtraderTransitLineSchema =
-  SchemaFactory.createForClass(CardtraderTransitLine);
+export const CardtraderTransitLineSchema = SchemaFactory.createForClass(
+  CardtraderTransitLine,
+);
 
 CardtraderTransitLineSchema.index({ lot_id: 1 });

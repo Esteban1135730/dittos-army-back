@@ -4,7 +4,7 @@ import { StockScanService } from './stock-scan.service';
 import { StockRepository } from 'src/repository/stock.repository';
 import { PvpRepository } from 'src/repository/pvp.repository';
 import { CardStockTagRepository } from 'src/repository/card-stock-tag.repository';
-import { TCGDexService } from 'src/service/tcgdex/tcgdex.service';
+import { TCGDexService } from 'src/pokemon';
 
 const validId = '507f1f77bcf86cd799439011';
 const otherId = '507f1f77bcf86cd799439012';
@@ -384,9 +384,7 @@ describe('StockScanService', () => {
       sold?: unknown;
     }) {
       const stockRepository = {
-        findById: jest
-          .fn()
-          .mockResolvedValue(overrides.sold ?? soldLine),
+        findById: jest.fn().mockResolvedValue(overrides.sold ?? soldLine),
         findByCardIdsInStates: jest
           .fn()
           .mockResolvedValue(overrides.candidates ?? []),

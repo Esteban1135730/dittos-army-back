@@ -1,5 +1,5 @@
 import { Injectable, Optional } from '@nestjs/common';
-import { TCGDexService } from '../tcgdex/tcgdex.service';
+import { TCGDexService } from '../../pokemon';
 import {
   expansionLabel,
   formatLocalIdForLocale,
@@ -8,16 +8,17 @@ import {
   adjustSetIdForCatalog,
   normalizeMangledAsiaSetId,
   remapSetIdForGallerySubset,
+  remap30thCelebrationCard,
   resolveKnownCardTraderPrint,
   tcgdexLocalIdWithBlueprintCollision,
   resolveSetFromLocaleAliases,
   resolveSetFromLocaleMap,
-} from '../../utils/tcgdex-set-resolve';
+} from '../../pokemon';
 import {
   loadTcgdexSetResolveIndex,
   type SetResolveMeta,
   type TcgdexSetResolveIndex,
-} from '../../utils/tcgdex-homolog-loader';
+} from '../../pokemon';
 
 export type TcgdexResolveResult = {
   tcgdex_card_id: string | null;
@@ -175,11 +176,16 @@ export class CardTraderTcgdexResolveService {
 
     const locale =
       this.index.setLocaleById.get(set.tcgdex_set_id) ?? set.locale;
-    const localId = formatLocalIdForLocale(
+    const formattedLocalId = formatLocalIdForLocale(
       args.collectorNumber?.trim() || undefined,
       locale,
       set.tcgdex_set_id,
     );
+    const celebration = remap30thCelebrationCard(
+      set.tcgdex_set_id,
+      formattedLocalId,
+    );
+    const localId = celebration.localId;
     if (!localId) {
       return {
         tcgdex_card_id: null,
@@ -189,7 +195,10 @@ export class CardTraderTcgdexResolveService {
       };
     }
 
-    const tcgdex_set_id = remapSetIdForGallerySubset(set.tcgdex_set_id, localId);
+    const tcgdex_set_id = remapSetIdForGallerySubset(
+      celebration.setId,
+      localId,
+    );
     const collisionLocalId = tcgdexLocalIdWithBlueprintCollision(
       localId,
       args.blueprint_id,
