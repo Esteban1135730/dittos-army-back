@@ -173,6 +173,7 @@ import {
 } from './schema/cardtrader-quote-session.schema';
 import { CardtraderQuoteSessionRepository } from './repository/cardtrader-quote-session.repository';
 import { CardTraderQuoteSessionService } from './service/cardtrader/cardtrader-quote-session.service';
+import { CardTraderYugiohSearchService } from './service/cardtrader/cardtrader-yugioh-search.service';
 import { PedidoRepository } from './repository/pedido.repository';
 import { PedidoAbonoRepository } from './repository/pedido-abono.repository';
 import { PedidoService } from './service/pedido.service';
@@ -304,6 +305,7 @@ const MONGOOSE_FEATURE_MODELS = [
     EnvioGeocodeService,
     CardtraderQuoteSessionRepository,
     CardTraderQuoteSessionService,
+    CardTraderYugiohSearchService,
   ],
   imports: [
     MongooseModule.forRootAsync({

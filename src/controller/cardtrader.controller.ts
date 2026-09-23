@@ -21,6 +21,7 @@ import {
   type QuoteLineInput,
 } from 'src/service/cardtrader/cardtrader-quote-resolve.service';
 import { CardTraderQuoteSessionService } from 'src/service/cardtrader/cardtrader-quote-session.service';
+import { CardTraderYugiohSearchService } from 'src/service/cardtrader/cardtrader-yugioh-search.service';
 import { RequireFeature } from 'src/owner/feature-acl.guard';
 import {
   CARDTRADER_POKEMON_GAME_ID,
@@ -54,6 +55,7 @@ export class CardTraderController {
     private readonly tcgdxResolve: CardTraderTcgdexResolveService,
     private readonly quoteResolve: CardTraderQuoteResolveService,
     private readonly quoteSessions: CardTraderQuoteSessionService,
+    private readonly yugiohSearch: CardTraderYugiohSearchService,
   ) {}
 
   @Get('expansions')
@@ -113,6 +115,9 @@ export class CardTraderController {
     }
     if (game === CARDTRADER_POKEMON_GAME_ID) {
       return this.quoteResolve.searchBlueprintsByName(query);
+    }
+    if (game === CARDTRADER_YUGIOH_GAME_ID) {
+      return this.yugiohSearch.searchBlueprintsByName(query);
     }
     return this.cardTrader.searchBlueprintsByName(query, game);
   }
@@ -266,6 +271,7 @@ export class CardTraderController {
     @Query('expansion') expansion?: string,
     @Query('expansion_id') expansionId?: string,
     @Query('collector_number') collectorNumber?: string,
+    @Query('name') cardName?: string,
     @Query('language') language?: string,
     @Query('blueprint_id') blueprintId?: string,
   ): Promise<unknown> {
@@ -291,6 +297,7 @@ export class CardTraderController {
       expansionName: expName,
       expansionId: expId,
       collectorNumber: collectorNumber?.trim() || undefined,
+      cardName: cardName?.trim() || undefined,
       language: language?.trim() || undefined,
       blueprint_id: bpId,
     });
@@ -389,6 +396,7 @@ export class CardTraderController {
         expansion?: string;
         expansion_id?: number;
         collector_number?: string;
+        name?: string;
         language?: string;
         blueprint_id?: number;
       }>;
@@ -426,6 +434,7 @@ export class CardTraderController {
         expansionName: expName,
         expansionId: expId,
         collectorNumber: line?.collector_number?.trim() || undefined,
+        cardName: line?.name?.trim() || undefined,
         language: line?.language?.trim() || undefined,
         blueprint_id: bpId,
       };

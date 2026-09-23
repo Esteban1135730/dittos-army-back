@@ -1,3 +1,4 @@
+import { officialPokemonComCardImageUrl } from '../../utils/card-image-url';
 import type { CardDto } from './dto/card.dto';
 import type { CardResumeDto } from './dto/card.resume.dto';
 
@@ -178,6 +179,55 @@ export function celebrationEnergiesMatchingName(
   }));
 }
 
+const ENERGY_TYPE_TOKENS: Array<{ localId: string; tokens: string[] }> = [
+  { localId: '009', tokens: ['grass', 'planta', 'plante', 'erba', 'grama', 'pflanze'] },
+  { localId: '010', tokens: ['fire', 'fuego', 'feu', 'fuoco', 'fogo', 'feuer'] },
+  { localId: '011', tokens: ['water', 'agua', 'eau', 'acqua', 'wasser'] },
+  { localId: '012', tokens: ['lightning', 'electric', 'rayo', 'electrik', 'elektro', 'lampo', 'raios'] },
+  { localId: '013', tokens: ['psychic', 'psiquica', 'psico', 'psycho'] },
+  { localId: '014', tokens: ['fighting', 'lucha', 'combat', 'lotta', 'kampf'] },
+  { localId: '015', tokens: ['darkness', 'dark', 'oscura', 'oscurita', 'obscur', 'escuridao', 'finsternis'] },
+  { localId: '016', tokens: ['metal', 'metalica', 'metallo', 'metall'] },
+];
+
+function is30thCelebrationExpansion(setId: string | undefined, expansionName: string | undefined): boolean {
+  if ((setId ?? '').trim().toLowerCase() === '30th') return true;
+  const expansion = fold(expansionName ?? '');
+  if (!expansion.includes('30th celebration')) return false;
+  if (expansion.includes('classic') || expansion.includes('premium')) return false;
+  if (/(^|\s)jp($|\s)/.test(expansion)) return false;
+  return true;
+}
+
+function isEnergyName(name: string): boolean {
+  return (
+    name.includes('energy') ||
+    name.includes('energie') ||
+    name.includes('energia')
+  );
+}
+
+/**
+ * CardTrader no manda collector_number en las energías básicas foil de 30th Celebration.
+ * El nombre de la carta alcanza para asignar MEE 009–016.
+ */
+export function resolve30thCelebrationBasicEnergy(args: {
+  setId?: string;
+  expansionName?: string;
+  cardName?: string;
+}): string | null {
+  if (!is30thCelebrationExpansion(args.setId, args.expansionName)) return null;
+  const name = fold(args.cardName ?? '');
+  if (!isEnergyName(name)) return null;
+
+  for (const type of ENERGY_TYPE_TOKENS) {
+    if (type.tokens.some((token) => name.includes(token))) {
+      return `mee-${type.localId}`;
+    }
+  }
+  return null;
+}
+
 export function celebrationEnergyDetail(
   id: string,
   locale: string,
@@ -188,6 +238,7 @@ export function celebrationEnergyDetail(
 
   const spanish = locale.trim().toLowerCase() === 'es' || locale.trim().toLowerCase() === 'es-mx';
   const setName = spanish ? SET_NAME_ES : SET_NAME_EN;
+  const image = officialPokemonComCardImageUrl(SET_ID, def.localId) ?? '';
 
   return {
     id: cardId(def.localId),
@@ -200,7 +251,7 @@ export function celebrationEnergyDetail(
     legal: { standard: true, expanded: true },
     set: `${SET_ID}(${setName})`,
     setEnglishName: SET_NAME_EN,
-    image: '',
-    images: { small: '', large: '' },
+    image,
+    images: { small: image, large: image },
   };
 }

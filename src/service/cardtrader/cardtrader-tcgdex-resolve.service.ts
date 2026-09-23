@@ -1,5 +1,6 @@
 import { Injectable, Optional } from '@nestjs/common';
 import { TCGDexService } from '../../pokemon';
+import { resolve30thCelebrationBasicEnergy } from '../../pokemon/tcgdex/celebration-energies';
 import {
   expansionLabel,
   formatLocalIdForLocale,
@@ -146,6 +147,7 @@ export class CardTraderTcgdexResolveService {
     expansionName?: string;
     expansionId?: number;
     collectorNumber?: string;
+    cardName?: string;
     language?: string;
     blueprint_id?: number;
   }): Promise<TcgdexResolveResult> {
@@ -165,6 +167,21 @@ export class CardTraderTcgdexResolveService {
     }
 
     const set = this.findSet(args);
+    if (!args.collectorNumber?.trim()) {
+      const energyId = resolve30thCelebrationBasicEnergy({
+        setId: set?.tcgdex_set_id,
+        expansionName: args.expansionName,
+        cardName: args.cardName,
+      });
+      if (energyId) {
+        return {
+          tcgdex_card_id: energyId,
+          tcgdex_set_id: 'mee',
+          locale: 'en',
+          error: null,
+        };
+      }
+    }
     if (!set) {
       return {
         tcgdex_card_id: null,
@@ -238,6 +255,7 @@ export class CardTraderTcgdexResolveService {
       expansionName?: string;
       expansionId?: number;
       collectorNumber?: string;
+      cardName?: string;
       language?: string;
       blueprint_id?: number;
     }>,

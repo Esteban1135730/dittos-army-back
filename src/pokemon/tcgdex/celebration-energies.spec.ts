@@ -2,6 +2,7 @@ import {
   appendCelebrationEnergies,
   celebrationEnergyDetail,
   celebrationEnergiesMatchingName,
+  resolve30thCelebrationBasicEnergy,
 } from './celebration-energies';
 
 describe('celebration energies', () => {
@@ -57,6 +58,33 @@ describe('celebration energies', () => {
       'mee-016',
     ]);
     expect(celebrationEnergiesMatchingName('pikachu', 'en')).toEqual([]);
+  });
+
+  it('homologa energías de 30th Celebration sin número de colección', () => {
+    expect(
+      resolve30thCelebrationBasicEnergy({
+        expansionName: '30th Celebration',
+        cardName: 'Basic Darkness Energy',
+      }),
+    ).toBe('mee-015');
+    expect(
+      resolve30thCelebrationBasicEnergy({
+        setId: '30th',
+        cardName: 'Energía Básica Planta',
+      }),
+    ).toBe('mee-009');
+    expect(
+      resolve30thCelebrationBasicEnergy({
+        expansionName: '30th Classic Collection',
+        cardName: 'Basic Fire Energy',
+      }),
+    ).toBeNull();
+    expect(
+      resolve30thCelebrationBasicEnergy({
+        expansionName: '30th Celebration',
+        cardName: 'Pikachu',
+      }),
+    ).toBeNull();
   });
 
   it('devuelve el detalle para inventario', () => {

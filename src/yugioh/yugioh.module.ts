@@ -11,5 +11,6 @@ import { OwnerModelsService } from '../owner/owner-models.service';
 @Module({
   controllers: [YugiohController],
   providers: [YugiohCatalogService, YugiohStockService, OwnerModelsService],
+  exports: [YugiohCatalogService],
 })
 export class YugiohModule {}

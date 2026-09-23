@@ -7,6 +7,17 @@ describe('CardTraderTcgdexResolveService', () => {
     service = new CardTraderTcgdexResolveService();
   });
 
+  it('resuelve Basic Darkness Energy de 30th Celebration sin collector_number', async () => {
+    const hit = await service.resolveTcgdexCardId({
+      expansionName: '30th Celebration',
+      cardName: 'Basic Darkness Energy',
+      language: 'it',
+    });
+    expect(hit.tcgdex_card_id).toBe('mee-015');
+    expect(hit.tcgdex_set_id).toBe('mee');
+    expect(hit.error).toBeNull();
+  });
+
   it('resuelve Lost Origin #TG23 → swsh11.5tg-TG23', async () => {
     const byName = await service.resolveTcgdexCardId({
       expansionName: 'Lost Origin',

@@ -458,6 +458,7 @@ describe('CardtraderTransitLotService', () => {
       {
         _id: { toString: () => 'lot-1' },
         purchase_date: new Date('2026-07-01'),
+        owner: 'esteban',
       },
     ]);
     lineRepository.findByLotId.mockResolvedValue([
@@ -470,6 +471,8 @@ describe('CardtraderTransitLotService', () => {
         rareza: null,
         remaining_quantity: 1,
         unit_cost_cop: 100,
+        expansion: 'SV08',
+        collector_number: '057',
         created_at: new Date('2026-07-01'),
       },
       {
@@ -484,11 +487,55 @@ describe('CardtraderTransitLotService', () => {
         not_arrived_at: new Date('2026-07-29'),
         created_at: new Date('2026-07-02'),
       },
+      {
+        _id: { toString: () => 'c' },
+        card_id: 'x-3',
+        card_name: 'Ya recibida',
+        image_url: '',
+        language: 'en',
+        rareza: null,
+        remaining_quantity: 0,
+        unit_cost_cop: 50,
+        created_at: new Date('2026-07-03'),
+      },
     ]);
 
     const rows = await service.listOpenCatalogLines();
     expect(rows).toHaveLength(1);
     expect(rows[0].transit_line_id).toBe('a');
+    expect(rows[0].expansion).toBe('SV08');
+    expect(rows[0].collector_number).toBe('057');
+    expect(rows[0].owner).toBe('esteban');
+  });
+
+  it('listOpenCatalogLines usa owner default si el lote no tiene owner', async () => {
+    lotRepository.findOpenLots.mockResolvedValue([
+      {
+        _id: { toString: () => 'lot-2' },
+        purchase_date: new Date('2026-08-01'),
+      },
+    ]);
+    lineRepository.findByLotId.mockResolvedValue([
+      {
+        _id: { toString: () => 'd' },
+        card_id: 'y-1',
+        card_name: 'Default owner',
+        image_url: '',
+        language: 'jp',
+        rareza: 'reverse',
+        remaining_quantity: 2,
+        unit_cost_cop: 200,
+        expansion: null,
+        collector_number: null,
+        created_at: new Date('2026-08-01'),
+      },
+    ]);
+
+    const rows = await service.listOpenCatalogLines();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].expansion).toBeNull();
+    expect(rows[0].collector_number).toBeNull();
+    expect(rows[0].owner).toBe('pablo');
   });
 
   it('rechaza markNotArrived con body vacío', async () => {

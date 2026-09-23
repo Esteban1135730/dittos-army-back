@@ -317,6 +317,9 @@ export class CardtraderTransitLotService {
       unit_cost_cop: number;
       purchase_date: Date;
       created_at: Date;
+      expansion: string | null;
+      collector_number: string | null;
+      owner: OwnerKey;
     }>
   > {
     const lots = await this.lotRepository.findOpenLots();
@@ -325,6 +328,7 @@ export class CardtraderTransitLotService {
     const rows = await Promise.all(
       lots.map(async (lot) => {
         const lotId = lot._id.toString();
+        const owner = this.resolveLotOwner(lot.owner);
         const lines = await this.lineRepository.findByLotId(lotId);
         return lines
           .filter(
@@ -343,6 +347,9 @@ export class CardtraderTransitLotService {
             unit_cost_cop: line.unit_cost_cop,
             purchase_date: lot.purchase_date,
             created_at: line.created_at,
+            expansion: line.expansion ?? null,
+            collector_number: line.collector_number ?? null,
+            owner,
           }));
       }),
     );

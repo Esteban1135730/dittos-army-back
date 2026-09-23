@@ -5,6 +5,7 @@ import { CardTraderService } from 'src/service/cardtrader/cardtrader.service';
 import { CardTraderTcgdexResolveService } from 'src/service/cardtrader/cardtrader-tcgdex-resolve.service';
 import { CardTraderQuoteResolveService } from 'src/service/cardtrader/cardtrader-quote-resolve.service';
 import { CardTraderQuoteSessionService } from 'src/service/cardtrader/cardtrader-quote-session.service';
+import { CardTraderYugiohSearchService } from 'src/service/cardtrader/cardtrader-yugioh-search.service';
 
 describe('CardTraderController quote-lines/resolve', () => {
   async function setup() {
@@ -20,6 +21,7 @@ describe('CardTraderController quote-lines/resolve', () => {
         { provide: CardTraderTcgdexResolveService, useValue: {} },
         { provide: CardTraderQuoteResolveService, useValue: quoteResolve },
         { provide: CardTraderQuoteSessionService, useValue: {} },
+        { provide: CardTraderYugiohSearchService, useValue: {} },
       ],
     }).compile();
 
@@ -105,6 +107,7 @@ describe('CardTraderController blueprints/search', () => {
         { provide: CardTraderTcgdexResolveService, useValue: {} },
         { provide: CardTraderQuoteResolveService, useValue: quoteResolve },
         { provide: CardTraderQuoteSessionService, useValue: {} },
+        { provide: CardTraderYugiohSearchService, useValue: {} },
       ],
     }).compile();
     return {
@@ -137,11 +140,11 @@ describe('CardTraderController blueprints/search', () => {
     });
   });
 
-  it('Yu-Gi-Oh usa búsqueda nativa CardTrader', async () => {
+  it('Yu-Gi-Oh usa búsqueda YGOPRODeck + CardTrader', async () => {
     const quoteResolve = {
       searchBlueprintsByName: jest.fn(),
     };
-    const cardTrader = {
+    const yugiohSearch = {
       searchBlueprintsByName: jest.fn().mockResolvedValue({
         items: [{ blueprint_id: 9, expansion_id: 8, name: 'Dark Magician' }],
       }),
@@ -149,17 +152,17 @@ describe('CardTraderController blueprints/search', () => {
     const moduleRef = await Test.createTestingModule({
       controllers: [CardTraderController],
       providers: [
-        { provide: CardTraderService, useValue: cardTrader },
+        { provide: CardTraderService, useValue: {} },
         { provide: CardTraderTcgdexResolveService, useValue: {} },
         { provide: CardTraderQuoteResolveService, useValue: quoteResolve },
         { provide: CardTraderQuoteSessionService, useValue: {} },
+        { provide: CardTraderYugiohSearchService, useValue: yugiohSearch },
       ],
     }).compile();
     const controller = moduleRef.get(CardTraderController);
     const out = await controller.searchBlueprints('Dark Magician', '4');
-    expect(cardTrader.searchBlueprintsByName).toHaveBeenCalledWith(
+    expect(yugiohSearch.searchBlueprintsByName).toHaveBeenCalledWith(
       'Dark Magician',
-      4,
     );
     expect(quoteResolve.searchBlueprintsByName).not.toHaveBeenCalled();
     expect(out).toEqual({
@@ -180,6 +183,7 @@ describe('CardTraderController quote-sessions', () => {
         { provide: CardTraderTcgdexResolveService, useValue: {} },
         { provide: CardTraderQuoteResolveService, useValue: {} },
         { provide: CardTraderQuoteSessionService, useValue: quoteSessions },
+        { provide: CardTraderYugiohSearchService, useValue: {} },
       ],
     }).compile();
     const controller = moduleRef.get(CardTraderController);
