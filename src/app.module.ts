@@ -7,6 +7,12 @@ import {
 import { APP_GUARD } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ESTEBAN_CONNECTION_NAME, OWNERS_CONFIG } from './config/owners.config';
+import {
+  YUGIOH_ESTEBAN_CONNECTION,
+  YUGIOH_ESTEBAN_DB,
+  YUGIOH_PABLO_CONNECTION,
+  YUGIOH_PABLO_DB,
+} from './yugioh/yugioh.constants';
 import { OwnerMiddleware } from './owner/owner.middleware';
 import { OwnerModelsService } from './owner/owner-models.service';
 import { FeatureAclGuard } from './owner/feature-acl.guard';
@@ -49,6 +55,7 @@ import { IncomingBatchItemRepository } from './repository/incoming-batch-item.re
 import { IncomingRoundRepository } from './repository/incoming-round.repository';
 import { IncomingRoundItemRepository } from './repository/incoming-round-item.repository';
 import { PokemonModule } from './pokemon';
+import { YugiohModule } from './yugioh/yugioh.module';
 import { StockCardImagesSyncService } from './service/stock-card-images-sync.service';
 import { StoreInventoryService } from './service/store-inventory.service';
 import { OpenedSealedStockService } from './service/opened-sealed-stock.service';
@@ -299,7 +306,6 @@ const MONGOOSE_FEATURE_MODELS = [
     CardTraderQuoteSessionService,
   ],
   imports: [
-    PokemonModule,
     MongooseModule.forRootAsync({
       useFactory: () => {
         const uri = process.env.MONGO_URI?.trim();
@@ -329,8 +335,39 @@ const MONGOOSE_FEATURE_MODELS = [
         };
       },
     }),
+    MongooseModule.forRootAsync({
+      connectionName: YUGIOH_PABLO_CONNECTION,
+      useFactory: () => {
+        const uri = process.env.MONGO_URI?.trim();
+        if (!uri) {
+          throw new Error(
+            'MONGO_URI is required (set in .env). No embedded Mongo URI fallback.',
+          );
+        }
+        return { uri, dbName: YUGIOH_PABLO_DB };
+      },
+    }),
+    MongooseModule.forRootAsync({
+      connectionName: YUGIOH_ESTEBAN_CONNECTION,
+      useFactory: () => {
+        const uri = process.env.MONGO_URI?.trim();
+        if (!uri) {
+          throw new Error(
+            'MONGO_URI is required (set in .env). No embedded Mongo URI fallback.',
+          );
+        }
+        return { uri, dbName: YUGIOH_ESTEBAN_DB };
+      },
+    }),
     MongooseModule.forFeature(MONGOOSE_FEATURE_MODELS),
     MongooseModule.forFeature(MONGOOSE_FEATURE_MODELS, ESTEBAN_CONNECTION_NAME),
+    MongooseModule.forFeature(MONGOOSE_FEATURE_MODELS, YUGIOH_PABLO_CONNECTION),
+    MongooseModule.forFeature(
+      MONGOOSE_FEATURE_MODELS,
+      YUGIOH_ESTEBAN_CONNECTION,
+    ),
+    PokemonModule,
+    YugiohModule,
   ],
 })
 export class AppModule implements NestModule {

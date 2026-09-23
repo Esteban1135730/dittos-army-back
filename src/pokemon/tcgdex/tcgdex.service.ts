@@ -3,6 +3,12 @@ import TCGdex, { CardResume, Query } from '@tcgdex/sdk';
 import _ from 'lodash';
 import { mapSetResume, SetResumeDto } from './dto/set.resume.dto';
 import { CardDto, mapCardFromApi } from './dto/card.dto';
+import {
+  appendCelebrationEnergies,
+  celebrationEnergiesMatchingName,
+  celebrationEnergyDetail,
+  isCelebrationEnergySet,
+} from './celebration-energies';
 import { isPublicRemoteImageUrl } from '../../utils/store-image-localize';
 import {
   officialPokemonComCardImageUrl,
@@ -201,7 +207,7 @@ export class TCGDexService {
       return cached;
     }
     const response = await this.getClient(normalizedLocale).set.get(setId);
-    const cards = response?.cards.map((card) => {
+    const remoteCards = response?.cards.map((card) => {
       const dto = mapCardResume(card);
       const remoteImageBase =
         typeof (card as { image?: string }).image === 'string'
@@ -222,6 +228,10 @@ export class TCGDexService {
       );
       return { ...dto, image: urls.small };
     });
+    const cards =
+      remoteCards || isCelebrationEnergySet(setId)
+        ? appendCelebrationEnergies(setId, remoteCards ?? [], normalizedLocale)
+        : undefined;
     return this.setCached(cacheKey, cards, this.TTL_SET_CARDS_MS);
   }
 
@@ -260,6 +270,10 @@ export class TCGDexService {
       );
       return { ...dto, image: urls.small };
     });
+    const present = new Set(mapped.map((card) => card.id));
+    for (const extra of celebrationEnergiesMatchingName(cardName, normalizedLocale)) {
+      if (!present.has(extra.id)) mapped.push(extra);
+    }
     return this.setCached(cacheKey, mapped, this.TTL_CARD_SEARCH_MS);
   }
 
@@ -317,7 +331,7 @@ export class TCGDexService {
     try {
       const res = await fetch(url);
       if (!res.ok) {
-        return undefined;
+        return this.cacheCelebrationEnergy(cacheKey, id, normalizedLocale);
       }
       const raw = (await res.json()) as TCGdexCardApiResponse;
       if (!raw || typeof raw !== 'object' || !raw.name) {
@@ -356,8 +370,18 @@ export class TCGDexService {
         url,
         error: err instanceof Error ? err.message : String(err),
       });
-      return undefined;
+      return this.cacheCelebrationEnergy(cacheKey, id, normalizedLocale);
     }
+  }
+
+  private cacheCelebrationEnergy(
+    cacheKey: string,
+    id: string,
+    locale: TcgDexLocale,
+  ): CardDto | undefined {
+    const local = celebrationEnergyDetail(id, locale);
+    if (!local) return undefined;
+    return this.setCached(cacheKey, local, this.TTL_CARD_DETAIL_MS);
   }
 
   /**

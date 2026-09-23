@@ -13,7 +13,10 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   // Product API under /pokemon; health (Render) and static /card-images/ stay at root.
   app.setGlobalPrefix('pokemon', {
-    exclude: [{ path: 'health', method: RequestMethod.GET }],
+    exclude: [
+      { path: 'health', method: RequestMethod.GET },
+      { path: 'yugioh/*path', method: RequestMethod.ALL },
+    ],
   });
   app.useStaticAssets(imagesDir, { prefix: '/card-images/' });
 
@@ -32,6 +35,7 @@ async function bootstrap() {
       'Content-Type',
       'Authorization',
       'X-Owner',
+      'X-Tcg',
       'X-Sync-Token',
     ],
     credentials: true,

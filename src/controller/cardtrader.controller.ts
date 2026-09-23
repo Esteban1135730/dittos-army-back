@@ -22,6 +22,13 @@ import {
 } from 'src/service/cardtrader/cardtrader-quote-resolve.service';
 import { CardTraderQuoteSessionService } from 'src/service/cardtrader/cardtrader-quote-session.service';
 import { RequireFeature } from 'src/owner/feature-acl.guard';
+import {
+  CARDTRADER_POKEMON_GAME_ID,
+  CARDTRADER_YUGIOH_GAME_ID,
+  cardTraderGameIdForTcg,
+  isCardTraderGameId,
+} from 'src/constants/cardtrader-games';
+import { getCurrentTcg } from 'src/owner/tcg-context';
 
 const ORDER_STATES = new Set([
   'paid',
@@ -94,13 +101,20 @@ export class CardTraderController {
     if (query.length < 2 || query.length > 80) {
       throw new BadRequestException('q debe tener entre 2 y 80 caracteres');
     }
+    let game = cardTraderGameIdForTcg(getCurrentTcg());
     if (gameId !== undefined && gameId.trim() !== '') {
       const g = Number(gameId);
-      if (!Number.isInteger(g) || g !== 5) {
-        throw new BadRequestException('game_id debe ser 5 (Pokémon)');
+      if (!Number.isInteger(g) || !isCardTraderGameId(g)) {
+        throw new BadRequestException(
+          `game_id debe ser ${CARDTRADER_POKEMON_GAME_ID} (Pokémon) o ${CARDTRADER_YUGIOH_GAME_ID} (Yu-Gi-Oh)`,
+        );
       }
+      game = g;
     }
-    return this.quoteResolve.searchBlueprintsByName(query);
+    if (game === CARDTRADER_POKEMON_GAME_ID) {
+      return this.quoteResolve.searchBlueprintsByName(query);
+    }
+    return this.cardTrader.searchBlueprintsByName(query, game);
   }
 
   @Get('blueprints/item/:blueprintId')

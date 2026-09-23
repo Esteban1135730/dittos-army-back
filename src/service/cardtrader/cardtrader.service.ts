@@ -5,11 +5,17 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { getCurrentOwner } from 'src/owner/owner-context';
+import { getCurrentTcg } from 'src/owner/tcg-context';
 import type { OwnerKey } from 'src/config/owners.config';
+import {
+  CARDTRADER_POKEMON_GAME_ID,
+  cardTraderGameIdForTcg,
+  isCardTraderGameId,
+} from 'src/constants/cardtrader-games';
+import { readBlueprintImageUrl } from 'src/utils/novedad-card-resolve';
 
 const DEFAULT_BASE = 'https://api.cardtrader.com/api/v2';
 const REQUEST_TIMEOUT_MS = 25_000;
-const POKEMON_GAME_ID = 5;
 
 export type CardTraderAddress = {
   name: string;
@@ -196,22 +202,83 @@ export class CardTraderService {
   async getExpansions(
     _page?: number,
     _limit?: number,
-    _gameId?: number,
+    gameId?: number,
   ): Promise<unknown> {
-    // CardTrader no está aplicando consistentemente el filtro por query param game_id.
-    // Traemos todas las expansiones y filtramos manualmente solo Pokémon (game_id = 5).
+    // CardTrader no filtra bien por query param; traemos todo y filtramos aquí.
+    const targetGameId =
+      gameId != null && Number.isInteger(gameId) && gameId >= 1
+        ? gameId
+        : cardTraderGameIdForTcg(getCurrentTcg());
     const raw = await this.requestJson('GET', 'expansions');
     if (!Array.isArray(raw)) {
       return [];
     }
 
-    const pokemonExpansions = raw.filter((item) => {
+    return raw.filter((item) => {
       if (!item || typeof item !== 'object') return false;
       const value = (item as { game_id?: unknown }).game_id;
-      return typeof value === 'number' && value === POKEMON_GAME_ID;
+      return typeof value === 'number' && value === targetGameId;
     });
+  }
 
-    return pokemonExpansions;
+  /**
+   * Búsqueda nativa CardTrader por nombre (Yu-Gi-Oh y otros TCG sin TCGdex).
+   */
+  async searchBlueprintsByName(
+    q: string,
+    gameId: number = CARDTRADER_POKEMON_GAME_ID,
+  ): Promise<{
+    items: Array<{
+      blueprint_id: number;
+      expansion_id: number;
+      expansion_name?: string;
+      name?: string;
+      collector_number?: string;
+      image_url?: string | null;
+    }>;
+  }> {
+    const query = q.trim();
+    if (!query) return { items: [] };
+    const raw = await this.requestJson('GET', 'blueprints', {
+      query: { name: query, game_id: String(gameId) },
+    });
+    if (!Array.isArray(raw)) return { items: [] };
+
+    const items: Array<{
+      blueprint_id: number;
+      expansion_id: number;
+      expansion_name?: string;
+      name?: string;
+      collector_number?: string;
+      image_url?: string | null;
+    }> = [];
+
+    for (const row of raw) {
+      if (!row || typeof row !== 'object') continue;
+      const bp = row as {
+        id?: unknown;
+        expansion_id?: unknown;
+        name?: unknown;
+        version?: unknown;
+        image?: unknown;
+        image_url?: unknown;
+      };
+      if (typeof bp.id !== 'number' || typeof bp.expansion_id !== 'number') {
+        continue;
+      }
+      items.push({
+        blueprint_id: bp.id,
+        expansion_id: bp.expansion_id,
+        name: typeof bp.name === 'string' ? bp.name : undefined,
+        collector_number:
+          typeof bp.version === 'string' && bp.version.trim()
+            ? bp.version.trim()
+            : undefined,
+        image_url: readBlueprintImageUrl(bp as never) || null,
+      });
+      if (items.length >= 40) break;
+    }
+    return { items };
   }
 
   /** Descarga imagen de dominios CardTrader para el panel (PDF / caché local). */

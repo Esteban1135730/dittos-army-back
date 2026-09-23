@@ -11,8 +11,8 @@
 
 export type OwnerKey = 'pablo' | 'esteban';
 
-/** TCG slug for path and DB naming (only `pokemon` wired today). */
-export type TcgKey = 'pokemon';
+/** TCG slug for path and DB naming (`pokemon` legacy DBs; `yugioh` → `{tcg}-{owner}`). */
+export type TcgKey = 'pokemon' | 'yugioh';
 
 export type FeatureKey =
   | 'inicio'

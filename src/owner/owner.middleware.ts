@@ -5,10 +5,11 @@ import {
 } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { resolveOwnerFromRequest, runWithOwner } from './owner-context';
+import { resolveTcgFromRequest, runWithTcg } from './tcg-context';
 
 /**
- * Sets owner ALS for the request lifetime from X-Owner / ?owner=.
- * Registered globally in AppModule.
+ * Sets owner + TCG ALS for the request lifetime.
+ * Owner: X-Owner / ?owner=. TCG: X-Tcg / ?tcg= / path `/yugioh`.
  */
 @Injectable()
 export class OwnerMiddleware implements NestMiddleware {
@@ -25,6 +26,21 @@ export class OwnerMiddleware implements NestMiddleware {
       );
       return;
     }
-    runWithOwner(owner, () => next());
+    const tcg = resolveTcgFromRequest({
+      header: req.headers['x-tcg'],
+      query: req.query?.tcg as string | string[] | undefined,
+      path: req.path,
+    });
+    if (tcg == null) {
+      next(
+        new BadRequestException(
+          'TCG inválido. Use X-Tcg o ?tcg= con valor pokemon | yugioh',
+        ),
+      );
+      return;
+    }
+    runWithOwner(owner, () => {
+      runWithTcg(tcg, () => next());
+    });
   }
 }

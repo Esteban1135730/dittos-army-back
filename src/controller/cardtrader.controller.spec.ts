@@ -121,7 +121,7 @@ describe('CardTraderController blueprints/search', () => {
     expect(quoteResolve.searchBlueprintsByName).not.toHaveBeenCalled();
   });
 
-  it('400 si game_id no es 5', async () => {
+  it('400 si game_id no es Pokémon ni Yu-Gi-Oh', async () => {
     const { controller } = await setup();
     await expect(
       controller.searchBlueprints('Pikachu', '1'),
@@ -134,6 +134,36 @@ describe('CardTraderController blueprints/search', () => {
     expect(quoteResolve.searchBlueprintsByName).toHaveBeenCalledWith('Pikachu');
     expect(out).toEqual({
       items: [{ blueprint_id: 1, expansion_id: 2, name: 'Pikachu' }],
+    });
+  });
+
+  it('Yu-Gi-Oh usa búsqueda nativa CardTrader', async () => {
+    const quoteResolve = {
+      searchBlueprintsByName: jest.fn(),
+    };
+    const cardTrader = {
+      searchBlueprintsByName: jest.fn().mockResolvedValue({
+        items: [{ blueprint_id: 9, expansion_id: 8, name: 'Dark Magician' }],
+      }),
+    };
+    const moduleRef = await Test.createTestingModule({
+      controllers: [CardTraderController],
+      providers: [
+        { provide: CardTraderService, useValue: cardTrader },
+        { provide: CardTraderTcgdexResolveService, useValue: {} },
+        { provide: CardTraderQuoteResolveService, useValue: quoteResolve },
+        { provide: CardTraderQuoteSessionService, useValue: {} },
+      ],
+    }).compile();
+    const controller = moduleRef.get(CardTraderController);
+    const out = await controller.searchBlueprints('Dark Magician', '4');
+    expect(cardTrader.searchBlueprintsByName).toHaveBeenCalledWith(
+      'Dark Magician',
+      4,
+    );
+    expect(quoteResolve.searchBlueprintsByName).not.toHaveBeenCalled();
+    expect(out).toEqual({
+      items: [{ blueprint_id: 9, expansion_id: 8, name: 'Dark Magician' }],
     });
   });
 });
