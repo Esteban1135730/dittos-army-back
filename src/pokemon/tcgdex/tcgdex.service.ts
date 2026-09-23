@@ -272,7 +272,9 @@ export class TCGDexService {
     });
     const present = new Set(mapped.map((card) => card.id));
     for (const extra of celebrationEnergiesMatchingName(cardName, normalizedLocale)) {
-      if (!present.has(extra.id)) mapped.push(extra);
+      if (!present.has(extra.id)) {
+        mapped.push({ ...extra, image: extra.image ?? '' });
+      }
     }
     return this.setCached(cacheKey, mapped, this.TTL_CARD_SEARCH_MS);
   }
