@@ -11,7 +11,7 @@ import { isSyntheticQuantityCardId } from '../constants/bulk-product';
 import { sanitizeCardImageUrl } from '../utils/card-image-url';
 import { TCGDexService } from '../pokemon';
 import { LocalCardImagesService } from '../pokemon';
-import { OWNERS_CONFIG, type OwnerKey } from '../config/owners.config';
+import { OWNERS_CONFIG, ownersForTcg, type OwnerKey } from '../config/owners.config';
 import { runWithOwnerAsync } from '../owner/owner-context';
 import {
   effectiveOperationalRarezaFromStock,
@@ -75,7 +75,11 @@ type PvpByCard = Map<string, PvpLike[]>;
 type PvpByOwner = Record<OwnerKey, PvpByCard>;
 
 function emptyPvpByOwner(): PvpByOwner {
-  return { pablo: new Map(), esteban: new Map() };
+  return {
+    pablo: new Map(),
+    esteban: new Map(),
+    tefa: new Map(),
+  };
 }
 
 function isStoreExportSellable(stock: {
@@ -152,7 +156,8 @@ export class StoreInventoryService {
   ) {}
 
   private ownerKeys(): OwnerKey[] {
-    return Object.keys(OWNERS_CONFIG.owners) as OwnerKey[];
+    // Tienda pública: solo stock Pokémon (Pablo / Esteban).
+    return ownersForTcg('pokemon').map((o) => o.key);
   }
 
   private async loadDemandCounts(): Promise<Map<string, number> | null> {

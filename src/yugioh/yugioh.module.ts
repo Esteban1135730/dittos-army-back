@@ -6,7 +6,7 @@ import { OwnerModelsService } from '../owner/owner-models.service';
 
 /**
  * Catálogo Yu-Gi-Oh (YGOPRODeck). El stock y el resto de colecciones viven en
- * `yugioh-{owner}` vía OwnerModelsService + X-Tcg (mismas schemas que Pokémon).
+ * `yugioh-tefa` vía OwnerModelsService + X-Tcg (mismas schemas que Pokémon).
  */
 @Module({
   controllers: [YugiohController],

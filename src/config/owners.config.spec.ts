@@ -5,6 +5,9 @@ import {
   OWNERS_CONFIG,
   getOwnerDefinition,
   databaseNameFor,
+  coerceOwnerForTcg,
+  defaultOwnerForTcg,
+  ownersForTcg,
 } from './owners.config';
 import {
   getCurrentOwner,
@@ -13,22 +16,22 @@ import {
 } from '../owner/owner-context';
 
 describe('owners.config', () => {
-  it('defaultOwner es pablo; tcg pokemon y bases físicas actuales', () => {
+  it('defaultOwner es pablo; Pokémon y Yu-Gi-Oh (Tefa) con bases correctas', () => {
     expect(OWNERS_CONFIG.defaultOwner).toBe('pablo');
     expect(getOwnerDefinition('pablo').tcg).toBe('pokemon');
     expect(getOwnerDefinition('esteban').tcg).toBe('pokemon');
+    expect(getOwnerDefinition('tefa').tcg).toBe('yugioh');
     expect(getOwnerDefinition('pablo').dbName).toBe('test');
     expect(getOwnerDefinition('esteban').dbName).toBe('esteban');
-    expect(getOwnerDefinition('pablo').legacyDbName).toBeUndefined();
-    expect(getOwnerDefinition('esteban').legacyDbName).toBeUndefined();
+    expect(getOwnerDefinition('tefa').dbName).toBe('yugioh-tefa');
     expect(getOwnerDefinition('pablo').stockQrPrefix).toBe('DA-STOCK:');
     expect(getOwnerDefinition('esteban').stockQrPrefix).toBe('ESTEBAN-STOCK:');
+    expect(getOwnerDefinition('tefa').stockQrPrefix).toBe('TEFA-STOCK:');
   });
 
   it('databaseNameFor sigue la convención {tcg}-{owner}', () => {
     expect(databaseNameFor('pokemon', 'pablo')).toBe('pokemon-pablo');
-    expect(databaseNameFor('magic', 'pablo')).toBe('magic-pablo');
-    expect(databaseNameFor('pokemon', 'esteban')).toBe('pokemon-esteban');
+    expect(databaseNameFor('yugioh', 'tefa')).toBe('yugioh-tefa');
   });
 
   it('ACL: Esteban con cotizar/cardtrader; sin incoming/export-tienda', () => {
@@ -38,17 +41,32 @@ describe('owners.config', () => {
     expect(isFeatureAllowed('esteban', 'export-tienda')).toBe(false);
     expect(isFeatureAllowed('esteban', 'stock')).toBe(true);
     expect(isFeatureAllowed('pablo', 'export-tienda')).toBe(true);
+    expect(isFeatureAllowed('tefa', 'stock')).toBe(true);
   });
 
   it('isOwnerKey', () => {
     expect(isOwnerKey('pablo')).toBe(true);
     expect(isOwnerKey('esteban')).toBe(true);
+    expect(isOwnerKey('tefa')).toBe(true);
     expect(isOwnerKey('otro')).toBe(false);
   });
 
-  it('otherOwner intercambia pablo y esteban', () => {
+  it('otherOwner intercambia pablo y esteban; tefa sin par', () => {
     expect(otherOwner('pablo')).toBe('esteban');
     expect(otherOwner('esteban')).toBe('pablo');
+    expect(otherOwner('tefa')).toBeNull();
+  });
+
+  it('ownersForTcg / coerceOwnerForTcg', () => {
+    expect(ownersForTcg('pokemon').map((o) => o.key)).toEqual([
+      'pablo',
+      'esteban',
+    ]);
+    expect(ownersForTcg('yugioh').map((o) => o.key)).toEqual(['tefa']);
+    expect(defaultOwnerForTcg('yugioh')).toBe('tefa');
+    expect(coerceOwnerForTcg('pablo', 'yugioh')).toBe('tefa');
+    expect(coerceOwnerForTcg('tefa', 'pokemon')).toBe('pablo');
+    expect(coerceOwnerForTcg('esteban', 'pokemon')).toBe('esteban');
   });
 });
 
@@ -56,7 +74,7 @@ describe('owner-context routing', () => {
   it('default y header X-Owner', () => {
     expect(resolveOwnerFromRequest({})).toBe('pablo');
     expect(resolveOwnerFromRequest({ header: 'esteban' })).toBe('esteban');
-    expect(resolveOwnerFromRequest({ query: 'esteban' })).toBe('esteban');
+    expect(resolveOwnerFromRequest({ query: 'tefa' })).toBe('tefa');
     expect(resolveOwnerFromRequest({ header: 'pablo', query: 'esteban' })).toBe(
       'pablo',
     );
@@ -80,7 +98,8 @@ describe('owner-context routing', () => {
 
     runWithOwner('esteban', writeForCurrent);
     runWithOwner('pablo', writeForCurrent);
+    runWithOwner('tefa', writeForCurrent);
 
-    expect(writes).toEqual(['esteban', 'test']);
+    expect(writes).toEqual(['esteban', 'test', 'yugioh-tefa']);
   });
 });

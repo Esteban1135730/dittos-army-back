@@ -307,9 +307,17 @@ export class StoreWhatsAppReservationImportService {
     const requestOwner = getCurrentOwner();
     const secondaryOwner = otherOwner(requestOwner);
     const requestReservas = await this.reservaRepository.findAll();
+    const emptyOtherPool: OwnerMatchPool = {
+      owner: requestOwner,
+      allStock: [],
+      available: [],
+      pvpByCard: new Map(),
+    };
     const [currentPool, otherPool] = await Promise.all([
       this.loadOwnerMatchPool(requestOwner, cardIds, requestReservas),
-      this.loadOwnerMatchPool(secondaryOwner, cardIds, requestReservas),
+      secondaryOwner
+        ? this.loadOwnerMatchPool(secondaryOwner, cardIds, requestReservas)
+        : Promise.resolve(emptyOtherPool),
     ]);
 
     const imageByCardId = new Map<string, string>();

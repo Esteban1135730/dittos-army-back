@@ -4,24 +4,26 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
+import { coerceOwnerForTcg } from '../config/owners.config';
 import { resolveOwnerFromRequest, runWithOwner } from './owner-context';
 import { resolveTcgFromRequest, runWithTcg } from './tcg-context';
 
 /**
  * Sets owner + TCG ALS for the request lifetime.
  * Owner: X-Owner / ?owner=. TCG: X-Tcg / ?tcg= / path `/yugioh`.
+ * Si el owner no pertenece al TCG, se corrige al default de ese TCG.
  */
 @Injectable()
 export class OwnerMiddleware implements NestMiddleware {
   use(req: Request, _res: Response, next: NextFunction) {
-    const owner = resolveOwnerFromRequest({
+    const resolvedOwner = resolveOwnerFromRequest({
       header: req.headers['x-owner'],
       query: req.query?.owner as string | string[] | undefined,
     });
-    if (owner == null) {
+    if (resolvedOwner == null) {
       next(
         new BadRequestException(
-          'Owner inválido. Use X-Owner o ?owner= con valor pablo | esteban',
+          'Owner inválido. Use X-Owner o ?owner= con valor pablo | esteban | tefa',
         ),
       );
       return;
@@ -39,6 +41,7 @@ export class OwnerMiddleware implements NestMiddleware {
       );
       return;
     }
+    const owner = coerceOwnerForTcg(resolvedOwner, tcg);
     runWithOwner(owner, () => {
       runWithTcg(tcg, () => next());
     });

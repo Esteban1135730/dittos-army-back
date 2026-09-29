@@ -442,6 +442,44 @@ export class IncomingHomologService {
     return updated;
   }
 
+  private allOwnerKeys(): OwnerKey[] {
+    return Object.keys(OWNERS_CONFIG.owners) as OwnerKey[];
+  }
+
+  /**
+   * Busca una línea de tránsito en todas las DBs de owner (Pokémon + Yu-Gi-Oh).
+   * Recepción Pablo admite lotes de cualquier TCG.
+   */
+  private async findTransitLineAcrossOwners(lineId: string): Promise<{
+    line: Awaited<ReturnType<CardtraderTransitLineRepository['findById']>>;
+    owner: OwnerKey;
+  } | null> {
+    const id = lineId?.trim();
+    if (!id) return null;
+    for (const owner of this.allOwnerKeys()) {
+      const line = await runWithOwnerAsync(owner, () =>
+        this.transitLineRepository.findById(id),
+      );
+      if (line) return { line, owner };
+    }
+    return null;
+  }
+
+  private async findTransitLotAcrossOwners(lotId: string): Promise<{
+    lot: Awaited<ReturnType<CardtraderTransitLotRepository['findById']>>;
+    owner: OwnerKey;
+  } | null> {
+    const id = lotId?.trim();
+    if (!id) return null;
+    for (const owner of this.allOwnerKeys()) {
+      const lot = await runWithOwnerAsync(owner, () =>
+        this.transitLotRepository.findById(id),
+      );
+      if (lot) return { lot, owner };
+    }
+    return null;
+  }
+
   async verifyUnit(
     sessionId: string,
     sentUnitKey: string,
@@ -451,10 +489,10 @@ export class IncomingHomologService {
     const session = await this.requireSession(sessionId);
     this.assertSessionEditable(session);
 
-    const transitLine =
-      await this.transitLineRepository.findById(transitLineId);
-    if (!transitLine)
+    const foundLine = await this.findTransitLineAcrossOwners(transitLineId);
+    if (!foundLine?.line)
       throw new NotFoundException('Línea de tránsito no encontrada');
+    const transitLine = foundLine.line;
     if (transitLine.remaining_quantity <= 0) {
       throw new BadRequestException(
         'Esta línea de tránsito no tiene unidades disponibles',
@@ -474,8 +512,10 @@ export class IncomingHomologService {
       );
     }
 
-    const lot = await this.transitLotRepository.findById(transitLine.lot_id);
-    if (!lot) throw new NotFoundException('Lote de tránsito no encontrado');
+    const foundLot = await this.findTransitLotAcrossOwners(transitLine.lot_id);
+    if (!foundLot?.lot)
+      throw new NotFoundException('Lote de tránsito no encontrado');
+    const lot = foundLot.lot;
 
     const unitIdx = (session.units ?? []).findIndex(
       (u) => u.sent_unit_key === sentUnitKey,
@@ -1134,8 +1174,21 @@ export class IncomingHomologService {
       return this.createTandaLegacyShipRound(sessionId, shipping, cards, units);
     }
 
-    const transitLinesInRoute =
-      await this.transitLineRepository.findByRemainingQuantityGreaterThanZero();
+    const transitLinesInRoute: Awaited<
+      ReturnType<CardtraderTransitLineRepository['findByRemainingQuantityGreaterThanZero']>
+    > = [];
+    const seenLineIds = new Set<string>();
+    for (const owner of this.allOwnerKeys()) {
+      const lines = await runWithOwnerAsync(owner, () =>
+        this.transitLineRepository.findByRemainingQuantityGreaterThanZero(),
+      );
+      for (const line of lines) {
+        const id = line._id.toString();
+        if (seenLineIds.has(id)) continue;
+        seenLineIds.add(id);
+        transitLinesInRoute.push(line);
+      }
+    }
     if (transitLinesInRoute.length === 0) {
       throw new BadRequestException(
         'No hay cartas en tránsito CardTrader en el panel',
@@ -1227,9 +1280,10 @@ export class IncomingHomologService {
     }
 
     for (const [lineId, count] of arrivedByTransitLine) {
-      await this.transitLineRepository.decrementRemainingQuantity(
-        lineId,
-        count,
+      const found = await this.findTransitLineAcrossOwners(lineId);
+      if (!found) continue;
+      await runWithOwnerAsync(found.owner, () =>
+        this.transitLineRepository.decrementRemainingQuantity(lineId, count),
       );
     }
 
@@ -1566,10 +1620,10 @@ export class IncomingHomologService {
     if (!id) return OWNERS_CONFIG.defaultOwner;
     const cached = cache.get(id);
     if (cached) return cached;
-    const lot = await this.transitLotRepository.findById(id);
-    const owner = isOwnerKey(lot?.owner)
-      ? lot.owner
-      : OWNERS_CONFIG.defaultOwner;
+    const found = await this.findTransitLotAcrossOwners(id);
+    const owner = isOwnerKey(found?.lot?.owner)
+      ? found!.lot!.owner
+      : (found?.owner ?? OWNERS_CONFIG.defaultOwner);
     cache.set(id, owner);
     return owner;
   }
@@ -1810,17 +1864,31 @@ export class IncomingHomologService {
   }
 
   private async loadPanelItems(session: { units?: IncomingHomologUnit[] }) {
-    const transitLines =
-      await this.transitLineRepository.findByRemainingQuantityGreaterThanZero();
-    const lotIds = [...new Set(transitLines.map((line) => line.lot_id))];
-    const lots = await Promise.all(
-      lotIds.map((id) => this.transitLotRepository.findById(id)),
-    );
-    const lotMap = new Map(
-      lots
-        .filter((lot): lot is NonNullable<typeof lot> => lot != null)
-        .map((lot) => [lot._id.toString(), lot]),
-    );
+    type LineDoc = Awaited<
+      ReturnType<CardtraderTransitLineRepository['findByRemainingQuantityGreaterThanZero']>
+    >[number];
+    type LotDoc = NonNullable<
+      Awaited<ReturnType<CardtraderTransitLotRepository['findById']>>
+    >;
+
+    const transitLines: LineDoc[] = [];
+    const lotMap = new Map<string, LotDoc>();
+
+    for (const owner of this.allOwnerKeys()) {
+      await runWithOwnerAsync(owner, async () => {
+        const lines =
+          await this.transitLineRepository.findByRemainingQuantityGreaterThanZero();
+        transitLines.push(...lines);
+        const lotIds = [...new Set(lines.map((line) => line.lot_id))];
+        await Promise.all(
+          lotIds.map(async (id) => {
+            if (lotMap.has(id)) return;
+            const lot = await this.transitLotRepository.findById(id);
+            if (lot) lotMap.set(id, lot);
+          }),
+        );
+      });
+    }
 
     const verifiedCountByLine = new Map<string, number>();
     for (const u of session.units ?? []) {
@@ -1872,11 +1940,25 @@ export class IncomingHomologService {
   }
 
   private async loadBatchesSummary() {
-    const lots = await this.transitLotRepository.findOpenLots();
+    type LotDoc = NonNullable<
+      Awaited<ReturnType<CardtraderTransitLotRepository['findOpenLots']>>
+    >[number];
+
+    const lots: LotDoc[] = [];
+    for (const owner of this.allOwnerKeys()) {
+      const open = await runWithOwnerAsync(owner, () =>
+        this.transitLotRepository.findOpenLots(),
+      );
+      lots.push(...open);
+    }
+
     const summaries = await Promise.all(
       lots.map(async (lot) => {
-        const items = await this.transitLineRepository.findByLotId(
-          lot._id.toString(),
+        const lotOwner = isOwnerKey(lot.owner)
+          ? lot.owner
+          : OWNERS_CONFIG.defaultOwner;
+        const items = await runWithOwnerAsync(lotOwner, () =>
+          this.transitLineRepository.findByLotId(lot._id.toString()),
         );
         const remainingTotal = items.reduce(
           (sum, it) => sum + (it.remaining_quantity ?? 0),

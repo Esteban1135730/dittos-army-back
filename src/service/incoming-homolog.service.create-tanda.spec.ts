@@ -17,6 +17,7 @@ describe('IncomingHomologService.createTanda (CT path)', () => {
 
   const transitLineRepo = {
     findByRemainingQuantityGreaterThanZero: jest.fn(),
+    findById: jest.fn(),
     decrementRemainingQuantity: jest.fn(),
   };
 
@@ -95,6 +96,16 @@ describe('IncomingHomologService.createTanda (CT path)', () => {
       },
     ]);
     transitLineRepo.decrementRemainingQuantity.mockResolvedValue(undefined);
+    transitLineRepo.findById.mockImplementation(async (id: string) => {
+      const lines =
+        await transitLineRepo.findByRemainingQuantityGreaterThanZero();
+      return (
+        lines.find(
+          (line: { _id: { toString(): string } }) =>
+            line._id.toString() === id,
+        ) ?? null
+      );
+    });
     stockRepo.createMany.mockResolvedValue([{ _id: 'stock-1' }]);
     stockRepo.deleteById.mockResolvedValue(true);
     transitLotRepo.findById.mockResolvedValue({ owner: 'pablo' });

@@ -50,10 +50,10 @@ export class CardtraderTransitLot {
   @Prop()
   legacy_incoming_cop_hint?: number;
 
-  /** Dueño del stock que se creará al recibir (Pablo o Esteban). Default Pablo. */
+  /** Dueño del stock que se creará al recibir (Pablo, Esteban o Tefa). Default Pablo. */
   @Prop({
     required: true,
-    enum: ['pablo', 'esteban'],
+    enum: ['pablo', 'esteban', 'tefa'],
     default: OWNERS_CONFIG.defaultOwner,
   })
   owner: OwnerKey;

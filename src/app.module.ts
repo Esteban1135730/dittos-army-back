@@ -7,12 +7,7 @@ import {
 import { APP_GUARD } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ESTEBAN_CONNECTION_NAME, OWNERS_CONFIG } from './config/owners.config';
-import {
-  YUGIOH_ESTEBAN_CONNECTION,
-  YUGIOH_ESTEBAN_DB,
-  YUGIOH_PABLO_CONNECTION,
-  YUGIOH_PABLO_DB,
-} from './yugioh/yugioh.constants';
+import { YUGIOH_TEFA_CONNECTION, YUGIOH_TEFA_DB } from './yugioh/yugioh.constants';
 import { OwnerMiddleware } from './owner/owner.middleware';
 import { OwnerModelsService } from './owner/owner-models.service';
 import { FeatureAclGuard } from './owner/feature-acl.guard';
@@ -338,7 +333,7 @@ const MONGOOSE_FEATURE_MODELS = [
       },
     }),
     MongooseModule.forRootAsync({
-      connectionName: YUGIOH_PABLO_CONNECTION,
+      connectionName: YUGIOH_TEFA_CONNECTION,
       useFactory: () => {
         const uri = process.env.MONGO_URI?.trim();
         if (!uri) {
@@ -346,28 +341,12 @@ const MONGOOSE_FEATURE_MODELS = [
             'MONGO_URI is required (set in .env). No embedded Mongo URI fallback.',
           );
         }
-        return { uri, dbName: YUGIOH_PABLO_DB };
-      },
-    }),
-    MongooseModule.forRootAsync({
-      connectionName: YUGIOH_ESTEBAN_CONNECTION,
-      useFactory: () => {
-        const uri = process.env.MONGO_URI?.trim();
-        if (!uri) {
-          throw new Error(
-            'MONGO_URI is required (set in .env). No embedded Mongo URI fallback.',
-          );
-        }
-        return { uri, dbName: YUGIOH_ESTEBAN_DB };
+        return { uri, dbName: YUGIOH_TEFA_DB };
       },
     }),
     MongooseModule.forFeature(MONGOOSE_FEATURE_MODELS),
     MongooseModule.forFeature(MONGOOSE_FEATURE_MODELS, ESTEBAN_CONNECTION_NAME),
-    MongooseModule.forFeature(MONGOOSE_FEATURE_MODELS, YUGIOH_PABLO_CONNECTION),
-    MongooseModule.forFeature(
-      MONGOOSE_FEATURE_MODELS,
-      YUGIOH_ESTEBAN_CONNECTION,
-    ),
+    MongooseModule.forFeature(MONGOOSE_FEATURE_MODELS, YUGIOH_TEFA_CONNECTION),
     PokemonModule,
     YugiohModule,
   ],

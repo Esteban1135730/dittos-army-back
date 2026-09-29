@@ -5,16 +5,14 @@ import {
   ESTEBAN_CONNECTION_NAME,
   type OwnerKey,
 } from '../config/owners.config';
-import {
-  YUGIOH_ESTEBAN_CONNECTION,
-  YUGIOH_PABLO_CONNECTION,
-} from '../yugioh/yugioh.constants';
+import { YUGIOH_TEFA_CONNECTION } from '../yugioh/yugioh.constants';
 import { getCurrentOwner } from './owner-context';
-import { getCurrentTcg, type ActiveTcg } from './tcg-context';
+import type { ActiveTcg } from './tcg-context';
 
 /**
- * Returns Mongoose models bound to the active owner's database for the active TCG.
- * Pokémon: `test` / `esteban`. Yu-Gi-Oh: `yugioh-pablo` / `yugioh-esteban`.
+ * Returns Mongoose models bound to the active owner's database.
+ * Pokémon: Pablo → `test`, Esteban → `esteban`.
+ * Yu-Gi-Oh: Tefa → `yugioh-tefa`.
  */
 @Injectable()
 export class OwnerModelsService {
@@ -22,19 +20,15 @@ export class OwnerModelsService {
     @InjectConnection() private readonly pokemonPablo: Connection,
     @InjectConnection(ESTEBAN_CONNECTION_NAME)
     private readonly pokemonEsteban: Connection,
-    @InjectConnection(YUGIOH_PABLO_CONNECTION)
-    private readonly yugiohPablo: Connection,
-    @InjectConnection(YUGIOH_ESTEBAN_CONNECTION)
-    private readonly yugiohEsteban: Connection,
+    @InjectConnection(YUGIOH_TEFA_CONNECTION)
+    private readonly yugiohTefa: Connection,
   ) {}
 
-  getConnection(owner?: OwnerKey, tcg?: ActiveTcg): Connection {
+  getConnection(owner?: OwnerKey, _tcg?: ActiveTcg): Connection {
     const key = owner ?? getCurrentOwner();
-    const game = tcg ?? getCurrentTcg();
-    if (game === 'yugioh') {
-      return key === 'esteban' ? this.yugiohEsteban : this.yugiohPablo;
-    }
-    return key === 'esteban' ? this.pokemonEsteban : this.pokemonPablo;
+    if (key === 'tefa') return this.yugiohTefa;
+    if (key === 'esteban') return this.pokemonEsteban;
+    return this.pokemonPablo;
   }
 
   getModel<T>(name: string, owner?: OwnerKey, tcg?: ActiveTcg): Model<T> {

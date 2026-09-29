@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import type { OwnerKey } from '../config/owners.config';
 
 export type ReservaDocument = HydratedDocument<Reserva>;
 
@@ -32,8 +33,8 @@ export class Reserva {
    * Owner de la DB donde vive el stock (044). Opcional en documentos viejos
    * (= owner del request al leer). En altas nuevas siempre se persiste.
    */
-  @Prop({ required: false, enum: ['pablo', 'esteban'] })
-  stock_owner?: 'pablo' | 'esteban';
+  @Prop({ required: false, enum: ['pablo', 'esteban', 'tefa'] })
+  stock_owner?: OwnerKey;
 
   /** Fecha de creación; las nuevas reservas la rellena el repositorio. Opcional en documentos antiguos. */
   @Prop({ type: Date, required: false })

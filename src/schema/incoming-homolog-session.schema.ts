@@ -124,7 +124,7 @@ export class IncomingHomologCreatedStock implements HomologCreatedStockRef {
   @Prop({ required: true })
   stock_id: string;
 
-  @Prop({ required: true, enum: ['pablo', 'esteban'] })
+  @Prop({ required: true, enum: ['pablo', 'esteban', 'tefa'] })
   owner: OwnerKey;
 }
 

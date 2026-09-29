@@ -1,3 +1,5 @@
+import { OWNERS_CONFIG, type OwnerKey } from '../config/owners.config';
+
 export type ReservaDto = {
   id?: string;
   client_id: string;
@@ -8,5 +10,5 @@ export type ReservaDto = {
   quantity?: number;
   pedido_id?: string;
   /** DB del stock. Si falta en el body → X-Owner. */
-  stock_owner?: 'pablo' | 'esteban';
+  stock_owner?: OwnerKey;
 };

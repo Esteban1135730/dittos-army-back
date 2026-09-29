@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { YUGIOH_ESTEBAN_DB, YUGIOH_PABLO_DB } from './yugioh.constants';
+import { YUGIOH_TEFA_DB } from './yugioh.constants';
 import {
   filterYugiohSets,
   mapYugiohCard,
@@ -65,9 +65,8 @@ describe('yugioh catalog map', () => {
     expect(filterYugiohSets(sets, 'lob').map((s) => s.code)).toEqual(['LOB']);
   });
 
-  it('nombra las bases yugioh-{owner}', () => {
-    expect(YUGIOH_PABLO_DB).toBe('yugioh-pablo');
-    expect(YUGIOH_ESTEBAN_DB).toBe('yugioh-esteban');
+  it('nombra la base yugioh-tefa', () => {
+    expect(YUGIOH_TEFA_DB).toBe('yugioh-tefa');
   });
 });
 
@@ -84,7 +83,7 @@ describe('YugiohStockService', () => {
 
   it('guarda N copias en stocks del owner/TCG activo', async () => {
     const { svc, insertMany, ownerModels } = service();
-    const result = await runWithOwner('esteban', () =>
+    const result = await runWithOwner('tefa', () =>
       runWithTcg('yugioh', () =>
         svc.create({
           card_id: '89631139',

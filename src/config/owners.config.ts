@@ -2,14 +2,11 @@
  * Multi-owner config (034). Keep in sync with
  * `dittos-army-front/src/config/owners.ts`.
  *
- * Current owner DBs are Pokémon. This cluster cannot rename databases, so
- * the physical names stay `test` (Pablo) and `esteban` (Esteban).
- * Convention for NEW physical DBs: `{tcg}-{owner}` via `databaseNameFor`
- * (for example `magic-pablo`). Do not point these two owners at that
- * pattern until the data actually lives there.
+ * Pokémon: Pablo (`test`) y Esteban (`esteban`).
+ * Yu-Gi-Oh: un solo owner Tefa (`yugioh-tefa`).
  */
 
-export type OwnerKey = 'pablo' | 'esteban';
+export type OwnerKey = 'pablo' | 'esteban' | 'tefa';
 
 /** TCG slug for path and DB naming (`pokemon` legacy DBs; `yugioh` → `{tcg}-{owner}`). */
 export type TcgKey = 'pokemon' | 'yugioh';
@@ -30,7 +27,7 @@ export type FeatureKey =
 export type OwnerDefinition = {
   key: OwnerKey;
   label: string;
-  /** TCG this owner connection serves (Pokémon today). */
+  /** TCG this owner operates. */
   tcg: TcgKey;
   /** Physical Mongo DB name used by Mongoose. */
   dbName: string;
@@ -44,6 +41,7 @@ export type OwnerDefinition = {
 };
 
 export type OwnersConfig = {
+  /** Default for Pokémon panel. */
   defaultOwner: OwnerKey;
   owners: Record<OwnerKey, OwnerDefinition>;
 };
@@ -86,6 +84,8 @@ export function databaseNameFor(tcg: string, owner: string): string {
 const PABLO_DB_NAME = 'test';
 /** Pokémon physical DB for Esteban. Data is in `esteban`, not `pokemon-esteban`. */
 const ESTEBAN_DB_NAME = 'esteban';
+/** Yu-Gi-Oh physical DB for Tefa. */
+const TEFA_DB_NAME = databaseNameFor('yugioh', 'tefa');
 
 export const OWNERS_CONFIG: OwnersConfig = {
   defaultOwner: 'pablo',
@@ -106,19 +106,47 @@ export const OWNERS_CONFIG: OwnersConfig = {
       stockQrPrefix: 'ESTEBAN-STOCK:',
       allowedFeatures: [...ESTEBAN_FEATURES],
     },
+    tefa: {
+      key: 'tefa',
+      label: 'Tefa',
+      tcg: 'yugioh',
+      dbName: TEFA_DB_NAME,
+      stockQrPrefix: 'TEFA-STOCK:',
+      allowedFeatures: [...ALL_FEATURES],
+    },
   },
 };
 
-/** NestJS named connection for Esteban DB. */
+/** NestJS named connection for Esteban Pokémon DB. */
 export const ESTEBAN_CONNECTION_NAME = 'esteban';
 
 export function isOwnerKey(value: unknown): value is OwnerKey {
-  return value === 'pablo' || value === 'esteban';
+  return value === 'pablo' || value === 'esteban' || value === 'tefa';
 }
 
-/** The complementary owner (pablo ↔ esteban). */
-export function otherOwner(owner: OwnerKey): OwnerKey {
-  return owner === 'pablo' ? 'esteban' : 'pablo';
+export function ownersForTcg(tcg: TcgKey): OwnerDefinition[] {
+  return Object.values(OWNERS_CONFIG.owners).filter((o) => o.tcg === tcg);
+}
+
+export function defaultOwnerForTcg(tcg: TcgKey): OwnerKey {
+  return tcg === 'yugioh' ? 'tefa' : 'pablo';
+}
+
+/** If owner does not belong to `tcg`, returns the default owner for that TCG. */
+export function coerceOwnerForTcg(owner: OwnerKey, tcg: TcgKey): OwnerKey {
+  return getOwnerDefinition(owner).tcg === tcg
+    ? owner
+    : defaultOwnerForTcg(tcg);
+}
+
+/**
+ * Complementary Pokémon owner (pablo ↔ esteban).
+ * Tefa (Yu-Gi-Oh) has no pair → `null`.
+ */
+export function otherOwner(owner: OwnerKey): OwnerKey | null {
+  if (owner === 'pablo') return 'esteban';
+  if (owner === 'esteban') return 'pablo';
+  return null;
 }
 
 export function getOwnerDefinition(key: OwnerKey): OwnerDefinition {
