@@ -74,6 +74,11 @@ export type StockScanView = {
   reserved_fallback?: boolean;
   /** Vendida con sustitución por copia equivalente (mismo idioma preferido, si no otro). */
   sold_language_fallback?: boolean;
+  /**
+   * La unidad escaneada ya estaba en el carrito (`exclude`); se devolvió otra copia vendible.
+   * Este camino no consulta TCGdex: `expansion` puede ir vacío.
+   */
+  copy_fallback?: boolean;
   /** Owner DB donde se resolvió el stock (034 multi-owner). */
   owner?: OwnerKey;
   /**
@@ -265,9 +270,16 @@ export class StockScanService {
       throw new NotFoundException('Stock no encontrado');
     }
 
+    const state = stock.card_state ?? '';
+    const quantity = isQuantityKind(stock.product_kind);
+    const excluded = this.isIdExcluded(trimmed, excludeIds);
+    // Exclude de una unidad: no esperar red externa. El PVP y el stock bastan.
+    const skipExpansionLookup =
+      excluded && !quantity && state !== 'reserva' && state !== 'vendida';
+
     const [pvps, expansion] = await Promise.all([
       this.pvpRepository.findByCardIds([stock.card_id]),
-      isBulkCardId(stock.card_id)
+      isBulkCardId(stock.card_id) || skipExpansionLookup
         ? Promise.resolve('')
         : this.tcgDexService.resolveEnglishExpansionName(
             stock.card_id,
@@ -278,14 +290,85 @@ export class StockScanService {
     const pvpList = grouped.get(stock.card_id) ?? [];
     const view = this.buildScanView(stock, pvpList, expansion);
 
-    const state = stock.card_state ?? '';
+    // Bulk / quantity: el front incrementa qty sobre el mismo stock_id.
+    if (quantity) {
+      return view;
+    }
     if (state === 'reserva') {
       return this.buildReservedScanView(stock, pvpList, view, excludeIds);
+    }
+    // Camino feliz: una sola lectura, sin buscar equivalentes.
+    if (view.sellable && !excluded) {
+      return view;
     }
     if (state === 'vendida') {
       return this.buildSoldScanView(stock, pvpList, view, excludeIds);
     }
+    if (excluded || this.shouldSeekAnotherUnit(view)) {
+      return this.buildExcludedOrExhaustedScanView(
+        stock,
+        pvpList,
+        view,
+        excludeIds,
+        excluded,
+      );
+    }
     return view;
+  }
+
+  private isIdExcluded(stockId: string, excludeIds: string[]): boolean {
+    const id = stockId.trim();
+    if (!id) return false;
+    return excludeIds.some((raw) => raw.trim() === id);
+  }
+
+  /** Unidad no vendible por estado de ESA copia (no por falta de PVP ni por reserva). */
+  private shouldSeekAnotherUnit(view: StockScanView): boolean {
+    if (view.sellable) return false;
+    return (
+      view.reject_reason === 'ya_vendida' ||
+      view.reject_reason === 'propiedad' ||
+      view.reject_reason === 'estado_no_vendible'
+    );
+  }
+
+  /**
+   * Exclude del carrito o unidad agotada: otra copia (`prefer_same_then_any`).
+   * Si la razón es exclude, marca `copy_fallback` y no llama a TCGdex.
+   * Sin copia elegible, la línea excluida no se devuelve como vendible.
+   */
+  private async buildExcludedOrExhaustedScanView(
+    scanned: StockLineDoc,
+    pvpList: Parameters<typeof resolvePvpForLine>[0],
+    scannedView: StockScanView,
+    excludeIds: string[],
+    excluded: boolean,
+  ): Promise<StockScanView> {
+    const equivalent = await this.findEquivalentAvailable(
+      scanned,
+      pvpList,
+      excludeIds,
+      'prefer_same_then_any',
+    );
+    if (!equivalent) {
+      if (scannedView.sellable) {
+        return {
+          ...scannedView,
+          sellable: false,
+          reject_reason: 'sin_stock',
+        };
+      }
+      return scannedView;
+    }
+    const equivalentView = this.buildScanView(equivalent, pvpList, '');
+    if (excluded) {
+      return {
+        ...equivalentView,
+        scanned_stock_id: String(scanned._id),
+        copy_fallback: true,
+      };
+    }
+    return equivalentView;
   }
 
   /**
@@ -364,7 +447,8 @@ export class StockScanService {
   /**
    * Copia vendible misma carta + rareza operativa + PVP > 0.
    * - same_only: solo mismo idioma (reserva).
-   * - prefer_same_then_any: mismo idioma primero; si no, cualquier otro (vendida).
+   * - prefer_same_then_any: mismo idioma primero; si no, cualquier otro
+   *   (vendida, exclude del carrito o unidad agotada).
    */
   private async findEquivalentAvailable(
     scanned: StockLineDoc,

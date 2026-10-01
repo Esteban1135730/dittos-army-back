@@ -461,6 +461,18 @@ describe('StockScanService', () => {
       expect(view.sold_language_fallback).toBeUndefined();
     });
 
+    it('vendida cuyo id está en exclude conserva sold_language_fallback', async () => {
+      const { service } = await setupService({
+        candidates: [sameLangAvailable],
+      });
+      const view = await service.getScanView(soldId, [soldId]);
+      expect(view.stock_id).toBe(sameLangId);
+      expect(view.sellable).toBe(true);
+      expect(view.sold_language_fallback).toBe(true);
+      expect(view.copy_fallback).toBeUndefined();
+      expect(view.substituted).toBe(true);
+    });
+
     it('reserva sigue sin elegir otro idioma', async () => {
       const reservedId = '507f1f77bcf86cd799439021';
       const { service } = await setupService({
@@ -483,6 +495,197 @@ describe('StockScanService', () => {
       expect(view.reserved_fallback).toBe(true);
       expect(view.substituted).toBeUndefined();
       expect(view.sold_language_fallback).toBeUndefined();
+    });
+  });
+
+  describe('exclude del carrito y unidad agotada (copia equivalente)', () => {
+    const scannedId = '507f1f77bcf86cd799439041';
+    const sameLangId = '507f1f77bcf86cd799439042';
+    const otherLangId = '507f1f77bcf86cd799439043';
+
+    const scannedLine = {
+      _id: scannedId,
+      card_id: 'swsh3-136',
+      card_name: 'Charizard escaneado',
+      image_url: 'https://img.example/scanned.jpg',
+      card_state: 'disponible',
+      language: 'en',
+      shipment: 0,
+      cards_in_shipmet: 1,
+      unity_cost: 10000,
+      currency: 'COP',
+      rareza: 'holofoil',
+    };
+    const sameLangCopy = {
+      _id: sameLangId,
+      card_id: 'swsh3-136',
+      card_name: 'Charizard copia',
+      image_url: 'https://img.example/copy.jpg',
+      card_state: 'en_stock_colombia',
+      language: 'en',
+      shipment: 0,
+      cards_in_shipmet: 1,
+      unity_cost: 9000,
+      currency: 'COP',
+      rareza: 'holofoil',
+    };
+    const otherLangCopy = {
+      _id: otherLangId,
+      card_id: 'swsh3-136',
+      card_name: 'Charizard JA',
+      image_url: 'https://img.example/ja.jpg',
+      card_state: 'disponible',
+      language: 'ja',
+      shipment: 0,
+      cards_in_shipmet: 1,
+      unity_cost: 8000,
+      currency: 'COP',
+      rareza: 'holofoil',
+    };
+    const pvpHolofoil = [
+      { card_id: 'swsh3-136', rareza: 'holofoil', pvp: 50000, currency: 'COP' },
+    ];
+
+    async function setupService(overrides: {
+      scanned?: unknown;
+      candidates?: unknown[];
+      pvps?: unknown[];
+      tcg?: { resolveEnglishExpansionName: jest.Mock };
+    }) {
+      const tcg =
+        overrides.tcg ??
+        ({
+          resolveEnglishExpansionName: jest
+            .fn()
+            .mockResolvedValue("Champion's Path"),
+        } as { resolveEnglishExpansionName: jest.Mock });
+      const stockRepository = {
+        findById: jest.fn().mockResolvedValue(overrides.scanned ?? scannedLine),
+        findByCardIdsInStates: jest
+          .fn()
+          .mockResolvedValue(overrides.candidates ?? []),
+      };
+      const pvpRepository = {
+        findByCardIds: jest
+          .fn()
+          .mockResolvedValue(overrides.pvps ?? pvpHolofoil),
+      };
+      const moduleRef = await Test.createTestingModule({
+        providers: [
+          StockScanService,
+          { provide: StockRepository, useValue: stockRepository },
+          { provide: PvpRepository, useValue: pvpRepository },
+          { provide: CardStockTagRepository, useValue: {} },
+          { provide: TCGDexService, useValue: tcg },
+        ],
+      }).compile();
+      return {
+        service: moduleRef.get(StockScanService),
+        stockRepository,
+        tcg,
+      };
+    }
+
+    it('disponible fuera de exclude no busca equivalentes', async () => {
+      const { service, stockRepository, tcg } = await setupService({
+        candidates: [sameLangCopy],
+      });
+      const view = await service.getScanView(scannedId, [sameLangId]);
+      expect(view.stock_id).toBe(scannedId);
+      expect(view.sellable).toBe(true);
+      expect(view.copy_fallback).toBeUndefined();
+      expect(view.expansion).toBe("Champion's Path");
+      expect(stockRepository.findByCardIdsInStates).not.toHaveBeenCalled();
+      expect(tcg.resolveEnglishExpansionName).toHaveBeenCalled();
+    });
+
+    it('disponible en exclude devuelve otra copia del mismo idioma y copy_fallback', async () => {
+      const { service, tcg } = await setupService({
+        candidates: [scannedLine, otherLangCopy, sameLangCopy],
+      });
+      const view = await service.getScanView(scannedId, [scannedId]);
+      expect(view.stock_id).toBe(sameLangId);
+      expect(view.language).toBe('EN');
+      expect(view.sellable).toBe(true);
+      expect(view.copy_fallback).toBe(true);
+      expect(view.scanned_stock_id).toBe(scannedId);
+      expect(view.sold_language_fallback).toBeUndefined();
+      expect(view.expansion).toBe('');
+      expect(view.card_name).toBe('Charizard copia');
+      expect(tcg.resolveEnglishExpansionName).not.toHaveBeenCalled();
+    });
+
+    it('si solo hay copia en otro idioma, devuelve esa', async () => {
+      const { service, tcg } = await setupService({
+        candidates: [otherLangCopy],
+      });
+      const view = await service.getScanView(scannedId, [scannedId]);
+      expect(view.stock_id).toBe(otherLangId);
+      expect(view.language).toBe('JA');
+      expect(view.sellable).toBe(true);
+      expect(view.copy_fallback).toBe(true);
+      expect(view.expansion).toBe('');
+      expect(tcg.resolveEnglishExpansionName).not.toHaveBeenCalled();
+    });
+
+    it('sin copia elegible no devuelve la línea excluida como vendible', async () => {
+      const { service } = await setupService({
+        candidates: [
+          scannedLine,
+          { ...sameLangCopy, rareza: null },
+          { ...otherLangCopy, _id: sameLangId },
+        ],
+      });
+      const view = await service.getScanView(scannedId, [
+        scannedId,
+        sameLangId,
+      ]);
+      expect(view.sellable).toBe(false);
+      expect(view.stock_id).toBe(scannedId);
+      expect(view.copy_fallback).toBeUndefined();
+      expect(view.reject_reason).toBe('sin_stock');
+    });
+
+    it('quantity con su id en exclude sigue devolviendo esa misma línea', async () => {
+      const bulkId = '507f1f77bcf86cd799439099';
+      const stockRepository = {
+        findById: jest.fn().mockResolvedValue({
+          _id: bulkId,
+          card_id: 'da-bulk',
+          card_name: 'bulk',
+          card_state: 'disponible',
+          product_kind: 'quantity',
+          quantity: 8,
+          shipment: 0,
+          cards_in_shipmet: 1,
+          unity_cost: 0,
+          currency: 'COP',
+          image_url: '/bulk-dummy.svg',
+        }),
+      };
+      const pvpRepository = {
+        findByCardIds: jest
+          .fn()
+          .mockResolvedValue([
+            { card_id: 'da-bulk', rareza: null, pvp: 2000, currency: 'COP' },
+          ]),
+      };
+      const moduleRef = await Test.createTestingModule({
+        providers: [
+          StockScanService,
+          { provide: StockRepository, useValue: stockRepository },
+          { provide: PvpRepository, useValue: pvpRepository },
+          { provide: CardStockTagRepository, useValue: {} },
+          { provide: TCGDexService, useValue: tcgDexMock },
+        ],
+      }).compile();
+      const service = moduleRef.get(StockScanService);
+      const view = await service.getScanView(bulkId, [bulkId]);
+      expect(view.stock_id).toBe(bulkId);
+      expect(view.product_kind).toBe('quantity');
+      expect(view.sellable).toBe(true);
+      expect(view.copy_fallback).toBeUndefined();
+      expect(view.quantity).toBe(8);
     });
   });
 
