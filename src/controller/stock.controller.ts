@@ -28,6 +28,9 @@ import { StockScanService } from 'src/service/stock-scan.service';
 import { StockReviewService } from 'src/service/stock-review.service';
 import { BulkProductService } from 'src/service/bulk-product.service';
 import { effectiveProductKind } from 'src/constants/bulk-product';
+import { LocalCardImagesService } from 'src/pokemon';
+import { StockPhotoService } from 'src/service/stock-photo.service';
+import { isStockPhotoPublicPath } from 'src/utils/stock-photo-path';
 import {
   effectiveOperationalRarezaFromStock,
   groupPvpsByCardId,
@@ -72,6 +75,8 @@ export class StockController {
     private readonly stockScanService: StockScanService,
     private readonly stockReviewService: StockReviewService,
     private readonly bulkProductService: BulkProductService,
+    private readonly stockPhotoService: StockPhotoService,
+    private readonly localCardImages: LocalCardImagesService,
   ) {}
 
   private validatedRareza(stockDto: StockDto): string | null {
@@ -227,6 +232,34 @@ export class StockController {
     return this.stockScanService.listQrExportRows();
   }
 
+  @Get('inventory-photos/missing')
+  @UseGuards(FeatureAclGuard)
+  @RequireFeature('stock-inventario-fotos')
+  async listMissingInventoryPhotos() {
+    return this.stockPhotoService.listMissingInventoryPhotos();
+  }
+
+  @Get('inventory-photos/index')
+  @UseGuards(FeatureAclGuard)
+  @RequireFeature('stock-inventario-fotos')
+  async listInventoryPhotoIndex() {
+    return this.stockPhotoService.listInventoryPhotoIndex();
+  }
+
+  @Post(':id/inventory-photo')
+  @UseGuards(FeatureAclGuard)
+  @RequireFeature('stock-inventario-fotos')
+  async uploadInventoryPhoto(
+    @Param('id') id: string,
+    @Body() body: { imageBase64?: string },
+  ) {
+    const imageBase64 = String(body?.imageBase64 ?? '').trim();
+    if (!imageBase64) {
+      throw new BadRequestException('imageBase64 requerido');
+    }
+    return this.stockPhotoService.saveInventoryPhoto(id, imageBase64);
+  }
+
   /** @deprecated Usar GET /stock/qr-export */
   @Get('barcode-export')
   async exportStockBarcodes() {
@@ -299,8 +332,20 @@ export class StockController {
             ? stock.quantity
             : 0
           : null;
+
+      let image_url = String(stock.image_url ?? '').trim();
+      if (isStockPhotoPublicPath(image_url)) {
+        const locale = String(stock.language ?? 'en').trim() || 'en';
+        const local = this.localCardImages.resolve({
+          cardId: stock.card_id,
+          locale,
+        });
+        image_url = local?.small ?? local?.image ?? '';
+      }
+
       return {
         ...stock._doc,
+        image_url,
         card_name: stock.card_name ?? '',
         tags: this.resolveTagsForLine(stock.card_id, tagByCardId, stock.tags),
         card_cost: stock.shipment / stock.cards_in_shipmet + stock.unity_cost,

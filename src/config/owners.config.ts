@@ -22,7 +22,8 @@ export type FeatureKey =
   | 'cotizar'
   | 'cardtrader'
   | 'incoming'
-  | 'export-tienda';
+  | 'export-tienda'
+  | 'stock-inventario-fotos';
 
 export type OwnerDefinition = {
   key: OwnerKey;
@@ -50,6 +51,7 @@ const ALL_FEATURES: FeatureKey[] = [
   'inicio',
   'agregar-stock',
   'stock',
+  'stock-inventario-fotos',
   'ventas',
   'venta-asistida-qr',
   'propiedad',
@@ -64,6 +66,7 @@ const ESTEBAN_FEATURES: FeatureKey[] = [
   'inicio',
   'agregar-stock',
   'stock',
+  'stock-inventario-fotos',
   'ventas',
   'venta-asistida-qr',
   'propiedad',

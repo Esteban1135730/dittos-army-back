@@ -3,3 +3,6 @@
 /dist
 /data/card-images/**/*.png
 
+# Fotos de inventario (solo local; nunca subir al repo)
+/data/stock-photos/
+

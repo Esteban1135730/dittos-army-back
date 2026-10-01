@@ -100,6 +100,7 @@ import { CardTraderQuoteResolveService } from './service/cardtrader/cardtrader-q
 import { CardtraderTransitLotService } from './service/cardtrader/cardtrader-transit-lot.service';
 import { StockScanService } from './service/stock-scan.service';
 import { BulkProductService } from './service/bulk-product.service';
+import { StockPhotoService } from './service/stock-photo.service';
 import { DashboardController } from './controller/dashboard.controller';
 import { DashboardOverviewService } from './service/dashboard-overview.service';
 import { MetricsController } from './controller/metrics.controller';
@@ -278,6 +279,7 @@ const MONGOOSE_FEATURE_MODELS = [
     CardtraderTransitLotService,
     StockScanService,
     BulkProductService,
+    StockPhotoService,
     DashboardOverviewService,
     MetricsAnalyticsService,
     StockReviewService,

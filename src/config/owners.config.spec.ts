@@ -40,6 +40,8 @@ describe('owners.config', () => {
     expect(isFeatureAllowed('esteban', 'incoming')).toBe(false);
     expect(isFeatureAllowed('esteban', 'export-tienda')).toBe(false);
     expect(isFeatureAllowed('esteban', 'stock')).toBe(true);
+    expect(isFeatureAllowed('esteban', 'stock-inventario-fotos')).toBe(true);
+    expect(isFeatureAllowed('pablo', 'stock-inventario-fotos')).toBe(true);
     expect(isFeatureAllowed('pablo', 'export-tienda')).toBe(true);
     expect(isFeatureAllowed('tefa', 'stock')).toBe(true);
   });

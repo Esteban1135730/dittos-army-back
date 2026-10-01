@@ -5,20 +5,30 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { mkdirSync } from 'fs';
 import { AppModule } from './app.module';
 import { resolveCardImagesRoot } from './pokemon';
+import { resolveStockPhotosRoot } from './utils/stock-photo-path';
 
 async function bootstrap() {
   const imagesDir = resolveCardImagesRoot();
   mkdirSync(imagesDir, { recursive: true });
+  const stockPhotosDir = resolveStockPhotosRoot();
+  mkdirSync(stockPhotosDir, { recursive: true });
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  // Product API under /pokemon; health (Render) and static /card-images/ stay at root.
+
+  // Fotos inventario van en JSON base64; el default de Express (~100kb) devuelve 413.
+  app.useBodyParser('json', { limit: '12mb' });
+  app.useBodyParser('urlencoded', { limit: '12mb', extended: true });
+
+  // Product API under /pokemon; health (Render) y static /card-images/ stay at root.
   app.setGlobalPrefix('pokemon', {
     exclude: [
       { path: 'health', method: RequestMethod.GET },
       { path: 'yugioh/*path', method: RequestMethod.ALL },
     ],
   });
+
   app.useStaticAssets(imagesDir, { prefix: '/card-images/' });
+  app.useStaticAssets(stockPhotosDir, { prefix: '/stock-photos/' });
 
   // Configurar CORS
   app.enableCors({
