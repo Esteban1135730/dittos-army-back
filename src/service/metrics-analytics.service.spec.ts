@@ -15,8 +15,8 @@ const stockId2 = '507f1f77bcf86cd799439012';
 const stockId3 = '507f1f77bcf86cd799439013';
 
 describe('MetricsAnalyticsService', () => {
-  const saleRepository = { findVentasInPeriod: jest.fn() };
-  const stockRepository = { findAll: jest.fn() };
+  const saleRepository = { findVentasInPeriodLean: jest.fn() };
+  const stockRepository = { findAllLean: jest.fn() };
   const cardStockTagRepository = { findMapByCardIds: jest.fn() };
   const pvpRepository = { findByCardIds: jest.fn() };
   let service: MetricsAnalyticsService;
@@ -44,13 +44,13 @@ describe('MetricsAnalyticsService', () => {
   });
 
   it('usa periodo default de ~3 meses cuando no hay query', async () => {
-    saleRepository.findVentasInPeriod.mockResolvedValue([]);
-    stockRepository.findAll.mockResolvedValue([]);
+    saleRepository.findVentasInPeriodLean.mockResolvedValue([]);
+    stockRepository.findAllLean.mockResolvedValue([]);
 
     const res = await service.getAnalytics({});
     const expected = defaultMetricsPeriod();
     expect(res.period).toEqual(expected);
-    expect(saleRepository.findVentasInPeriod).toHaveBeenCalled();
+    expect(saleRepository.findVentasInPeriodLean).toHaveBeenCalled();
   });
 
   it('from > to → 400', async () => {
@@ -65,8 +65,28 @@ describe('MetricsAnalyticsService', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
+  it('cachea por owner + periodo y no cachea errores', async () => {
+    saleRepository.findVentasInPeriodLean.mockResolvedValue([]);
+    stockRepository.findAllLean.mockRejectedValueOnce(new Error('db down'));
+    stockRepository.findAllLean.mockResolvedValue([]);
+    const period = { from: '2026-01-01', to: '2026-01-31' };
+
+    await expect(service.getAnalytics(period)).rejects.toThrow('db down');
+    const a = await service.getAnalytics(period);
+    const b = await service.getAnalytics({ ...period });
+    expect(b).toBe(a);
+    expect(stockRepository.findAllLean).toHaveBeenCalledTimes(2);
+
+    await service.getAnalytics({ from: '2026-01-01', to: '2026-02-01' });
+    expect(stockRepository.findAllLean).toHaveBeenCalledTimes(3);
+
+    const { runWithOwner } = await import('../owner/owner-context');
+    await runWithOwner('esteban', () => service.getAnalytics(period));
+    expect(stockRepository.findAllLean).toHaveBeenCalledTimes(4);
+  });
+
   it('summary con snapshot vs fallback de costo', async () => {
-    saleRepository.findVentasInPeriod.mockResolvedValue([
+    saleRepository.findVentasInPeriodLean.mockResolvedValue([
       {
         stock_id: stockId1,
         card_id: 'c1',
@@ -83,7 +103,7 @@ describe('MetricsAnalyticsService', () => {
         created_at: new Date('2026-05-11T12:00:00.000Z'),
       },
     ]);
-    stockRepository.findAll.mockResolvedValue([
+    stockRepository.findAllLean.mockResolvedValue([
       {
         _id: { toString: () => stockId1 },
         card_id: 'c1',
@@ -124,7 +144,7 @@ describe('MetricsAnalyticsService', () => {
   });
 
   it('envio conserva revenue y fuerza ganancia 0 aunque el snapshot de costo sea 0', async () => {
-    saleRepository.findVentasInPeriod.mockResolvedValue([
+    saleRepository.findVentasInPeriodLean.mockResolvedValue([
       {
         stock_id: stockId1,
         card_id: 'da-envio',
@@ -134,7 +154,7 @@ describe('MetricsAnalyticsService', () => {
         created_at: new Date('2026-05-10T12:00:00.000Z'),
       },
     ]);
-    stockRepository.findAll.mockResolvedValue([
+    stockRepository.findAllLean.mockResolvedValue([
       {
         _id: { toString: () => stockId1 },
         card_id: 'da-envio',
@@ -159,7 +179,7 @@ describe('MetricsAnalyticsService', () => {
   });
 
   it('top sellers ordenado por units', async () => {
-    saleRepository.findVentasInPeriod.mockResolvedValue([
+    saleRepository.findVentasInPeriodLean.mockResolvedValue([
       {
         stock_id: stockId1,
         card_id: 'alpha',
@@ -182,7 +202,7 @@ describe('MetricsAnalyticsService', () => {
         created_at: new Date('2026-05-03T00:00:00.000Z'),
       },
     ]);
-    stockRepository.findAll.mockResolvedValue([
+    stockRepository.findAllLean.mockResolvedValue([
       {
         _id: { toString: () => stockId1 },
         card_id: 'alpha',
@@ -223,7 +243,7 @@ describe('MetricsAnalyticsService', () => {
   });
 
   it('sales_by_day agrupa por día UTC', async () => {
-    saleRepository.findVentasInPeriod.mockResolvedValue([
+    saleRepository.findVentasInPeriodLean.mockResolvedValue([
       {
         stock_id: stockId1,
         card_id: 'c1',
@@ -246,7 +266,7 @@ describe('MetricsAnalyticsService', () => {
         created_at: new Date('2026-05-11T12:00:00.000Z'),
       },
     ]);
-    stockRepository.findAll.mockResolvedValue([]);
+    stockRepository.findAllLean.mockResolvedValue([]);
 
     const res = await service.getAnalytics({
       from: '2026-05-01',
@@ -260,7 +280,7 @@ describe('MetricsAnalyticsService', () => {
 
   it('sales_by_cycle separa active vs cerrado', async () => {
     const closed = new Date('2026-04-01T15:00:00.000Z');
-    saleRepository.findVentasInPeriod.mockResolvedValue([
+    saleRepository.findVentasInPeriodLean.mockResolvedValue([
       {
         stock_id: stockId1,
         card_id: 'c1',
@@ -277,7 +297,7 @@ describe('MetricsAnalyticsService', () => {
         cycle_closed_at: closed,
       },
     ]);
-    stockRepository.findAll.mockResolvedValue([]);
+    stockRepository.findAllLean.mockResolvedValue([]);
 
     const res = await service.getAnalytics({
       from: '2026-05-01',
@@ -292,8 +312,8 @@ describe('MetricsAnalyticsService', () => {
   });
 
   it('periodo sin ventas → ceros / listas vacías', async () => {
-    saleRepository.findVentasInPeriod.mockResolvedValue([]);
-    stockRepository.findAll.mockResolvedValue([]);
+    saleRepository.findVentasInPeriodLean.mockResolvedValue([]);
+    stockRepository.findAllLean.mockResolvedValue([]);
     const res = await service.getAnalytics({
       from: '2026-01-01',
       to: '2026-01-31',
@@ -308,8 +328,8 @@ describe('MetricsAnalyticsService', () => {
     old.setUTCDate(old.getUTCDate() - 120);
     const mid = new Date();
     mid.setUTCDate(mid.getUTCDate() - 50);
-    saleRepository.findVentasInPeriod.mockResolvedValue([]);
-    stockRepository.findAll.mockResolvedValue([
+    saleRepository.findVentasInPeriodLean.mockResolvedValue([]);
+    stockRepository.findAllLean.mockResolvedValue([
       {
         _id: { toString: () => stockId3 },
         card_id: 'dead',
@@ -378,7 +398,7 @@ describe('MetricsAnalyticsService', () => {
     const sidSold3 = '507f1f77bcf86cd799439023';
     const sidRest = '507f1f77bcf86cd799439024';
 
-    saleRepository.findVentasInPeriod.mockResolvedValue([
+    saleRepository.findVentasInPeriodLean.mockResolvedValue([
       {
         stock_id: sidSold1,
         card_id: 'hot',
@@ -404,7 +424,7 @@ describe('MetricsAnalyticsService', () => {
         received_at_snapshot: soldReceived,
       },
     ]);
-    stockRepository.findAll.mockResolvedValue([
+    stockRepository.findAllLean.mockResolvedValue([
       {
         _id: { toString: () => sidRest },
         card_id: 'hot',
@@ -439,7 +459,7 @@ describe('MetricsAnalyticsService', () => {
     const sidSold2 = '507f1f77bcf86cd799439032';
     const sidRest = '507f1f77bcf86cd799439033';
 
-    saleRepository.findVentasInPeriod.mockResolvedValue([
+    saleRepository.findVentasInPeriodLean.mockResolvedValue([
       {
         stock_id: sidSold1,
         card_id: 'slow-unit',
@@ -457,7 +477,7 @@ describe('MetricsAnalyticsService', () => {
         received_at_snapshot: soldReceived,
       },
     ]);
-    stockRepository.findAll.mockResolvedValue([
+    stockRepository.findAllLean.mockResolvedValue([
       {
         _id: { toString: () => sidRest },
         card_id: 'slow-unit',
@@ -499,7 +519,7 @@ describe('MetricsAnalyticsService', () => {
       '507f1f77bcf86cd799439045',
     ];
 
-    saleRepository.findVentasInPeriod.mockResolvedValue([
+    saleRepository.findVentasInPeriodLean.mockResolvedValue([
       {
         stock_id: ids[0],
         card_id: 'pile',
@@ -518,7 +538,7 @@ describe('MetricsAnalyticsService', () => {
       },
     ]);
     // 2 vendidas + 3 estancadas → 40% vendidas / 60% estancadas
-    stockRepository.findAll.mockResolvedValue(
+    stockRepository.findAllLean.mockResolvedValue(
       [ids[2], ids[3], ids[4]].map((id, n) => ({
         _id: { toString: () => id },
         card_id: 'pile',
@@ -552,8 +572,8 @@ describe('MetricsAnalyticsService', () => {
   it('vintage es más laxo en umbrales de tiempo', async () => {
     const mid = new Date();
     mid.setUTCDate(mid.getUTCDate() - 50); // 50d: alerta normal, no vintage
-    saleRepository.findVentasInPeriod.mockResolvedValue([]);
-    stockRepository.findAll.mockResolvedValue([
+    saleRepository.findVentasInPeriodLean.mockResolvedValue([]);
+    stockRepository.findAllLean.mockResolvedValue([
       {
         _id: { toString: () => stockId1 },
         card_id: 'vint',
@@ -582,8 +602,8 @@ describe('MetricsAnalyticsService', () => {
   it('vintage no entra por rotación aunque lleve ~200 días', async () => {
     const mid = new Date();
     mid.setUTCDate(mid.getUTCDate() - 200);
-    saleRepository.findVentasInPeriod.mockResolvedValue([]);
-    stockRepository.findAll.mockResolvedValue([
+    saleRepository.findVentasInPeriodLean.mockResolvedValue([]);
+    stockRepository.findAllLean.mockResolvedValue([
       {
         _id: { toString: () => stockId1 },
         card_id: 'vint2',
@@ -610,7 +630,7 @@ describe('MetricsAnalyticsService', () => {
   });
 
   it('agrega ventas por tag (jugable/vintage/…) y ObjectId como recepción parcial', async () => {
-    saleRepository.findVentasInPeriod.mockResolvedValue([
+    saleRepository.findVentasInPeriodLean.mockResolvedValue([
       {
         stock_id: stockId1,
         card_id: 'alpha',
@@ -628,7 +648,7 @@ describe('MetricsAnalyticsService', () => {
         received_at_snapshot: new Date('2026-05-01T00:00:00.000Z'),
       },
     ]);
-    stockRepository.findAll.mockResolvedValue([
+    stockRepository.findAllLean.mockResolvedValue([
       {
         _id: stockId1,
         card_id: 'alpha',

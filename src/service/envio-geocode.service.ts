@@ -5,15 +5,22 @@ import {
   type GoogleGeocodeResult,
   type NominatimHit,
 } from 'src/utils/bogota-geo';
+import { TtlCache } from 'src/utils/ttl-cache';
 
 export type EnvioGeocodePoint = { lat: number; lng: number };
 
 const QUERY_MIN = 3;
 const QUERY_MAX = 240;
+const GEOCODE_TIMEOUT_MS = 8_000;
+const GEOCODE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const GEOCODE_CACHE_MAX = 2_000;
 
 @Injectable()
 export class EnvioGeocodeService {
-  private readonly cache = new Map<string, EnvioGeocodePoint | null>();
+  private readonly cache = new TtlCache<EnvioGeocodePoint | null>({
+    ttlMs: GEOCODE_CACHE_TTL_MS,
+    maxEntries: GEOCODE_CACHE_MAX,
+  });
 
   async geocodeIfBogota(
     raw: string | undefined,
@@ -22,12 +29,7 @@ export class EnvioGeocodeService {
     if (!q) {
       throw new BadRequestException('q inválido');
     }
-    if (this.cache.has(q)) {
-      return this.cache.get(q) ?? null;
-    }
-    const point = await this.resolve(q);
-    this.cache.set(q, point);
-    return point;
+    return this.cache.getOrLoad(q, () => this.resolve(q));
   }
 
   private normalizeQuery(raw: string | undefined): string {
@@ -78,6 +80,7 @@ export class EnvioGeocodeService {
     try {
       const res = await fetch(url.toString(), {
         headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(GEOCODE_TIMEOUT_MS),
       });
       if (!res.ok) return null;
       const body = (await res.json()) as {
@@ -118,6 +121,7 @@ export class EnvioGeocodeService {
     try {
       const res = await fetch(url.toString(), {
         headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(GEOCODE_TIMEOUT_MS),
       });
       if (!res.ok) return null;
       const body = (await res.json()) as {
@@ -157,6 +161,7 @@ export class EnvioGeocodeService {
           Accept: 'application/json',
           'User-Agent': 'dittos-army-back/1.0 (coordinar-envios)',
         },
+        signal: AbortSignal.timeout(GEOCODE_TIMEOUT_MS),
       });
       if (!res.ok) return null;
       const data: unknown = await res.json();

@@ -4,6 +4,7 @@ import { OwnerModelsService } from '../owner/owner-models.service';
 import { Model } from 'mongoose';
 import { PvpDto } from 'src/Dto/pvp.dto';
 import { normalizeOperationalRareza } from '../constants/item-rareza';
+import { applyLeanDefaults } from '../utils/lean-defaults';
 
 function filterBasePvp(cardId: string) {
   return {
@@ -89,6 +90,22 @@ export class PvpRepository {
 
   async findAll(): Promise<Pvp[]> {
     return this.pvpModel.find().exec();
+  }
+
+  /** Igual que `findAll` en objetos planos con defaults (solo lectura). */
+  async findAllLean(): Promise<Pvp[]> {
+    const rows = await this.pvpModel.find().lean<Pvp[]>().exec();
+    return applyLeanDefaults(this.pvpModel, rows);
+  }
+
+  /** Igual que `findByCardIds` en objetos planos con defaults (solo lectura). */
+  async findByCardIdsLean(cardIds: string[]): Promise<Pvp[]> {
+    if (!cardIds.length) return [];
+    const rows = await this.pvpModel
+      .find({ card_id: { $in: cardIds } })
+      .lean<Pvp[]>()
+      .exec();
+    return applyLeanDefaults(this.pvpModel, rows);
   }
 
   async deleteByCardId(cardId: string): Promise<any> {

@@ -73,6 +73,32 @@ describe('EnvioGeocodeService', () => {
     ).toBe(false);
   });
 
+  it('misma consulta concurrente → una sola cadena de fetch; luego sale de caché', async () => {
+    delete process.env.GOOGLE_MAPS_API_KEY;
+    const fetchMock = jest.fn().mockImplementation(async () => {
+      await new Promise((r) => setTimeout(r, 5));
+      return {
+        ok: true,
+        json: async () => [
+          { lat: '4.65', lon: '-74.08', display_name: 'Calle 100, Bogotá' },
+        ],
+      };
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+    const svc = new EnvioGeocodeService();
+    const [a, b] = await Promise.all([
+      svc.geocodeIfBogota('Calle 100 #15-20'),
+      svc.geocodeIfBogota('Calle 100   #15-20'),
+    ]);
+    expect(a).toEqual({ lat: 4.65, lng: -74.08 });
+    expect(b).toEqual(a);
+    await svc.geocodeIfBogota('Calle 100 #15-20');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect((fetchMock.mock.calls[0][1] as RequestInit).signal).toBeInstanceOf(
+      AbortSignal,
+    );
+  });
+
   it('sin clave Google: Nominatim solo si el hit es Bogotá', async () => {
     delete process.env.GOOGLE_MAPS_API_KEY;
     const fetchMock = jest.fn().mockResolvedValue({

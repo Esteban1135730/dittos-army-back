@@ -73,3 +73,4 @@ CardtraderTransitLotSchema.index(
   { ct0_package_key: 1 },
   { unique: true, sparse: true },
 );
+CardtraderTransitLotSchema.index({ status: 1, created_at: -1 });

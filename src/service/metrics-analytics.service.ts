@@ -6,10 +6,12 @@ import {
 import { STOCK_TAG_VALUES } from '../constants/stock-tags';
 import { CardStockTagRepository } from '../repository/card-stock-tag.repository';
 import { PvpRepository } from '../repository/pvp.repository';
-import { SaleRepository } from '../repository/sale.repository';
+import { SaleRepository, type SaleLean } from '../repository/sale.repository';
 import { StockRepository } from '../repository/stock.repository';
-import type { SaleDocument } from '../schema/sale.schema';
 import type { Stock } from '../schema/stock.schema';
+import { getCurrentOwner } from '../owner/owner-context';
+import { getCurrentTcg } from '../owner/tcg-context';
+import { TtlCache } from '../utils/ttl-cache';
 import {
   effectiveOperationalRarezaFromStock,
   groupPvpsByCardId,
@@ -22,6 +24,9 @@ import {
   type ReceivedAtSource,
 } from '../utils/stock-received-at';
 import type { MetricsAnalyticsResponse } from './metrics-analytics.types';
+
+const ANALYTICS_CACHE_TTL_MS = 120_000;
+const ANALYTICS_CACHE_MAX = 100;
 
 export const DEAD_STOCK_MIN_COST_COP = 20000;
 export const DEAD_STOCK_MIN_DAYS = 90;
@@ -227,6 +232,12 @@ export class MetricsAnalyticsService {
     private readonly pvpRepository: PvpRepository,
   ) {}
 
+  /** Caché por owner + TCG + periodo resuelto (el cálculo recorre todo el stock). */
+  private readonly analyticsCache = new TtlCache<MetricsAnalyticsResponse>({
+    ttlMs: ANALYTICS_CACHE_TTL_MS,
+    maxEntries: ANALYTICS_CACHE_MAX,
+  });
+
   async getAnalytics(query: {
     from?: string;
     to?: string;
@@ -241,48 +252,9 @@ export class MetricsAnalyticsService {
         throw new BadRequestException('`from` no puede ser posterior a `to`.');
       }
 
-      const [sales, allStock] = await Promise.all([
-        this.saleRepository.findVentasInPeriod(fromDate, toDate),
-        this.stockRepository.findAll(),
-      ]);
-
-      const stockById = new Map<string, Stock>();
-      for (const s of allStock) {
-        const id = stockDocId(s as Stock & { _id?: { toString(): string } });
-        if (id) stockById.set(id, s);
-      }
-
-      const cardIds = [
-        ...new Set(
-          sales.map((s) => String(s.card_id ?? '').trim()).filter(Boolean),
-        ),
-      ];
-      const sellableCardIds = [
-        ...new Set(
-          allStock
-            .filter((s) =>
-              isSellableState(String(s.card_state ?? '').toLowerCase()),
-            )
-            .map((s) => String(s.card_id ?? '').trim())
-            .filter(Boolean),
-        ),
-      ];
-      const [tagsByCard, pvps] = await Promise.all([
-        this.cardStockTagRepository.findMapByCardIds([
-          ...new Set([...cardIds, ...sellableCardIds]),
-        ]),
-        this.pvpRepository.findByCardIds(sellableCardIds),
-      ]);
-      const pvpByCard = groupPvpsByCardId(pvps);
-
-      return this.buildResponse(
-        fromStr,
-        toStr,
-        sales,
-        stockById,
-        allStock,
-        tagsByCard,
-        pvpByCard,
+      const key = `${getCurrentOwner()}:${getCurrentTcg()}:${fromStr}:${toStr}`;
+      return await this.analyticsCache.getOrLoad(key, () =>
+        this.computeAnalytics(fromStr, toStr, fromDate, toDate),
       );
     } catch (err) {
       if (err instanceof BadRequestException) throw err;
@@ -292,13 +264,64 @@ export class MetricsAnalyticsService {
     }
   }
 
+  private async computeAnalytics(
+    fromStr: string,
+    toStr: string,
+    fromDate: Date,
+    toDate: Date,
+  ): Promise<MetricsAnalyticsResponse> {
+    const [sales, allStock] = await Promise.all([
+      this.saleRepository.findVentasInPeriodLean(fromDate, toDate),
+      this.stockRepository.findAllLean(),
+    ]);
+
+    const stockById = new Map<string, Stock>();
+    for (const s of allStock) {
+      const id = stockDocId(s as Stock & { _id?: { toString(): string } });
+      if (id) stockById.set(id, s);
+    }
+
+    const cardIds = [
+      ...new Set(
+        sales.map((s) => String(s.card_id ?? '').trim()).filter(Boolean),
+      ),
+    ];
+    const sellableCardIds = [
+      ...new Set(
+        allStock
+          .filter((s) =>
+            isSellableState(String(s.card_state ?? '').toLowerCase()),
+          )
+          .map((s) => String(s.card_id ?? '').trim())
+          .filter(Boolean),
+      ),
+    ];
+    const [tagsByCard, pvps] = await Promise.all([
+      this.cardStockTagRepository.findMapByCardIds([
+        ...new Set([...cardIds, ...sellableCardIds]),
+      ]),
+      this.pvpRepository.findByCardIds(sellableCardIds),
+    ]);
+    const pvpByCard = groupPvpsByCardId(pvps);
+
+    return this.buildResponse(
+      fromStr,
+      toStr,
+      sales,
+      stockById,
+      allStock,
+      tagsByCard,
+      pvpByCard,
+    );
+  }
+
   private resolveSaleCost(
-    sale: SaleDocument,
+    sale: SaleLean,
     stockById: Map<string, Stock>,
     tagsByCard: Map<string, string[]>,
   ): SaleCost {
     const revenue = roundCop(sale.amount_cop ?? 0);
-    const snap = (sale as SaleDocument & { cost_cop_snapshot?: number })
+    const snap = (sale as SaleLean & { cost_cop_snapshot?: number })
       .cost_cop_snapshot;
     let cost: number;
     let fromSnapshot: boolean;
@@ -313,7 +336,7 @@ export class MetricsAnalyticsService {
     cost = effectiveSaleCostCop(sale.card_id, revenue, cost);
 
     const stock = stockById.get(sale.stock_id);
-    const kindSnap = (sale as SaleDocument & { product_kind_snapshot?: string })
+    const kindSnap = (sale as SaleLean & { product_kind_snapshot?: string })
       .product_kind_snapshot;
     const productKind =
       (kindSnap && String(kindSnap).trim()) ||
@@ -322,7 +345,7 @@ export class MetricsAnalyticsService {
 
     const soldAt = sale.created_at ? new Date(sale.created_at) : null;
     const receivedSnap = (
-      sale as SaleDocument & { received_at_snapshot?: Date }
+      sale as SaleLean & { received_at_snapshot?: Date }
     ).received_at_snapshot;
 
     let receivedAt: Date | null = null;
@@ -349,7 +372,7 @@ export class MetricsAnalyticsService {
     }
 
     const tagSnap = normalizeTags(
-      (sale as SaleDocument & { tags_snapshot?: string[] }).tags_snapshot,
+      (sale as SaleLean & { tags_snapshot?: string[] }).tags_snapshot,
     );
     let tags = tagSnap;
     const tagsFromSnapshot = tagSnap.length > 0;
@@ -373,7 +396,7 @@ export class MetricsAnalyticsService {
   private buildResponse(
     fromStr: string,
     toStr: string,
-    sales: SaleDocument[],
+    sales: SaleLean[],
     stockById: Map<string, Stock>,
     allStock: Stock[],
     tagsByCard: Map<string, string[]>,
@@ -508,7 +531,7 @@ export class MetricsAnalyticsService {
       day.profit_cop += resolved.profit;
       byDay.set(dayKey, day);
 
-      const closed = (sale as SaleDocument & { cycle_closed_at?: Date })
+      const closed = (sale as SaleLean & { cycle_closed_at?: Date })
         .cycle_closed_at;
       const cycleKey = closed ? new Date(closed).toISOString() : 'active';
       const cycle = byCycle.get(cycleKey) ?? {
@@ -718,7 +741,7 @@ export class MetricsAnalyticsService {
 
       const soldAt = sale.created_at ? new Date(sale.created_at) : null;
       const receivedSnap = (
-        sale as SaleDocument & { received_at_snapshot?: Date }
+        sale as SaleLean & { received_at_snapshot?: Date }
       ).received_at_snapshot;
       let receivedAt: Date | null = null;
       if (receivedSnap) {

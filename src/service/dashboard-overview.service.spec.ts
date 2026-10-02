@@ -20,32 +20,33 @@ const stockId = '507f1f77bcf86cd799439011';
 const stockId2 = '507f1f77bcf86cd799439012';
 
 describe('DashboardOverviewService', () => {
-  const stockRepository = { findAll: jest.fn() };
+  const stockRepository = { findAllLean: jest.fn() };
   const saleRepository = {
-    findActiveVentas: jest.fn(),
-    findHistoricalVentas: jest.fn(),
+    findActiveVentasLean: jest.fn(),
+    findHistoricalVentasLean: jest.fn(),
   };
-  const clientRepository = { findAll: jest.fn() };
-  const reservaRepository = { findAll: jest.fn() };
-  const reservaIncomingRepository = { findAll: jest.fn() };
-  const incomingBatchRepository = { findOpenBatches: jest.fn() };
-  const incomingBatchItemRepository = { findByBatchId: jest.fn() };
+  const clientRepository = { countAll: jest.fn() };
+  const reservaRepository = { findAllLean: jest.fn() };
+  const reservaIncomingRepository = { findAllLean: jest.fn() };
+  const incomingBatchRepository = { findOpenBatchIds: jest.fn() };
+  const incomingBatchItemRepository = { findByBatchIdsLean: jest.fn() };
   const cardtraderTransitLineRepository = {
-    findByRemainingQuantityGreaterThanZero: jest.fn(),
+    findByRemainingQuantityGreaterThanZeroLean: jest.fn(),
   };
   const pvpRepository = { findByCardIds: jest.fn() };
 
   let service: DashboardOverviewService;
 
   function mockEmptyBase() {
-    stockRepository.findAll.mockResolvedValue([]);
-    saleRepository.findActiveVentas.mockResolvedValue([]);
-    saleRepository.findHistoricalVentas.mockResolvedValue([]);
-    clientRepository.findAll.mockResolvedValue([]);
-    reservaRepository.findAll.mockResolvedValue([]);
-    reservaIncomingRepository.findAll.mockResolvedValue([]);
-    incomingBatchRepository.findOpenBatches.mockResolvedValue([]);
-    cardtraderTransitLineRepository.findByRemainingQuantityGreaterThanZero.mockResolvedValue(
+    stockRepository.findAllLean.mockResolvedValue([]);
+    saleRepository.findActiveVentasLean.mockResolvedValue([]);
+    saleRepository.findHistoricalVentasLean.mockResolvedValue([]);
+    clientRepository.countAll.mockResolvedValue(0);
+    reservaRepository.findAllLean.mockResolvedValue([]);
+    reservaIncomingRepository.findAllLean.mockResolvedValue([]);
+    incomingBatchRepository.findOpenBatchIds.mockResolvedValue([]);
+    incomingBatchItemRepository.findByBatchIdsLean.mockResolvedValue([]);
+    cardtraderTransitLineRepository.findByRemainingQuantityGreaterThanZeroLean.mockResolvedValue(
       [],
     );
     pvpRepository.findByCardIds.mockResolvedValue([]);
@@ -101,7 +102,7 @@ describe('DashboardOverviewService', () => {
     const today = new Date();
     today.setHours(12, 0, 0, 0);
     mockEmptyBase();
-    saleRepository.findActiveVentas.mockResolvedValue([
+    saleRepository.findActiveVentasLean.mockResolvedValue([
       { created_at: today, amount_cop: 5000 },
     ]);
 
@@ -117,7 +118,7 @@ describe('DashboardOverviewService', () => {
 
   it('agrupa conteos por card_state', async () => {
     mockEmptyBase();
-    stockRepository.findAll.mockResolvedValue([
+    stockRepository.findAllLean.mockResolvedValue([
       {
         _id: stockId,
         card_id: 'c1',
@@ -148,7 +149,7 @@ describe('DashboardOverviewService', () => {
 
   it('calcula ganancia de ventas activas con costo EUR', async () => {
     mockEmptyBase();
-    stockRepository.findAll.mockResolvedValue([
+    stockRepository.findAllLean.mockResolvedValue([
       {
         _id: stockId,
         card_id: 'c1',
@@ -159,7 +160,7 @@ describe('DashboardOverviewService', () => {
         cards_in_shipmet: 1,
       },
     ]);
-    saleRepository.findActiveVentas.mockResolvedValue([
+    saleRepository.findActiveVentasLean.mockResolvedValue([
       { stock_id: stockId, amount_cop: 15000 },
     ]);
 
@@ -172,7 +173,7 @@ describe('DashboardOverviewService', () => {
 
   it('reserva sin stock cuenta venta esperada y costo 0 en ganancia', async () => {
     mockEmptyBase();
-    reservaRepository.findAll.mockResolvedValue([
+    reservaRepository.findAllLean.mockResolvedValue([
       { stock_id: 'missing', precio: 8000, currency: 'COP' },
     ]);
 
@@ -184,7 +185,7 @@ describe('DashboardOverviewService', () => {
 
   it('domicilio conserva el precio y ganancia 100% (costo 0)', async () => {
     mockEmptyBase();
-    stockRepository.findAll.mockResolvedValue([
+    stockRepository.findAllLean.mockResolvedValue([
       {
         _id: stockId,
         card_id: 'da-domicilio',
@@ -195,10 +196,10 @@ describe('DashboardOverviewService', () => {
         cards_in_shipmet: 1,
       },
     ]);
-    saleRepository.findActiveVentas.mockResolvedValue([
+    saleRepository.findActiveVentasLean.mockResolvedValue([
       { stock_id: stockId, card_id: 'da-domicilio', amount_cop: 8000 },
     ]);
-    reservaRepository.findAll.mockResolvedValue([
+    reservaRepository.findAllLean.mockResolvedValue([
       { stock_id: stockId, precio: 8000, currency: 'COP' },
     ]);
 
@@ -212,7 +213,7 @@ describe('DashboardOverviewService', () => {
 
   it('envio conserva el precio y ganancia 0 en venta y reserva', async () => {
     mockEmptyBase();
-    stockRepository.findAll.mockResolvedValue([
+    stockRepository.findAllLean.mockResolvedValue([
       {
         _id: stockId,
         card_id: 'da-envio',
@@ -223,10 +224,10 @@ describe('DashboardOverviewService', () => {
         cards_in_shipmet: 1,
       },
     ]);
-    saleRepository.findActiveVentas.mockResolvedValue([
+    saleRepository.findActiveVentasLean.mockResolvedValue([
       { stock_id: stockId, card_id: 'da-envio', amount_cop: 8000 },
     ]);
-    reservaRepository.findAll.mockResolvedValue([
+    reservaRepository.findAllLean.mockResolvedValue([
       { stock_id: stockId, precio: 8000, currency: 'COP' },
     ]);
 
@@ -240,7 +241,7 @@ describe('DashboardOverviewService', () => {
 
   it('suma costo CT transit con remaining > 0 (remaining × unit_cost_cop)', async () => {
     mockEmptyBase();
-    cardtraderTransitLineRepository.findByRemainingQuantityGreaterThanZero.mockResolvedValue(
+    cardtraderTransitLineRepository.findByRemainingQuantityGreaterThanZeroLean.mockResolvedValue(
       [
         { remaining_quantity: 2, unit_cost_cop: 1000 },
         { remaining_quantity: 1, unit_cost_cop: 500 },
@@ -259,7 +260,7 @@ describe('DashboardOverviewService', () => {
 
   it('no suma líneas CT con remaining 0 aunque el repo las devolviera', async () => {
     mockEmptyBase();
-    cardtraderTransitLineRepository.findByRemainingQuantityGreaterThanZero.mockResolvedValue(
+    cardtraderTransitLineRepository.findByRemainingQuantityGreaterThanZeroLean.mockResolvedValue(
       [
         { remaining_quantity: 2, unit_cost_cop: 1000 },
         { remaining_quantity: 0, unit_cost_cop: 99999 },
@@ -275,7 +276,7 @@ describe('DashboardOverviewService', () => {
 
   it('CT vacío deja tránsito en 0 y capital solo inventario', async () => {
     mockEmptyBase();
-    stockRepository.findAll.mockResolvedValue([
+    stockRepository.findAllLean.mockResolvedValue([
       {
         _id: stockId,
         card_id: 'c1',
@@ -297,14 +298,12 @@ describe('DashboardOverviewService', () => {
   it('suma CT transit + incoming legacy remaining', async () => {
     mockEmptyBase();
     const batchId = '507f1f77bcf86cd799439099';
-    incomingBatchRepository.findOpenBatches.mockResolvedValue([
-      { _id: batchId },
-    ]);
-    incomingBatchItemRepository.findByBatchId.mockResolvedValue([
+    incomingBatchRepository.findOpenBatchIds.mockResolvedValue([batchId]);
+    incomingBatchItemRepository.findByBatchIdsLean.mockResolvedValue([
       { remaining_quantity: 1, unit_cost_cop: 400 },
       { remaining_quantity: 0, unit_cost_cop: 9999 },
     ]);
-    cardtraderTransitLineRepository.findByRemainingQuantityGreaterThanZero.mockResolvedValue(
+    cardtraderTransitLineRepository.findByRemainingQuantityGreaterThanZeroLean.mockResolvedValue(
       [{ remaining_quantity: 2, unit_cost_cop: 1000 }],
     );
 
@@ -327,7 +326,7 @@ describe('DashboardOverviewService', () => {
     'ignora stock sintético %s en KPIs de inventario y capital',
     async (syntheticId) => {
       mockEmptyBase();
-      stockRepository.findAll.mockResolvedValue([
+      stockRepository.findAllLean.mockResolvedValue([
         {
           _id: stockId,
           card_id: 'c1',
@@ -378,7 +377,7 @@ describe('DashboardOverviewService', () => {
 
   it('no suma líneas CT sintéticas en tránsito ni capital', async () => {
     mockEmptyBase();
-    cardtraderTransitLineRepository.findByRemainingQuantityGreaterThanZero.mockResolvedValue(
+    cardtraderTransitLineRepository.findByRemainingQuantityGreaterThanZeroLean.mockResolvedValue(
       [
         { card_id: 'sv1-1', remaining_quantity: 2, unit_cost_cop: 1000 },
         {
@@ -407,10 +406,8 @@ describe('DashboardOverviewService', () => {
   it('no suma ítems incoming legacy sintéticos en tránsito', async () => {
     mockEmptyBase();
     const batchId = '507f1f77bcf86cd799439099';
-    incomingBatchRepository.findOpenBatches.mockResolvedValue([
-      { _id: batchId },
-    ]);
-    incomingBatchItemRepository.findByBatchId.mockResolvedValue([
+    incomingBatchRepository.findOpenBatchIds.mockResolvedValue([batchId]);
+    incomingBatchItemRepository.findByBatchIdsLean.mockResolvedValue([
       { card_id: 'c1', remaining_quantity: 1, unit_cost_cop: 400 },
       {
         card_id: DOMICILIO_CARD_ID,
@@ -429,5 +426,63 @@ describe('DashboardOverviewService', () => {
     expect(result.incoming.units_in_transit).toBe(1);
     expect(result.incoming.estimated_cost_cop).toBe(400);
     expect(result.highlights.capital_engaged_cop).toBe(400);
+  });
+
+  it('ítems de varios lotes abiertos en una sola query $in', async () => {
+    mockEmptyBase();
+    incomingBatchRepository.findOpenBatchIds.mockResolvedValue(['b1', 'b2']);
+    incomingBatchItemRepository.findByBatchIdsLean.mockResolvedValue([
+      { card_id: 'c1', remaining_quantity: 1, unit_cost_cop: 100 },
+      { card_id: 'c2', remaining_quantity: 2, unit_cost_cop: 50 },
+    ]);
+    clientRepository.countAll.mockResolvedValue(7);
+
+    const result = await service.getOverview();
+
+    expect(
+      incomingBatchItemRepository.findByBatchIdsLean,
+    ).toHaveBeenCalledTimes(1);
+    expect(incomingBatchItemRepository.findByBatchIdsLean).toHaveBeenCalledWith(
+      ['b1', 'b2'],
+      expect.any(String),
+    );
+    expect(result.incoming.open_batches_count).toBe(2);
+    expect(result.incoming.units_in_transit).toBe(3);
+    expect(result.incoming.estimated_cost_cop).toBe(200);
+    expect(result.clients_reservations.clients_count).toBe(7);
+  });
+
+  describe('caché por owner/TCG', () => {
+    afterEach(() => jest.restoreAllMocks());
+
+    it('reutiliza el resultado dentro del TTL y recalcula al expirar', async () => {
+      mockEmptyBase();
+      let now = 1_000_000;
+      jest.spyOn(Date, 'now').mockImplementation(() => now);
+
+      const a = await service.getOverview();
+      const b = await service.getOverview();
+      expect(b).toBe(a);
+      expect(stockRepository.findAllLean).toHaveBeenCalledTimes(1);
+
+      now += 30_001;
+      await service.getOverview();
+      expect(stockRepository.findAllLean).toHaveBeenCalledTimes(2);
+    });
+
+    it('owners distintos no comparten entrada', async () => {
+      mockEmptyBase();
+      const { runWithOwner } = await import('../owner/owner-context');
+      await runWithOwner('pablo', () => service.getOverview());
+      await runWithOwner('esteban', () => service.getOverview());
+      await runWithOwner('pablo', () => service.getOverview());
+      expect(stockRepository.findAllLean).toHaveBeenCalledTimes(2);
+    });
+
+    it('peticiones concurrentes comparten un solo cálculo', async () => {
+      mockEmptyBase();
+      await Promise.all([service.getOverview(), service.getOverview()]);
+      expect(stockRepository.findAllLean).toHaveBeenCalledTimes(1);
+    });
   });
 });

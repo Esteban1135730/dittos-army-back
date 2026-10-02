@@ -167,6 +167,62 @@ describe('CardTraderService', () => {
     expect(String(fetchSpy.mock.calls[0][0])).toContain('/ct0_box_items');
   });
 
+  it('getExpansions cachea la lista upstream y filtra por juego en cada llamada', async () => {
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () =>
+        JSON.stringify([
+          { id: 1, game_id: 5, name: 'Pokemon set' },
+          { id: 2, game_id: 4, name: 'Yugioh set' },
+        ]),
+    });
+    const pokemon = await service.getExpansions(undefined, undefined, 5);
+    const yugioh = await service.getExpansions(undefined, undefined, 4);
+    expect(pokemon).toEqual([{ id: 1, game_id: 5, name: 'Pokemon set' }]);
+    expect(yugioh).toEqual([{ id: 2, game_id: 4, name: 'Yugioh set' }]);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('getExpansions con caché sigue exigiendo token del owner', async () => {
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => '[]',
+    });
+    await service.getExpansions(undefined, undefined, 5);
+    await expect(
+      runWithOwnerAsync('esteban', () =>
+        service.getExpansions(undefined, undefined, 5),
+      ),
+    ).rejects.toBeInstanceOf(ServiceUnavailableException);
+  });
+
+  it('getBlueprintsExport deduplica concurrentes y cachea por expansión; errores no se cachean', async () => {
+    fetchSpy
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        text: async () => '{}',
+      })
+      .mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: async () => '[{"id":1}]',
+      });
+    await expect(service.getBlueprintsExport(7)).rejects.toBeInstanceOf(
+      HttpException,
+    );
+    const [a, b] = await Promise.all([
+      service.getBlueprintsExport(7),
+      service.getBlueprintsExport(7),
+    ]);
+    expect(a).toEqual([{ id: 1 }]);
+    expect(b).toBe(a);
+    await service.getBlueprintsExport(7);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+  });
+
   it('getBlueprintById consulta /blueprints/:id', async () => {
     fetchSpy.mockResolvedValue({
       ok: true,

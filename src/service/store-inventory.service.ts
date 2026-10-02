@@ -178,55 +178,57 @@ export class StoreInventoryService {
   }
 
   private async loadDemandCountsAllOwners(): Promise<Map<string, number>> {
+    const perOwner = await Promise.all(
+      this.ownerKeys().map((owner) =>
+        runWithOwnerAsync(owner, () => this.loadDemandCounts()).catch((e) => {
+          console.warn(
+            `StoreInventory: error counting sold_units_90d for ${owner}`,
+            e,
+          );
+          return null;
+        }),
+      ),
+    );
     let merged = new Map<string, number>();
-    for (const owner of this.ownerKeys()) {
-      try {
-        const counts = await runWithOwnerAsync(owner, () =>
-          this.loadDemandCounts(),
-        );
-        merged = mergeSoldUnitCounts(merged, counts);
-      } catch (e) {
-        console.warn(
-          `StoreInventory: error counting sold_units_90d for ${owner}`,
-          e,
-        );
-      }
+    for (const counts of perOwner) {
+      if (counts) merged = mergeSoldUnitCounts(merged, counts);
     }
     return merged;
   }
 
   private async loadSellableStockFromAllOwners(): Promise<any[]> {
-    const all: any[] = [];
-    for (const owner of this.ownerKeys()) {
-      try {
-        const rows = await runWithOwnerAsync(owner, () =>
-          this.stockRepository.findAll(),
-        );
-        all.push(...rows.filter(isStoreExportSellable));
-      } catch (e) {
-        if (owner === 'pablo') throw e;
-        console.warn(
-          `StoreInventory: error loading stock for ${owner}; skipping`,
-          e,
-        );
-      }
-    }
-    return all;
+    const perOwner = await Promise.all(
+      this.ownerKeys().map((owner) =>
+        runWithOwnerAsync(owner, () => this.stockRepository.findAll()).catch(
+          (e) => {
+            if (owner === 'pablo') throw e;
+            console.warn(
+              `StoreInventory: error loading stock for ${owner}; skipping`,
+              e,
+            );
+            return [];
+          },
+        ),
+      ),
+    );
+    return perOwner.flatMap((rows) => rows.filter(isStoreExportSellable));
   }
 
   private async loadPvpByOwner(cardIds: string[]): Promise<PvpByOwner> {
     const result = emptyPvpByOwner();
     if (cardIds.length === 0) return result;
-    for (const owner of this.ownerKeys()) {
-      try {
-        result[owner] = await runWithOwnerAsync(owner, async () => {
-          const pvps = await this.pvpRepository.findByCardIds(cardIds);
-          return groupPvpsByCardId(pvps);
-        });
-      } catch (e) {
-        console.warn(`StoreInventory: error loading PVP for ${owner}`, e);
-      }
-    }
+    await Promise.all(
+      this.ownerKeys().map(async (owner) => {
+        try {
+          result[owner] = await runWithOwnerAsync(owner, async () => {
+            const pvps = await this.pvpRepository.findByCardIds(cardIds);
+            return groupPvpsByCardId(pvps);
+          });
+        } catch (e) {
+          console.warn(`StoreInventory: error loading PVP for ${owner}`, e);
+        }
+      }),
+    );
     return result;
   }
 
@@ -235,15 +237,18 @@ export class StoreInventoryService {
   ): Promise<Map<string, string[]>> {
     let merged = new Map<string, string[]>();
     if (cardIds.length === 0) return merged;
-    for (const owner of this.ownerKeys()) {
-      try {
-        const part = await runWithOwnerAsync(owner, () =>
+    const perOwner = await Promise.all(
+      this.ownerKeys().map((owner) =>
+        runWithOwnerAsync(owner, () =>
           this.cardStockTagRepository.findMapByCardIds(cardIds),
-        );
-        merged = mergePublicTagMaps(merged, part);
-      } catch (e) {
-        console.warn(`StoreInventory: error loading tags for ${owner}`, e);
-      }
+        ).catch((e) => {
+          console.warn(`StoreInventory: error loading tags for ${owner}`, e);
+          return null;
+        }),
+      ),
+    );
+    for (const part of perOwner) {
+      if (part) merged = mergePublicTagMaps(merged, part);
     }
     return merged;
   }

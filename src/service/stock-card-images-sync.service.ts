@@ -23,6 +23,7 @@ import {
   LocalCardImagesService,
 } from '../pokemon/tcgdex/local-card-images.service';
 import { TCGDexService } from '../pokemon/tcgdex/tcgdex.service';
+import { firstAcceptedInOrder } from '../utils/concurrency';
 
 type StockImageRef = {
   owner: OwnerKey;
@@ -131,39 +132,43 @@ export class StockCardImagesSyncService implements OnApplicationBootstrap {
 
   private async collectActiveByCardId(): Promise<Map<string, StockImageRef[]>> {
     const map = new Map<string, StockImageRef[]>();
-    for (const owner of this.ownerKeys()) {
-      await runWithOwnerAsync(owner, async () => {
-        const rows = await this.stockRepository.findAll();
-        for (const row of rows) {
-          if (!isActiveStockForImageCache(row)) continue;
-          const cardId = String(row.card_id ?? '').trim();
-          const id = this.stockDocId(row);
-          if (!cardId || !id) continue;
-          const list = map.get(cardId) ?? [];
-          list.push({
-            owner,
-            id,
-            card_id: cardId,
-            image_url: String(row.image_url ?? ''),
-            language:
-              String(row.language ?? row.languaje ?? '').trim() || undefined,
-          });
-          map.set(cardId, list);
-        }
-      });
-    }
+    const owners = this.ownerKeys();
+    const rowsPerOwner = await Promise.all(
+      owners.map((owner) =>
+        runWithOwnerAsync(owner, () => this.stockRepository.findAll()),
+      ),
+    );
+    owners.forEach((owner, ownerIdx) => {
+      for (const row of rowsPerOwner[ownerIdx]) {
+        if (!isActiveStockForImageCache(row)) continue;
+        const cardId = String(row.card_id ?? '').trim();
+        const id = this.stockDocId(row);
+        if (!cardId || !id) continue;
+        const list = map.get(cardId) ?? [];
+        list.push({
+          owner,
+          id,
+          card_id: cardId,
+          image_url: String(row.image_url ?? ''),
+          language:
+            String(row.language ?? row.languaje ?? '').trim() || undefined,
+        });
+        map.set(cardId, list);
+      }
+    });
     return map;
   }
 
   private async cardIdIsActiveAnywhere(cardId: string): Promise<boolean> {
-    for (const owner of this.ownerKeys()) {
-      const found = await runWithOwnerAsync(owner, async () => {
-        const rows = await this.stockRepository.findByCardId(cardId);
-        return (rows ?? []).some((row) => isActiveStockForImageCache(row));
-      });
-      if (found) return true;
-    }
-    return false;
+    const hit = await firstAcceptedInOrder(
+      this.ownerKeys().map((owner) =>
+        runWithOwnerAsync(owner, async () => {
+          const rows = await this.stockRepository.findByCardId(cardId);
+          return (rows ?? []).some((row) => isActiveStockForImageCache(row));
+        }),
+      ),
+    );
+    return hit != null;
   }
 
   private pruneOrphanFiles(activeCardIds: Set<string>): number {

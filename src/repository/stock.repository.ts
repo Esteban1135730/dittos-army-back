@@ -1,8 +1,11 @@
 import { Stock, StockDocument } from '../schema/stock.schema';
 import { Injectable } from '@nestjs/common';
-import { isValidObjectId, Model } from 'mongoose';
+import { isValidObjectId, Model, Types } from 'mongoose';
 import { OwnerModelsService } from '../owner/owner-models.service';
 import { StockDto } from 'src/Dto/stock.dto';
+import { applyLeanDefaults } from 'src/utils/lean-defaults';
+
+export type StockLean = Stock & { _id: Types.ObjectId; __v?: number };
 
 @Injectable()
 export class StockRepository {
@@ -71,21 +74,52 @@ export class StockRepository {
   }
 
   /**
-   * Búsqueda puntual (móvil): por `_id` o por nombre.
-   * No sustituye `findAll` del listado completo.
+   * Listado completo como objetos planos (solo lectura; sin `_doc` ni `save`).
+   * `projection` opcional (sintaxis `select` de Mongoose) para lecturas agregadas.
    */
-  async searchByQuery(q: string, limit = 50): Promise<Stock[]> {
+  async findAllLean(projection?: string): Promise<StockLean[]> {
+    const query = this.stockModel.find();
+    if (projection) query.select(projection);
+    const rows = await query.lean<StockLean[]>().exec();
+    return applyLeanDefaults(this.stockModel, rows);
+  }
+
+  /**
+   * Búsqueda puntual (móvil): por `_id` o por nombre. Objetos planos (lean).
+   * No sustituye `findAllLean` del listado completo.
+   */
+  async searchByQuery(q: string, limit = 50): Promise<StockLean[]> {
     const trimmed = q.trim();
     if (!trimmed) return [];
     if (isValidObjectId(trimmed)) {
-      const one = await this.findById(trimmed);
-      return one ? [one] : [];
+      const one = await this.stockModel
+        .findById(trimmed)
+        .lean<StockLean>()
+        .exec();
+      return one ? applyLeanDefaults(this.stockModel, [one]) : [];
     }
     const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return this.stockModel
+    const rows = await this.stockModel
       .find({ card_name: { $regex: escaped, $options: 'i' } })
       .limit(limit)
+      .lean<StockLean[]>()
       .exec();
+    return applyLeanDefaults(this.stockModel, rows);
+  }
+
+  /** Igual que `findByIds` pero en objetos planos (solo lectura). */
+  async findByIdsLean(ids: string[]): Promise<StockLean[]> {
+    const unique = [
+      ...new Set(
+        ids.map((id) => String(id ?? '').trim()).filter((id) => id.length > 0),
+      ),
+    ];
+    if (unique.length === 0) return [];
+    const rows = await this.stockModel
+      .find({ _id: { $in: unique } })
+      .lean<StockLean[]>()
+      .exec();
+    return applyLeanDefaults(this.stockModel, rows);
   }
 
   async findById(id: string): Promise<Stock | null> {
@@ -200,6 +234,18 @@ export class StockRepository {
       { card_state: cardState },
       { new: true },
     );
+  }
+
+  /** Igual que `updateCardState` para muchos ids en un solo `updateMany`. */
+  async updateCardStateMany(
+    stockIds: string[],
+    cardState: string,
+  ): Promise<number> {
+    if (!stockIds.length) return 0;
+    const result = await this.stockModel
+      .updateMany({ _id: { $in: stockIds } }, { card_state: cardState })
+      .exec();
+    return result.modifiedCount ?? 0;
   }
 
   /**

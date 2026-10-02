@@ -20,16 +20,8 @@ const stockScanMock = {
 describe('StockController.listStock (tags por card_id)', () => {
   it('prioriza tags de card_stock_tags sobre tags legacy en el documento', async () => {
     const stockRow = {
-      _doc: {
-        _id: '507f1f77bcf86cd799439011',
-        card_id: 'sv1-1',
-        card_name: 'Test',
-        shipment: 0,
-        cards_in_shipmet: 1,
-        unity_cost: 100,
-        currency: 'EUR',
-        tags: ['bulk'],
-      },
+      _id: '507f1f77bcf86cd799439011',
+      __v: 0,
       card_id: 'sv1-1',
       card_name: 'Test',
       shipment: 0,
@@ -40,7 +32,7 @@ describe('StockController.listStock (tags por card_id)', () => {
     };
 
     const stockRepository = {
-      findAll: jest.fn().mockResolvedValue([stockRow]),
+      findAllLean: jest.fn().mockResolvedValue([stockRow]),
     };
     const cardStockTagRepository = {
       findMapByCardIds: jest
@@ -49,7 +41,7 @@ describe('StockController.listStock (tags por card_id)', () => {
       setTagsForCardId: jest.fn(),
     };
     const pvpRepository = {
-      findByCardIds: jest.fn().mockResolvedValue([]),
+      findByCardIdsLean: jest.fn().mockResolvedValue([]),
     };
 
     const moduleRef = await Test.createTestingModule({
@@ -76,20 +68,27 @@ describe('StockController.listStock (tags por card_id)', () => {
     expect(cardStockTagRepository.findMapByCardIds).toHaveBeenCalledWith([
       'sv1-1',
     ]);
+    expect(rows![0]).toEqual({
+      _id: '507f1f77bcf86cd799439011',
+      __v: 0,
+      card_id: 'sv1-1',
+      card_name: 'Test',
+      shipment: 0,
+      cards_in_shipmet: 1,
+      unity_cost: 100,
+      currency: 'EUR',
+      tags: ['vintage'],
+      card_cost: 100,
+      pvp: undefined,
+      pvp_currency: undefined,
+      product_kind: 'unit',
+      quantity: null,
+    });
   });
 
   it('si no hay fila en card_stock_tags, usa tags del documento stock', async () => {
     const stockRow = {
-      _doc: {
-        _id: '507f1f77bcf86cd799439012',
-        card_id: 'sv1-2',
-        card_name: 'Legacy',
-        shipment: 0,
-        cards_in_shipmet: 1,
-        unity_cost: 50,
-        currency: 'EUR',
-        tags: ['jugable'],
-      },
+      _id: '507f1f77bcf86cd799439012',
       card_id: 'sv1-2',
       card_name: 'Legacy',
       shipment: 0,
@@ -100,7 +99,7 @@ describe('StockController.listStock (tags por card_id)', () => {
     };
 
     const stockRepository = {
-      findAll: jest.fn().mockResolvedValue([stockRow]),
+      findAllLean: jest.fn().mockResolvedValue([stockRow]),
     };
     const cardStockTagRepository = {
       findMapByCardIds: jest
@@ -109,7 +108,7 @@ describe('StockController.listStock (tags por card_id)', () => {
       setTagsForCardId: jest.fn(),
     };
     const pvpRepository = {
-      findByCardIds: jest.fn().mockResolvedValue([]),
+      findByCardIdsLean: jest.fn().mockResolvedValue([]),
     };
 
     const moduleRef = await Test.createTestingModule({

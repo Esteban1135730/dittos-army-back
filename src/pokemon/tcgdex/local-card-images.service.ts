@@ -5,6 +5,7 @@ import {
   mkdirSync,
   readdirSync,
   readFileSync,
+  statSync,
   unlinkSync,
   writeFileSync,
 } from 'fs';
@@ -12,6 +13,23 @@ import { basename, dirname, extname, join, relative } from 'path';
 import { isSyntheticQuantityCardId } from '../../constants/bulk-product';
 import { isCardImagesMetaFile } from '../../utils/stock-card-images-sync';
 import { sanitizeRelativeAssetPath } from '../../utils/store-image-localize';
+import { TtlCache } from '../../utils/ttl-cache';
+
+/** Cada cuánto se re-verifica (stat) el `card-index.json` de una raíz en disco. */
+const ROOT_INDEX_RECHECK_MS = 5_000;
+/**
+ * TTL de la caché de existencia de archivos (positiva y negativa). Las escrituras
+ * de este servicio la invalidan al momento; el TTL cubre altas/bajas externas.
+ */
+const FILE_EXISTS_TTL_MS = 30_000;
+const FILE_EXISTS_MAX_ENTRIES = 50_000;
+
+type RootIndexCacheEntry = {
+  index: CardIndex;
+  mtimeMs: number;
+  size: number;
+  checkedAt: number;
+};
 
 export type ResolvedCardImages = {
   image: string;
@@ -78,6 +96,11 @@ export class LocalCardImagesService implements OnModuleInit {
   private indexLoaded = false;
   private pendingByKey = new Map<string, PendingManifestEntry>();
   private flushTimer: ReturnType<typeof setTimeout> | undefined;
+  private readonly rootIndexCache = new Map<string, RootIndexCacheEntry>();
+  private readonly fileExistsCache = new TtlCache<boolean>({
+    ttlMs: FILE_EXISTS_TTL_MS,
+    maxEntries: FILE_EXISTS_MAX_ENTRIES,
+  });
 
   onModuleInit(): void {
     this.loadIndex();
@@ -177,10 +200,12 @@ export class LocalCardImagesService implements OnModuleInit {
     extraIndex?: CardIndex,
   ): string[] {
     const paths = new Set<string>();
-    const merged: CardIndex = { ...extraIndex, ...this.index };
 
     for (const key of this.indexKeys(cardId, locale)) {
-      const entry = merged[key];
+      // Mismo resultado que `{ ...extraIndex, ...this.index }[key]` sin copiar índices.
+      const entry = Object.prototype.hasOwnProperty.call(this.index, key)
+        ? this.index[key]
+        : extraIndex?.[key];
       if (entry?.file) paths.add(entry.file.replace(/\\/g, '/'));
     }
 
@@ -203,19 +228,67 @@ export class LocalCardImagesService implements OnModuleInit {
     }
   }
 
+  /**
+   * `card-index.json` de una raíz, cacheado en memoria. Se relee solo si cambió
+   * su mtime/tamaño (comprobado como mucho cada `ROOT_INDEX_RECHECK_MS`).
+   */
+  private rootIndex(root: string): CardIndex {
+    const indexPath = join(root, 'card-index.json');
+    const now = Date.now();
+    const cached = this.rootIndexCache.get(indexPath);
+    if (cached && now - cached.checkedAt < ROOT_INDEX_RECHECK_MS) {
+      return cached.index;
+    }
+    let mtimeMs = -1;
+    let size = -1;
+    try {
+      const st = statSync(indexPath);
+      mtimeMs = st.mtimeMs;
+      size = st.size;
+    } catch {
+      /* sin índice en esta raíz */
+    }
+    if (cached && cached.mtimeMs === mtimeMs && cached.size === size) {
+      cached.checkedAt = now;
+      return cached.index;
+    }
+    const index = mtimeMs < 0 ? {} : this.loadIndexFromPath(indexPath);
+    this.rootIndexCache.set(indexPath, {
+      index,
+      mtimeMs,
+      size,
+      checkedAt: now,
+    });
+    return index;
+  }
+
+  private fullPathFor(relativePath: string, root: string): string | undefined {
+    const safe = sanitizeRelativeAssetPath(relativePath);
+    if (!safe) return undefined;
+    return join(root, ...safe.split('/'));
+  }
+
   private localFileExists(
     relativePath: string,
     root = this.getImagesRoot(),
   ): boolean {
-    const safe = sanitizeRelativeAssetPath(relativePath);
-    if (!safe) return false;
-    const fullPath = join(root, ...safe.split('/'));
-    if (!existsSync(fullPath)) return false;
+    const fullPath = this.fullPathFor(relativePath, root);
+    if (!fullPath) return false;
+    const cached = this.fileExistsCache.get(fullPath);
+    if (cached !== undefined) return cached;
+    let exists = false;
     try {
-      return readFileSync(fullPath).length > 0;
+      const st = statSync(fullPath);
+      exists = st.isFile() && st.size > 0;
     } catch {
-      return false;
+      exists = false;
     }
+    this.fileExistsCache.set(fullPath, exists);
+    return exists;
+  }
+
+  private markFile(fullPath: string, exists: boolean): void {
+    this.fileExistsCache.set(fullPath, exists);
   }
 
   private toPublicUrl(relativePath: string): string {
@@ -253,7 +326,7 @@ export class LocalCardImagesService implements OnModuleInit {
     if (!id) return undefined;
 
     const inferredSetId = setId ?? inferSetIdFromCardId(id);
-    const extraIndex = this.loadIndexFromPath(join(root, 'card-index.json'));
+    const extraIndex = this.rootIndex(root);
     const locales = uniqueLocales(locale);
     for (const loc of locales) {
       for (const relativePath of this.candidateRelativePaths(
@@ -309,6 +382,7 @@ export class LocalCardImagesService implements OnModuleInit {
     const fullPath = join(root, ...safe.split('/'));
     mkdirSync(dirname(fullPath), { recursive: true });
     writeFileSync(fullPath, buffer);
+    this.markFile(fullPath, true);
     const cardId = basename(safe, extname(safe));
     if (cardId) {
       this.index[cardId] = {
@@ -339,6 +413,7 @@ export class LocalCardImagesService implements OnModuleInit {
         const dest = join(destRoot, ...found.split('/'));
         mkdirSync(dirname(dest), { recursive: true });
         copyFileSync(src, dest);
+        this.fileExistsCache.delete(dest);
         this.index[id] = {
           ...this.index[id],
           file: found,
@@ -389,11 +464,16 @@ export class LocalCardImagesService implements OnModuleInit {
     const safe = sanitizeRelativeAssetPath(relativePath);
     if (!safe || isCardImagesMetaFile(safe)) return false;
     const fullPath = join(this.getImagesRoot(), ...safe.split('/'));
-    if (!existsSync(fullPath)) return false;
+    if (!existsSync(fullPath)) {
+      this.markFile(fullPath, false);
+      return false;
+    }
     try {
       unlinkSync(fullPath);
+      this.markFile(fullPath, false);
       return true;
     } catch (err) {
+      this.fileExistsCache.delete(fullPath);
       this.logger.warn(
         `No se pudo borrar ${safe}: ${err instanceof Error ? err.message : String(err)}`,
       );

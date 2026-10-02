@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { OwnerModelsService } from '../owner/owner-models.service';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import {
   ReservaIncoming,
   ReservaIncomingDocument,
 } from '../schema/reserva-incoming.schema';
+import { applyLeanDefaults } from '../utils/lean-defaults';
+
+export type ReservaIncomingLean = ReservaIncoming & { _id: Types.ObjectId };
 
 @Injectable()
 export class ReservaIncomingRepository {
@@ -103,6 +106,18 @@ export class ReservaIncomingRepository {
   async findAll(clientId?: string): Promise<ReservaIncomingDocument[]> {
     const q = clientId ? { client_id: clientId } : {};
     return this.model.find(q).sort({ created_at: -1 }).exec();
+  }
+
+  /** Igual que `findAll` en objetos planos con defaults (solo lectura). */
+  async findAllLean(
+    clientId?: string,
+    projection?: string,
+  ): Promise<ReservaIncomingLean[]> {
+    const q = clientId ? { client_id: clientId } : {};
+    const query = this.model.find(q).sort({ created_at: -1 });
+    if (projection) query.select(projection);
+    const rows = await query.lean<ReservaIncomingLean[]>().exec();
+    return applyLeanDefaults(this.model, rows);
   }
 
   async deleteById(id: string): Promise<boolean> {

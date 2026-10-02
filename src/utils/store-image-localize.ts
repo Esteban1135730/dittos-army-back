@@ -178,9 +178,13 @@ function fallbackAssetName(url: string): string {
   return `fetched-${slug}${extensionFromUrl(url)}`;
 }
 
+const LOCALHOST_FETCH_TIMEOUT_MS = 15000;
+
 async function defaultFetchLocalhost(url: string): Promise<Buffer | undefined> {
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(LOCALHOST_FETCH_TIMEOUT_MS),
+    });
     if (!res.ok) return undefined;
     return Buffer.from(await res.arrayBuffer());
   } catch {

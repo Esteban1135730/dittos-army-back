@@ -77,7 +77,10 @@ export class IncomingReservationService {
     const pvps = await this.pvpRepository.findByCardIds(cardIds);
     const pvpMap = groupPvpsByCardId(pvps as any);
     const pedidoIdByClient = new Map<string, string | null>();
+    const reservasToCreate: Parameters<ReservaRepository['createMany']>[0] = [];
+    const reservedStockIds: string[] = [];
 
+    // El consumo FIFO de cupos sigue siendo secuencial (orden de llegada por línea).
     for (let i = 0; i < createdStocks.length; i++) {
       const stockDoc = createdStocks[i];
       const lineId = batchItemIds[i];
@@ -101,15 +104,19 @@ export class IncomingReservationService {
         slot.client_id,
         pedidoIdByClient,
       );
-      await this.reservaRepository.create({
+      reservasToCreate.push({
         client_id: slot.client_id,
         stock_id: stockId,
         precio: precioCop,
         currency,
         ...(pedidoId ? { pedido_id: pedidoId } : {}),
       });
-      await this.stockRepository.updateCardState(stockId, 'reserva');
+      reservedStockIds.push(stockId);
     }
+
+    if (!reservasToCreate.length) return;
+    await this.reservaRepository.createMany(reservasToCreate);
+    await this.stockRepository.updateCardStateMany(reservedStockIds, 'reserva');
   }
 
   private async reservadoPedidoIdForClient(
@@ -296,10 +303,10 @@ export class IncomingReservationService {
       unit_cost_cop?: number | null;
     }>
   > {
-    const rows = await this.reservaIncomingRepo.findAll(clientId);
+    const rows = await this.reservaIncomingRepo.findAllLean(clientId);
     const ids = [...new Set(rows.map((r) => r.batch_item_id))];
     const transitLines = ids.length
-      ? await this.transitLineRepo.findByIds(ids)
+      ? await this.transitLineRepo.findByIdsLean(ids)
       : [];
     const transitMap = new Map(
       transitLines.map((it) => [it._id.toString(), it]),

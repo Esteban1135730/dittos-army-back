@@ -75,3 +75,6 @@ export class Stock {
 }
 
 export const StockSchema = SchemaFactory.createForClass(Stock);
+/** Cubre también consultas solo por `card_id` (prefijo). */
+StockSchema.index({ card_id: 1, card_state: 1 });
+StockSchema.index({ card_state: 1 });

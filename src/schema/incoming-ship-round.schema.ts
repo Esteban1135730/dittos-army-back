@@ -22,3 +22,4 @@ export class IncomingShipRound {
 
 export const IncomingShipRoundSchema =
   SchemaFactory.createForClass(IncomingShipRound);
+IncomingShipRoundSchema.index({ status: 1, created_at: -1 });

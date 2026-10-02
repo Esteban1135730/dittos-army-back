@@ -69,9 +69,11 @@ describe('IncomingReservationService.materializeForNewStockLines', () => {
     };
     const reservaRepository = {
       create: jest.fn().mockResolvedValue({}),
+      createMany: jest.fn().mockResolvedValue([]),
     };
     const stockRepository = {
       updateCardState: jest.fn().mockResolvedValue({}),
+      updateCardStateMany: jest.fn().mockResolvedValue(0),
     };
     const pvpRepository = {
       findByCardIds: jest.fn().mockResolvedValue([]),
@@ -90,7 +92,13 @@ describe('IncomingReservationService.materializeForNewStockLines', () => {
       pvpRepository as any,
       pedidoRepository as any,
     );
-    return { svc, reservaRepository, pedidoRepository };
+    return {
+      svc,
+      reservaRepository,
+      pedidoRepository,
+      reservaIncomingRepo,
+      stockRepository,
+    };
   }
 
   it('liga la reserva materializada al pedido reservado del cliente', async () => {
@@ -101,13 +109,13 @@ describe('IncomingReservationService.materializeForNewStockLines', () => {
       [{ _id: 's1', card_id: 'sv1-1' }] as any,
       ['line1'],
     );
-    expect(reservaRepository.create).toHaveBeenCalledWith(
+    expect(reservaRepository.createMany).toHaveBeenCalledWith([
       expect.objectContaining({
         client_id: 'c1',
         stock_id: 's1',
         pedido_id: 'p-open',
       }),
-    );
+    ]);
   });
 
   it('deja la reserva sin pedido_id si el cliente no tiene pedido reservado', async () => {
@@ -118,16 +126,91 @@ describe('IncomingReservationService.materializeForNewStockLines', () => {
       [{ _id: 's1', card_id: 'sv1-1' }] as any,
       ['line1'],
     );
-    const arg = reservaRepository.create.mock.calls[0][0];
+    const arg = reservaRepository.createMany.mock.calls[0][0][0];
     expect(arg.client_id).toBe('c1');
     expect(arg.pedido_id).toBeUndefined();
+  });
+
+  it('consume cupos FIFO en orden y escribe reservas/estados en bloque', async () => {
+    const {
+      svc,
+      reservaRepository,
+      reservaIncomingRepo,
+      stockRepository,
+      pedidoRepository,
+    } = makeMaterializeService({ pedidoId: 'p-open' });
+    reservaIncomingRepo.consumeOneFifo
+      .mockReset()
+      .mockResolvedValueOnce({ client_id: 'c1', precio_cop: 5000 })
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ client_id: 'c2', precio_cop: 7000 })
+      .mockResolvedValueOnce({ client_id: 'c1', precio_cop: 0 });
+
+    await svc.materializeForNewStockLines(
+      [
+        { _id: 's1', card_id: 'sv1-1' },
+        { _id: 's2', card_id: 'sv1-1' },
+        { _id: 's3', card_id: 'sv1-2' },
+        { _id: 's4', card_id: 'sv1-1' },
+      ] as any,
+      ['l1', 'l1', 'l2', 'l1'],
+    );
+
+    expect(
+      reservaIncomingRepo.consumeOneFifo.mock.calls.map((c) => c[0] as string),
+    ).toEqual(['l1', 'l1', 'l2', 'l1']);
+    expect(reservaRepository.create).not.toHaveBeenCalled();
+    expect(reservaRepository.createMany).toHaveBeenCalledTimes(1);
+    expect(reservaRepository.createMany).toHaveBeenCalledWith([
+      {
+        client_id: 'c1',
+        stock_id: 's1',
+        precio: 5000,
+        currency: 'COP',
+        pedido_id: 'p-open',
+      },
+      {
+        client_id: 'c2',
+        stock_id: 's3',
+        precio: 7000,
+        currency: 'COP',
+        pedido_id: 'p-open',
+      },
+      {
+        client_id: 'c1',
+        stock_id: 's4',
+        precio: 0,
+        currency: 'COP',
+        pedido_id: 'p-open',
+      },
+    ]);
+    expect(stockRepository.updateCardState).not.toHaveBeenCalled();
+    expect(stockRepository.updateCardStateMany).toHaveBeenCalledWith(
+      ['s1', 's3', 's4'],
+      'reserva',
+    );
+    expect(pedidoRepository.findReservadoByClientId).toHaveBeenCalledTimes(2);
+  });
+
+  it('sin cupos no escribe nada', async () => {
+    const { svc, reservaRepository, reservaIncomingRepo, stockRepository } =
+      makeMaterializeService({ pedidoId: null });
+    reservaIncomingRepo.consumeOneFifo.mockReset().mockResolvedValue(null);
+
+    await svc.materializeForNewStockLines(
+      [{ _id: 's1', card_id: 'sv1-1' }] as any,
+      ['l1'],
+    );
+
+    expect(reservaRepository.createMany).not.toHaveBeenCalled();
+    expect(stockRepository.updateCardStateMany).not.toHaveBeenCalled();
   });
 });
 
 describe('IncomingReservationService.listIncoming', () => {
   it('incluye unit_cost_cop de la línea de tránsito', async () => {
     const reservaIncomingRepo = {
-      findAll: jest.fn().mockResolvedValue([
+      findAllLean: jest.fn().mockResolvedValue([
         {
           _id: { toString: () => 'r1' },
           client_id: 'c1',
@@ -138,7 +221,7 @@ describe('IncomingReservationService.listIncoming', () => {
       ]),
     };
     const transitLineRepo = {
-      findByIds: jest.fn().mockResolvedValue([
+      findByIdsLean: jest.fn().mockResolvedValue([
         {
           _id: { toString: () => 'b1' },
           card_name: 'Pikachu',

@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { isValidObjectId } from 'mongoose';
 import { Stock } from 'src/schema/stock.schema';
-import { StockRepository } from 'src/repository/stock.repository';
+import { StockLean, StockRepository } from 'src/repository/stock.repository';
 import { CardStockTagRepository } from 'src/repository/card-stock-tag.repository';
 import { PvpRepository } from 'src/repository/pvp.repository';
 import { ReservaRepository } from 'src/repository/reserva.repository';
@@ -259,11 +259,13 @@ export class StockController {
   }
 
   @Get()
-  async listStock(@Query('q') q?: string): Promise<Stock[] | null> {
+  async listStock(
+    @Query('q') q?: string,
+  ): Promise<Record<string, unknown>[] | null> {
     const query = q?.trim() ?? '';
-    const stockItems: any[] = query
+    const stockItems: StockLean[] = query
       ? await this.stockRepository.searchByQuery(query)
-      : await this.stockRepository.findAll();
+      : await this.stockRepository.findAllLean();
     const cardIds = [...new Set(stockItems.map((s) => s.card_id))];
     const tagByCardId =
       await this.cardStockTagRepository.findMapByCardIds(cardIds);
@@ -278,7 +280,7 @@ export class StockController {
       }[]
     >();
     try {
-      const pvps = await this.pvpRepository.findByCardIds(cardIds);
+      const pvps = await this.pvpRepository.findByCardIdsLean(cardIds);
       for (const [cid, list] of groupPvpsByCardId(pvps)) {
         pvpByCard.set(cid, list);
       }
@@ -300,7 +302,7 @@ export class StockController {
             : 0
           : null;
       return {
-        ...stock._doc,
+        ...stock,
         card_name: stock.card_name ?? '',
         tags: this.resolveTagsForLine(stock.card_id, tagByCardId, stock.tags),
         card_cost: stock.shipment / stock.cards_in_shipmet + stock.unity_cost,

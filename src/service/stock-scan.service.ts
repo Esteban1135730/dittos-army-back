@@ -206,23 +206,24 @@ export class StockScanService {
     const active = getCurrentOwner();
     const other: OwnerKey = active === 'pablo' ? 'esteban' : 'pablo';
 
-    const activeView = await runWithOwnerAsync(active, async () => {
-      try {
-        return await this.getScanViewInCurrentOwner(trimmed, excludeIds);
-      } catch (e) {
-        if (e instanceof NotFoundException) return null;
-        throw e;
-      }
-    });
-
-    const otherView = await runWithOwnerAsync(other, async () => {
-      try {
-        return await this.getScanViewInCurrentOwner(trimmed, excludeIds);
-      } catch (e) {
-        if (e instanceof NotFoundException) return null;
-        throw e;
-      }
-    });
+    const viewIn = (owner: OwnerKey) =>
+      runWithOwnerAsync(owner, async () => {
+        try {
+          return await this.getScanViewInCurrentOwner(trimmed, excludeIds);
+        } catch (e) {
+          if (e instanceof NotFoundException) return null;
+          throw e;
+        }
+      });
+    // En paralelo; si ambos fallan, se propaga primero el error del owner activo.
+    const [activeSettled, otherSettled] = await Promise.allSettled([
+      viewIn(active),
+      viewIn(other),
+    ]);
+    if (activeSettled.status === 'rejected') throw activeSettled.reason;
+    if (otherSettled.status === 'rejected') throw otherSettled.reason;
+    const activeView = activeSettled.value;
+    const otherView = otherSettled.value;
 
     const activeOk = activeView != null;
     const otherOk = otherView != null;

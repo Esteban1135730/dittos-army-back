@@ -35,9 +35,14 @@ import {
   findLegacyItemByCardName,
   unitCostCopFromLegacyItemRuleOfThree,
 } from 'src/utils/incoming-batch-item-pricing';
+import { getCurrentOwner } from 'src/owner/owner-context';
+import { InFlightDedupe } from 'src/utils/ttl-cache';
 
 @Injectable()
 export class CardtraderTransitLotService {
+  private readonly ownerBackfillDone = new Set<OwnerKey>();
+  private readonly ownerBackfillInFlight = new InFlightDedupe<void>();
+
   constructor(
     private readonly lotRepository: CardtraderTransitLotRepository,
     private readonly lineRepository: CardtraderTransitLineRepository,
@@ -45,6 +50,19 @@ export class CardtraderTransitLotService {
     private readonly incomingBatchItemRepository: IncomingBatchItemRepository,
     private readonly tcgDexService: TCGDexService,
   ) {}
+
+  /**
+   * `backfillMissingOwner` es idempotente y solo corrige datos legacy: basta una
+   * vez por proceso y owner (si falla, se reintenta en la siguiente llamada).
+   */
+  private async backfillMissingOwnerOnce(): Promise<void> {
+    const owner = getCurrentOwner();
+    if (this.ownerBackfillDone.has(owner)) return;
+    await this.ownerBackfillInFlight.run(owner, async () => {
+      await this.lotRepository.backfillMissingOwner();
+      this.ownerBackfillDone.add(owner);
+    });
+  }
 
   private resolveLotOwner(raw: unknown): OwnerKey {
     return isOwnerKey(raw) ? raw : OWNERS_CONFIG.defaultOwner;
@@ -147,18 +165,26 @@ export class CardtraderTransitLotService {
       owner: OwnerKey;
     }>
   > {
-    await this.lotRepository.backfillMissingOwner();
+    await this.backfillMissingOwnerOnce();
     const lots = await this.lotRepository.findOpenLots();
     if (lots.length === 0) return [];
+
+    const lines = await this.lineRepository.findByLotIdsLean(
+      lots.map((lot) => lot._id.toString()),
+    );
+    const remainingByLotId = new Map<string, number>();
+    for (const line of lines) {
+      const lotId = String(line.lot_id);
+      remainingByLotId.set(
+        lotId,
+        (remainingByLotId.get(lotId) ?? 0) + (line.remaining_quantity || 0),
+      );
+    }
 
     const result = await Promise.all(
       lots.map(async (lot) => {
         const lotId = lot._id.toString();
-        const lines = await this.lineRepository.findByLotId(lotId);
-        const remainingTotal = lines.reduce(
-          (sum, line) => sum + (line.remaining_quantity || 0),
-          0,
-        );
+        const remainingTotal = remainingByLotId.get(lotId) ?? 0;
         return {
           lot_id: lotId,
           status: lot.status,

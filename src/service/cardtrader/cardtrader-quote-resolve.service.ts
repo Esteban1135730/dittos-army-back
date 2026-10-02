@@ -1,5 +1,7 @@
 import { Injectable, Optional } from '@nestjs/common';
 import { CardTraderService } from './cardtrader.service';
+import { mapWithConcurrency } from '../../utils/concurrency';
+import { TtlCache } from '../../utils/ttl-cache';
 import { TCGDexService } from '../../pokemon';
 import {
   matchBlueprintsForQuoteLine,
@@ -48,6 +50,8 @@ export type QuoteLineResolveResult = {
 };
 
 const BLUEPRINT_CACHE_TTL_MS = 45 * 60 * 1000;
+const BLUEPRINT_CACHE_MAX = 100;
+const RESOLVE_LINES_CONCURRENCY = 5;
 const SEARCH_MAX_ITEMS = 40;
 
 export function searchLocaleOrder(q: string): string[] {
@@ -63,10 +67,10 @@ export function searchLocaleOrder(q: string): string[] {
 @Injectable()
 export class CardTraderQuoteResolveService {
   private index: QuoteExpansionIndex;
-  private readonly blueprintCache = new Map<
-    number,
-    { at: number; data: unknown }
-  >();
+  private readonly blueprintCache = new TtlCache<unknown>({
+    ttlMs: BLUEPRINT_CACHE_TTL_MS,
+    maxEntries: BLUEPRINT_CACHE_MAX,
+  });
 
   constructor(
     private readonly cardTrader: CardTraderService,
@@ -83,10 +87,11 @@ export class CardTraderQuoteResolveService {
   async resolveLines(lines: QuoteLineInput[]): Promise<{
     results: QuoteLineResolveResult[];
   }> {
-    const results: QuoteLineResolveResult[] = [];
-    for (let i = 0; i < lines.length; i += 1) {
-      results.push(await this.resolveLine(lines[i], i));
-    }
+    const results = await mapWithConcurrency(
+      lines,
+      RESOLVE_LINES_CONCURRENCY,
+      (line, i) => this.resolveLine(line, i),
+    );
     return { results };
   }
 
@@ -262,12 +267,8 @@ export class CardTraderQuoteResolveService {
   }
 
   private async getBlueprintsCached(expansionId: number): Promise<unknown> {
-    const cached = this.blueprintCache.get(expansionId);
-    if (cached && Date.now() - cached.at < BLUEPRINT_CACHE_TTL_MS) {
-      return cached.data;
-    }
-    const data = await this.cardTrader.getBlueprintsExport(expansionId);
-    this.blueprintCache.set(expansionId, { at: Date.now(), data });
-    return data;
+    return this.blueprintCache.getOrLoad(String(expansionId), () =>
+      this.cardTrader.getBlueprintsExport(expansionId),
+    );
   }
 }

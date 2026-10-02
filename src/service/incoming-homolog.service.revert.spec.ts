@@ -18,10 +18,13 @@ describe('IncomingHomologService.revertConversion (CT multi-owner)', () => {
   const transitLineRepo = {
     incrementRemainingQuantity: jest.fn(),
     findByRemainingQuantityGreaterThanZero: jest.fn(),
+    findByRemainingQuantityGreaterThanZeroLean: jest.fn(),
     findByLotId: jest.fn(),
+    findByLotIdsLean: jest.fn(),
   };
   const transitLotRepo = {
     findById: jest.fn(),
+    findByIds: jest.fn(),
     findOpenLots: jest.fn(),
   };
 
@@ -65,6 +68,11 @@ describe('IncomingHomologService.revertConversion (CT multi-owner)', () => {
     transitLineRepo.findByRemainingQuantityGreaterThanZero.mockResolvedValue(
       [],
     );
+    transitLineRepo.findByRemainingQuantityGreaterThanZeroLean.mockResolvedValue(
+      [],
+    );
+    transitLineRepo.findByLotIdsLean.mockResolvedValue([]);
+    transitLotRepo.findByIds.mockResolvedValue([]);
     transitLotRepo.findOpenLots.mockResolvedValue([]);
     sessionRepo.revertConverted.mockResolvedValue(
       convertedSession({

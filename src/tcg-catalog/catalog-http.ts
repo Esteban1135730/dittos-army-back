@@ -1,6 +1,7 @@
 import { BadGatewayException, Logger } from '@nestjs/common';
 
 const USER_AGENT = 'DittosArmy/1.0 (panel catalog)';
+const CATALOG_TIMEOUT_MS = 10_000;
 
 /**
  * GET JSON de un catálogo externo. Estados en `emptyOnStatus` (p. ej. 404 "sin
@@ -14,6 +15,7 @@ export async function fetchCatalogJson<T>(
   try {
     response = await fetch(url, {
       headers: { Accept: 'application/json', 'User-Agent': USER_AGENT },
+      signal: AbortSignal.timeout(CATALOG_TIMEOUT_MS),
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'network';

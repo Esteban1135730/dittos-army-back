@@ -46,3 +46,5 @@ export class Reserva {
 
 export const ReservaSchema = SchemaFactory.createForClass(Reserva);
 ReservaSchema.index({ pedido_id: 1 });
+ReservaSchema.index({ client_id: 1, created_at: -1 });
+ReservaSchema.index({ stock_id: 1 });

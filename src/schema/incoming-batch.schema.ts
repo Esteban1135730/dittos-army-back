@@ -35,3 +35,4 @@ export class IncomingBatch {
 }
 
 export const IncomingBatchSchema = SchemaFactory.createForClass(IncomingBatch);
+IncomingBatchSchema.index({ status: 1, created_at: -1 });
