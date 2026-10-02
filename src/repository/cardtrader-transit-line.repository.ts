@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { OwnerModelsService } from '../owner/owner-models.service';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import {
   CardtraderTransitLine,
   CardtraderTransitLineDocument,
 } from '../schema/cardtrader-transit-line.schema';
+
+export type CardtraderTransitLineLean = CardtraderTransitLine & {
+  _id: Types.ObjectId;
+};
 
 @Injectable()
 export class CardtraderTransitLineRepository {
@@ -33,10 +37,41 @@ export class CardtraderTransitLineRepository {
     return this.lineModel.find({ _id: { $in: ids } }).exec();
   }
 
+  /** Igual que `findByIds` en objetos planos (solo lectura). */
+  async findByIdsLean(ids: string[]): Promise<CardtraderTransitLineLean[]> {
+    if (!ids.length) return [];
+    return this.lineModel
+      .find({ _id: { $in: ids } })
+      .lean<CardtraderTransitLineLean[]>()
+      .exec();
+  }
+
+  /** Líneas de muchos lotes en una sola query (objetos planos, solo lectura). */
+  async findByLotIdsLean(
+    lotIds: string[],
+  ): Promise<CardtraderTransitLineLean[]> {
+    const unique = [...new Set(lotIds.filter((id) => id))];
+    if (!unique.length) return [];
+    return this.lineModel
+      .find({ lot_id: { $in: unique } })
+      .lean<CardtraderTransitLineLean[]>()
+      .exec();
+  }
+
   async findByRemainingQuantityGreaterThanZero(): Promise<
     CardtraderTransitLineDocument[]
   > {
     return this.lineModel.find({ remaining_quantity: { $gt: 0 } }).exec();
+  }
+
+  /** Igual que `findByRemainingQuantityGreaterThanZero` en objetos planos (solo lectura). */
+  async findByRemainingQuantityGreaterThanZeroLean(): Promise<
+    CardtraderTransitLineLean[]
+  > {
+    return this.lineModel
+      .find({ remaining_quantity: { $gt: 0 } })
+      .lean<CardtraderTransitLineLean[]>()
+      .exec();
   }
 
   async findByCt0ItemIds(

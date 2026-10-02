@@ -4,6 +4,7 @@ import { OwnerModelsService } from '../owner/owner-models.service';
 import { Model } from 'mongoose';
 import { ClientDto } from 'src/Dto/client.dto';
 import { toCelularE164 } from 'src/utils/phone-normalize';
+import { applyLeanDefaults } from 'src/utils/lean-defaults';
 
 @Injectable()
 export class ClientRepository {
@@ -33,6 +34,21 @@ export class ClientRepository {
 
   async findAll(): Promise<Client[]> {
     return this.clientModel.find().sort({ nombre: 1 }).exec();
+  }
+
+  /** Igual que `findAll` en objetos planos con defaults (solo lectura). */
+  async findAllLean(): Promise<Client[]> {
+    const rows = await this.clientModel
+      .find()
+      .sort({ nombre: 1 })
+      .lean<Client[]>()
+      .exec();
+    return applyLeanDefaults(this.clientModel, rows);
+  }
+
+  /** Número total de clientes (equivale a `findAll().length` sin traer documentos). */
+  async countAll(): Promise<number> {
+    return this.clientModel.countDocuments().exec();
   }
 
   async findById(id: string): Promise<Client | null> {

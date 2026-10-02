@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import type { OwnerKey } from '../config/owners.config';
+import { OWNER_KEYS, type OwnerKey } from '../config/owners.config';
 
 export type IncomingHomologSessionDocument =
   HydratedDocument<IncomingHomologSession>;
@@ -124,7 +124,7 @@ export class IncomingHomologCreatedStock implements HomologCreatedStockRef {
   @Prop({ required: true })
   stock_id: string;
 
-  @Prop({ required: true, enum: ['pablo', 'esteban', 'tefa'] })
+  @Prop({ required: true, enum: OWNER_KEYS })
   owner: OwnerKey;
 }
 

@@ -15,6 +15,8 @@ import { CardStockTagRepository } from 'src/repository/card-stock-tag.repository
 import { StockScanService } from 'src/service/stock-scan.service';
 import { StockReviewService } from 'src/service/stock-review.service';
 import { BulkProductService } from 'src/service/bulk-product.service';
+import { StockPhotoService } from 'src/service/stock-photo.service';
+import { LocalCardImagesService } from 'src/pokemon';
 
 describe('StockController.deleteStock', () => {
   const validId = '507f1f77bcf86cd799439011';
@@ -81,6 +83,8 @@ describe('StockController.deleteStock', () => {
         },
         { provide: StockReviewService, useValue: { listPerdidas: jest.fn() } },
         { provide: BulkProductService, useValue: { ensureBulk: jest.fn() } },
+        { provide: StockPhotoService, useValue: {} },
+        { provide: LocalCardImagesService, useValue: { resolve: jest.fn() } },
       ],
     }).compile();
 
@@ -171,6 +175,8 @@ describe('StockController.scanStockLine', () => {
         { provide: StockScanService, useValue: stockScanService },
         { provide: StockReviewService, useValue: { listPerdidas: jest.fn() } },
         { provide: BulkProductService, useValue: { ensureBulk: jest.fn() } },
+        { provide: StockPhotoService, useValue: {} },
+        { provide: LocalCardImagesService, useValue: { resolve: jest.fn() } },
       ],
     }).compile();
     return {
@@ -229,6 +235,8 @@ describe('StockController.listStockByCardId', () => {
         },
         { provide: StockReviewService, useValue: { listPerdidas: jest.fn() } },
         { provide: BulkProductService, useValue: { ensureBulk: jest.fn() } },
+        { provide: StockPhotoService, useValue: {} },
+        { provide: LocalCardImagesService, useValue: { resolve: jest.fn() } },
       ],
     }).compile();
 
@@ -314,6 +322,7 @@ describe('StockController.listStock query', () => {
   async function setupList() {
     const stockRepository = {
       findAll: jest.fn().mockResolvedValue([]),
+      findAllLean: jest.fn().mockResolvedValue([]),
       searchByQuery: jest.fn().mockResolvedValue([]),
     };
     const moduleRef = await Test.createTestingModule({
@@ -329,7 +338,10 @@ describe('StockController.listStock query', () => {
         },
         {
           provide: PvpRepository,
-          useValue: { findByCardIds: jest.fn().mockResolvedValue([]) },
+          useValue: {
+            findByCardIds: jest.fn().mockResolvedValue([]),
+            findByCardIdsLean: jest.fn().mockResolvedValue([]),
+          },
         },
         { provide: StoreInventoryService, useValue: {} },
         { provide: OpenedSealedStockService, useValue: {} },
@@ -345,6 +357,8 @@ describe('StockController.listStock query', () => {
         },
         { provide: StockReviewService, useValue: { listPerdidas: jest.fn() } },
         { provide: BulkProductService, useValue: { ensureBulk: jest.fn() } },
+        { provide: StockPhotoService, useValue: {} },
+        { provide: LocalCardImagesService, useValue: { resolve: jest.fn() } },
       ],
     }).compile();
 
@@ -354,10 +368,11 @@ describe('StockController.listStock query', () => {
     };
   }
 
-  it('sin q usa findAll', async () => {
+  it('sin q usa findAllLean (sin hidratar documentos)', async () => {
     const { controller, stockRepository } = await setupList();
     await controller.listStock();
-    expect(stockRepository.findAll).toHaveBeenCalled();
+    expect(stockRepository.findAllLean).toHaveBeenCalled();
+    expect(stockRepository.findAll).not.toHaveBeenCalled();
     expect(stockRepository.searchByQuery).not.toHaveBeenCalled();
   });
 
@@ -365,6 +380,7 @@ describe('StockController.listStock query', () => {
     const { controller, stockRepository } = await setupList();
     await controller.listStock('pikachu');
     expect(stockRepository.searchByQuery).toHaveBeenCalledWith('pikachu');
+    expect(stockRepository.findAllLean).not.toHaveBeenCalled();
     expect(stockRepository.findAll).not.toHaveBeenCalled();
   });
 });

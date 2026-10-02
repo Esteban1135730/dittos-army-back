@@ -16,9 +16,28 @@ import {
 import { effectiveSaleCostCop } from '../utils/sale-cost-snapshot';
 import { isSyntheticQuantityCardId } from '../constants/bulk-product';
 import type { Stock } from '../schema/stock.schema';
-import type { SaleDocument } from '../schema/sale.schema';
+import type { Sale } from '../schema/sale.schema';
+import { getCurrentOwner } from '../owner/owner-context';
+import { getCurrentTcg } from '../owner/tcg-context';
+import { TtlCache } from '../utils/ttl-cache';
 
 const NON_INVENTORY_STATES = new Set(['vendida', 'propiedad']);
+
+const OVERVIEW_CACHE_TTL_MS = 30_000;
+const OVERVIEW_CACHE_MAX = 50;
+
+/** Campos que lee el cálculo (costo, estado, rareza para PVP). */
+const STOCK_FIELDS =
+  '_id card_id card_state cards_in_shipmet shipment unity_cost currency rareza league_card holofoil';
+const SALE_FIELDS = 'stock_id card_id amount_cop created_at cycle_closed_at';
+const RESERVA_FIELDS = 'stock_id precio currency';
+const RESERVA_INCOMING_FIELDS = 'quantity client_id';
+const BATCH_ITEM_FIELDS = 'card_id remaining_quantity unit_cost_cop';
+
+type SaleRow = Pick<
+  Sale,
+  'stock_id' | 'card_id' | 'amount_cop' | 'created_at' | 'cycle_closed_at'
+>;
 
 export type DashboardOverviewResponse = {
   generated_at: string;
@@ -115,8 +134,8 @@ function buildLastNMonthKeys(n: number): string[] {
 }
 
 function buildSalesByMonth(
-  activeSales: SaleDocument[],
-  historicalSales: SaleDocument[],
+  activeSales: SaleRow[],
+  historicalSales: SaleRow[],
   monthKeys: string[],
 ): Array<{ month: string; count: number; amount_cop: number }> {
   const bucket = new Map<string, { count: number; amount_cop: number }>();
@@ -156,25 +175,44 @@ export class DashboardOverviewService {
     private readonly pvpRepository: PvpRepository,
   ) {}
 
+  /** Caché corta por owner + TCG: el panel refresca a menudo y el cálculo recorre todo el stock. */
+  private readonly overviewCache = new TtlCache<DashboardOverviewResponse>({
+    ttlMs: OVERVIEW_CACHE_TTL_MS,
+    maxEntries: OVERVIEW_CACHE_MAX,
+  });
+
   async getOverview(): Promise<DashboardOverviewResponse> {
+    const key = `${getCurrentOwner()}:${getCurrentTcg()}`;
+    return this.overviewCache.getOrLoad(key, () => this.computeOverview());
+  }
+
+  /** Vacía la caché de todos los owners/TCG (hay escrituras que cruzan owners). */
+  invalidateCache(): void {
+    this.overviewCache.clear();
+  }
+
+  private async computeOverview(): Promise<DashboardOverviewResponse> {
     const [
       stockItems,
       activeSales,
       historicalSales,
-      clients,
+      clientsCount,
       reservas,
       reservasIncoming,
-      openBatches,
+      openBatchIds,
       ctTransitLines,
     ] = await Promise.all([
-      this.stockRepository.findAll(),
-      this.saleRepository.findActiveVentas(),
-      this.saleRepository.findHistoricalVentas(),
-      this.clientRepository.findAll(),
-      this.reservaRepository.findAll(),
-      this.reservaIncomingRepository.findAll(),
-      this.incomingBatchRepository.findOpenBatches(),
-      this.cardtraderTransitLineRepository.findByRemainingQuantityGreaterThanZero(),
+      this.stockRepository.findAllLean(STOCK_FIELDS),
+      this.saleRepository.findActiveVentasLean(SALE_FIELDS),
+      this.saleRepository.findHistoricalVentasLean(SALE_FIELDS),
+      this.clientRepository.countAll(),
+      this.reservaRepository.findAllLean(RESERVA_FIELDS),
+      this.reservaIncomingRepository.findAllLean(
+        undefined,
+        RESERVA_INCOMING_FIELDS,
+      ),
+      this.incomingBatchRepository.findOpenBatchIds(),
+      this.cardtraderTransitLineRepository.findByRemainingQuantityGreaterThanZeroLean(),
     ]);
 
     const stockById = new Map<string, Stock>();
@@ -265,29 +303,20 @@ export class DashboardOverviewService {
       if (ri.client_id) incomingClientIds.add(ri.client_id);
     }
 
-    const openBatchIds = openBatches
-      .map(
-        (b) => (b as { _id?: { toString(): string } })._id?.toString?.() ?? '',
-      )
-      .filter(Boolean);
-
     // Incoming legacy: remaining_quantity * unit_cost_cop (no lot totals).
     let units_in_transit = 0;
     let estimated_cost_cop = 0;
     if (openBatchIds.length > 0) {
-      const itemGroups = await Promise.all(
-        openBatchIds.map((id) =>
-          this.incomingBatchItemRepository.findByBatchId(id),
-        ),
+      const items = await this.incomingBatchItemRepository.findByBatchIdsLean(
+        openBatchIds,
+        BATCH_ITEM_FIELDS,
       );
-      for (const items of itemGroups) {
-        for (const item of items) {
-          if (isSyntheticQuantityCardId(item.card_id)) continue;
-          const remaining = item.remaining_quantity ?? 0;
-          if (remaining <= 0) continue;
-          units_in_transit += remaining;
-          estimated_cost_cop += remaining * (item.unit_cost_cop ?? 0);
-        }
+      for (const item of items) {
+        if (isSyntheticQuantityCardId(item.card_id)) continue;
+        const remaining = item.remaining_quantity ?? 0;
+        if (remaining <= 0) continue;
+        units_in_transit += remaining;
+        estimated_cost_cop += remaining * (item.unit_cost_cop ?? 0);
       }
     }
 
@@ -368,7 +397,7 @@ export class DashboardOverviewService {
         closed_last_30_days_amount_cop,
       },
       clients_reservations: {
-        clients_count: clients.length,
+        clients_count: clientsCount,
         reservas_stock_count: reservas.length,
         ventas_esperadas_cop,
         ganancia_estimada_cop,
@@ -376,7 +405,7 @@ export class DashboardOverviewService {
         reservas_incoming_client_count: incomingClientIds.size,
       },
       incoming: {
-        open_batches_count: openBatches.length,
+        open_batches_count: openBatchIds.length,
         units_in_transit,
         estimated_cost_cop: roundedTransitCost,
       },

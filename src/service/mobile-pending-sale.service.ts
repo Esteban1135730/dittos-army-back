@@ -15,6 +15,7 @@ import type {
   MobilePendingStatus,
 } from 'src/schema/mobile-pending-sale.schema';
 import type { Stock } from 'src/schema/stock.schema';
+import { firstAcceptedInOrder } from 'src/utils/concurrency';
 import { SaleBatchService } from './sale-batch.service';
 
 const OWNER_KEYS: OwnerKey[] = ['pablo', 'esteban'];
@@ -127,25 +128,25 @@ export class MobilePendingSaleService {
     const current = getCurrentOwner();
     const order: OwnerKey[] =
       current === 'pablo' ? ['pablo', 'esteban'] : ['esteban', 'pablo'];
-    for (const owner of order) {
-      const stock = await runWithOwnerAsync(owner, () =>
-        this.stockRepository.findById(stockId),
-      );
-      if (stock) return { stock, owner };
-    }
-    return null;
+    const hit = await firstAcceptedInOrder(
+      order.map((owner) =>
+        runWithOwnerAsync(owner, () => this.stockRepository.findById(stockId)),
+      ),
+    );
+    return hit?.value ? { stock: hit.value, owner: order[hit.index] } : null;
   }
 
   private async findByClientSaleIdAnywhere(
     clientSaleId: string,
   ): Promise<MobilePendingSaleDocument | null> {
-    for (const owner of OWNER_KEYS) {
-      const found = await runWithOwnerAsync(owner, () =>
-        this.pendingRepository.findByClientSaleId(clientSaleId),
-      );
-      if (found) return found;
-    }
-    return null;
+    const hit = await firstAcceptedInOrder(
+      OWNER_KEYS.map((owner) =>
+        runWithOwnerAsync(owner, () =>
+          this.pendingRepository.findByClientSaleId(clientSaleId),
+        ),
+      ),
+    );
+    return hit?.value ?? null;
   }
 
   async create(dto: CreateMobilePendingDto): Promise<MobilePendingSaleView> {
@@ -227,14 +228,18 @@ export class MobilePendingSaleService {
 
     const rows: MobilePendingSaleView[] = [];
     const seen = new Set<string>();
-    for (const owner of owners) {
-      const docs = await runWithOwnerAsync(owner, () =>
-        this.pendingRepository.list({
-          statuses,
-          ids: ids.length > 0 ? ids : undefined,
-          client_sale_id: clientSaleId,
-        }),
-      );
+    const docsPerOwner = await Promise.all(
+      owners.map((owner) =>
+        runWithOwnerAsync(owner, () =>
+          this.pendingRepository.list({
+            statuses,
+            ids: ids.length > 0 ? ids : undefined,
+            client_sale_id: clientSaleId,
+          }),
+        ),
+      ),
+    );
+    for (const docs of docsPerOwner) {
       for (const doc of docs) {
         const id = String(doc._id);
         if (seen.has(id)) continue;

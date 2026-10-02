@@ -45,6 +45,17 @@ export class IncomingBatchRepository {
       .exec();
   }
 
+  /** Solo los `_id` de los lotes abiertos (mismo orden que `findOpenBatches`). */
+  async findOpenBatchIds(): Promise<string[]> {
+    const rows = await this.batchModel
+      .find({ status: 'open' })
+      .sort({ created_at: -1 })
+      .select('_id')
+      .lean<{ _id: { toString(): string } }[]>()
+      .exec();
+    return rows.map((r) => r._id.toString());
+  }
+
   async setStatus(
     id: string,
     status: 'open' | 'completed',

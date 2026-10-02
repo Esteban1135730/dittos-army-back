@@ -1,10 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { OwnerModelsService } from '../owner/owner-models.service';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import {
   IncomingBatchItem,
   IncomingBatchItemDocument,
 } from '../schema/incoming-batch-item.schema';
+import { applyLeanDefaults } from '../utils/lean-defaults';
+
+export type IncomingBatchItemLean = IncomingBatchItem & {
+  _id: Types.ObjectId;
+};
 
 @Injectable()
 export class IncomingBatchItemRepository {
@@ -22,6 +27,19 @@ export class IncomingBatchItemRepository {
 
   async findByBatchId(batchId: string): Promise<IncomingBatchItemDocument[]> {
     return this.itemModel.find({ batch_id: batchId }).exec();
+  }
+
+  /** Ítems de varios lotes en una sola query, como objetos planos (solo lectura). */
+  async findByBatchIdsLean(
+    batchIds: string[],
+    projection?: string,
+  ): Promise<IncomingBatchItemLean[]> {
+    const unique = [...new Set(batchIds.filter((id) => id))];
+    if (!unique.length) return [];
+    const query = this.itemModel.find({ batch_id: { $in: unique } });
+    if (projection) query.select(projection);
+    const rows = await query.lean<IncomingBatchItemLean[]>().exec();
+    return applyLeanDefaults(this.itemModel, rows);
   }
 
   async findByRemainingQuantityGreaterThanZero(): Promise<
@@ -49,6 +67,26 @@ export class IncomingBatchItemRepository {
         { new: true },
       )
       .exec();
+  }
+
+  /**
+   * Igual que N× `updateRemainingQuantity` en un solo `bulkWrite` ordenado
+   * (si un id se repite, gana el último, como en el recorrido secuencial).
+   */
+  async updateRemainingQuantities(
+    updates: Array<{ batchItemId: string; remainingQuantity: number }>,
+  ): Promise<number> {
+    if (!updates.length) return 0;
+    const result = await this.itemModel.bulkWrite(
+      updates.map((u) => ({
+        updateOne: {
+          filter: { _id: u.batchItemId },
+          update: { $set: { remaining_quantity: u.remainingQuantity } },
+        },
+      })) as any,
+      { ordered: true },
+    );
+    return result.modifiedCount ?? 0;
   }
 
   async deleteByBatchId(batchId: string): Promise<number> {

@@ -11,6 +11,8 @@ import { SaleRepository } from 'src/repository/sale.repository';
 import { StockScanService } from 'src/service/stock-scan.service';
 import { StockReviewService } from 'src/service/stock-review.service';
 import { BulkProductService } from 'src/service/bulk-product.service';
+import { StockPhotoService } from 'src/service/stock-photo.service';
+import { LocalCardImagesService } from 'src/pokemon';
 
 const stockScanMock = {
   listBarcodeExportRows: jest.fn(),
@@ -42,6 +44,8 @@ describe('StockController language validation', () => {
         { provide: StockScanService, useValue: stockScanMock },
         { provide: StockReviewService, useValue: { listPerdidas: jest.fn() } },
         { provide: BulkProductService, useValue: { ensureBulk: jest.fn() } },
+        { provide: StockPhotoService, useValue: {} },
+        { provide: LocalCardImagesService, useValue: { resolve: jest.fn() } },
       ],
     }).compile();
 

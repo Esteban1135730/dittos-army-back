@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { OwnerModelsService } from '../owner/owner-models.service';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Sale, SaleDocument } from 'src/schema/sale.schema';
+import { applyLeanDefaults } from 'src/utils/lean-defaults';
+
+export type SaleLean = Sale & { _id: Types.ObjectId };
 
 @Injectable()
 export class SaleRepository {
@@ -62,6 +65,62 @@ export class SaleRepository {
       .sort({ created_at: -1 })
       .limit(opts.limit)
       .exec();
+  }
+
+  /**
+   * Igual que `findActiveVentas` en objetos planos con defaults (solo lectura).
+   * `projection` opcional (sintaxis `select` de Mongoose) para lecturas agregadas.
+   */
+  async findActiveVentasLean(projection?: string): Promise<SaleLean[]> {
+    const query = this.saleModel
+      .find({
+        type: 'venta',
+        $or: [
+          { cycle_closed_at: null },
+          { cycle_closed_at: { $exists: false } },
+        ],
+      })
+      .sort({ created_at: -1 });
+    if (projection) query.select(projection);
+    const rows = await query.lean<SaleLean[]>().exec();
+    return applyLeanDefaults(this.saleModel, rows);
+  }
+
+  /** Igual que `findHistoricalVentas` en objetos planos con defaults (solo lectura). */
+  async findHistoricalVentasLean(projection?: string): Promise<SaleLean[]> {
+    const query = this.saleModel
+      .find({ type: 'venta', cycle_closed_at: { $ne: null, $exists: true } })
+      .sort({ cycle_closed_at: -1, created_at: -1 });
+    if (projection) query.select(projection);
+    const rows = await query.lean<SaleLean[]>().exec();
+    return applyLeanDefaults(this.saleModel, rows);
+  }
+
+  /** Igual que `findVentasInPeriod` en objetos planos con defaults (solo lectura). */
+  async findVentasInPeriodLean(from: Date, to: Date): Promise<SaleLean[]> {
+    const rows = await this.saleModel
+      .find({
+        type: 'venta',
+        created_at: { $gte: from, $lte: to },
+      })
+      .sort({ created_at: 1 })
+      .lean<SaleLean[]>()
+      .exec();
+    return applyLeanDefaults(this.saleModel, rows);
+  }
+
+  /** Igual que `findVentasByClientId` en objetos planos con defaults (solo lectura). */
+  async findVentasByClientIdLean(
+    clientId: string,
+    opts: { limit: number },
+  ): Promise<SaleLean[]> {
+    const rows = await this.saleModel
+      .find({ type: 'venta', client_id: clientId })
+      .sort({ created_at: -1 })
+      .limit(opts.limit)
+      .lean<SaleLean[]>()
+      .exec();
+    return applyLeanDefaults(this.saleModel, rows);
   }
 
   async closeCurrentCycle(): Promise<number> {

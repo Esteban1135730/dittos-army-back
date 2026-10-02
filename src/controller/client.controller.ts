@@ -19,7 +19,7 @@ export class ClientController {
 
   @Get()
   async getAll(): Promise<Client[]> {
-    return this.clientRepository.findAll();
+    return this.clientRepository.findAllLean();
   }
 
   @Get(':id')

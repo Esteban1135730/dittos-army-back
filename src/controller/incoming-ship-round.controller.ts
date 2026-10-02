@@ -415,35 +415,47 @@ export class IncomingShipRoundController {
       batchItemIdsMeta,
     );
 
-    // Actualizar remaining_quantity en cada batch_item
-    for (const pair of itemsWithDecisions) {
+    // Actualizar remaining_quantity en cada batch_item (un solo bulkWrite ordenado)
+    const remainingUpdates = itemsWithDecisions.map((pair) => {
       const newRemaining =
         Number(pair.bi.remaining_quantity ?? 0) -
         Number(pair.ri.arrived_quantity ?? 0);
       if (newRemaining < 0)
         throw new Error('remaining_quantity quedó negativo');
-      await this.incomingBatchItemRepository.updateRemainingQuantity(
-        pair.bi._id.toString(),
-        newRemaining,
-      );
-    }
+      return {
+        batchItemId: pair.bi._id.toString(),
+        remainingQuantity: newRemaining,
+      };
+    });
+    await this.incomingBatchItemRepository.updateRemainingQuantities(
+      remainingUpdates,
+    );
 
     // Actualizar estado de batch por cada batch_id afectado
     const affectedBatchIds = Array.from(
       new Set(itemsWithDecisions.map((p) => p.bi.batch_id.toString())),
     );
+    const remainingByBatchId = new Map<string, number>(
+      affectedBatchIds.map((id) => [id, 0]),
+    );
+    const affectedItems =
+      await this.incomingBatchItemRepository.findByBatchIdsLean(
+        affectedBatchIds,
+        'batch_id remaining_quantity',
+      );
+    for (const it of affectedItems) {
+      const batchId = String(it.batch_id);
+      remainingByBatchId.set(
+        batchId,
+        (remainingByBatchId.get(batchId) ?? 0) + (it.remaining_quantity ?? 0),
+      );
+    }
     await Promise.all(
-      affectedBatchIds.map(async (batchId) => {
-        const items =
-          await this.incomingBatchItemRepository.findByBatchId(batchId);
-        const remainingTotal = items.reduce(
-          (sum, it) => sum + (it.remaining_quantity ?? 0),
-          0,
-        );
-        if (remainingTotal === 0) {
-          await this.incomingBatchRepository.setStatus(batchId, 'completed');
-        }
-      }),
+      affectedBatchIds
+        .filter((batchId) => remainingByBatchId.get(batchId) === 0)
+        .map((batchId) =>
+          this.incomingBatchRepository.setStatus(batchId, 'completed'),
+        ),
     );
 
     await this.shipRoundRepository.setFinalized(roundId);

@@ -70,6 +70,27 @@ describe('owners.config', () => {
     expect(coerceOwnerForTcg('tefa', 'pokemon')).toBe('pablo');
     expect(coerceOwnerForTcg('esteban', 'pokemon')).toBe('esteban');
   });
+
+  it('Magic (Pablo) y One Piece (Ali): bases, QR, ACL y owner por defecto', () => {
+    expect(getOwnerDefinition('pablo-magic')).toMatchObject({
+      tcg: 'magic',
+      label: 'Pablo',
+      dbName: 'magic-pablo',
+      stockQrPrefix: 'MAGIC-STOCK:',
+    });
+    expect(getOwnerDefinition('ali')).toMatchObject({
+      tcg: 'onepiece',
+      dbName: 'onepiece-ali',
+      stockQrPrefix: 'ALI-STOCK:',
+    });
+    expect(defaultOwnerForTcg('magic')).toBe('pablo-magic');
+    expect(defaultOwnerForTcg('onepiece')).toBe('ali');
+    expect(coerceOwnerForTcg('pablo', 'magic')).toBe('pablo-magic');
+    expect(coerceOwnerForTcg('tefa', 'onepiece')).toBe('ali');
+    expect(otherOwner('ali')).toBeNull();
+    expect(isFeatureAllowed('ali', 'cotizar')).toBe(true);
+    expect(isFeatureAllowed('pablo-magic', 'stock')).toBe(true);
+  });
 });
 
 describe('owner-context routing', () => {

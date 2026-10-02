@@ -28,3 +28,4 @@ export class IncomingRound {
 }
 
 export const IncomingRoundSchema = SchemaFactory.createForClass(IncomingRound);
+IncomingRoundSchema.index({ batch_id: 1 });

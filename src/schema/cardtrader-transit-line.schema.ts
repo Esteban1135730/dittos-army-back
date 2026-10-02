@@ -69,3 +69,5 @@ export const CardtraderTransitLineSchema = SchemaFactory.createForClass(
 );
 
 CardtraderTransitLineSchema.index({ lot_id: 1 });
+CardtraderTransitLineSchema.index({ remaining_quantity: 1 });
+CardtraderTransitLineSchema.index({ ct0_item_id: 1 });

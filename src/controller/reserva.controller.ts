@@ -370,12 +370,12 @@ export class ReservaController {
 
   @Get()
   async findAll(): Promise<Reserva[]> {
-    return this.reservaRepository.findAll();
+    return this.reservaRepository.findAllLean();
   }
 
   @Get('client/:clientId')
   async findByClient(@Param('clientId') clientId: string): Promise<Reserva[]> {
-    return this.reservaRepository.findByClientId(clientId);
+    return this.reservaRepository.findByClientIdLean(clientId);
   }
 
   @Delete('stock/:stockId')

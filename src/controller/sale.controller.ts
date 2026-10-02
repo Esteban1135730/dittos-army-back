@@ -9,12 +9,12 @@ import {
   Query,
 } from '@nestjs/common';
 import { isValidObjectId } from 'mongoose';
-import { SaleRepository } from 'src/repository/sale.repository';
+import { SaleLean, SaleRepository } from 'src/repository/sale.repository';
 import { ClientRepository } from 'src/repository/client.repository';
-import { StockRepository } from 'src/repository/stock.repository';
+import { StockLean, StockRepository } from 'src/repository/stock.repository';
 import { ReservaRepository } from 'src/repository/reserva.repository';
-import { SaleDocument } from 'src/schema/sale.schema';
-import { TCGDexService } from 'src/pokemon';
+import { CardDto, TCGDexService } from 'src/pokemon';
+import { mapWithConcurrency } from 'src/utils/concurrency';
 import { StockCardImagesSyncService } from 'src/service/stock-card-images-sync.service';
 import { isQuantityKind, isZeroProfitCardId } from 'src/constants/bulk-product';
 import { type OwnerKey, isOwnerKey } from 'src/config/owners.config';
@@ -26,6 +26,15 @@ import {
 import { CardStockTagRepository } from 'src/repository/card-stock-tag.repository';
 import type { Stock } from 'src/schema/stock.schema';
 import { SaleBatchService } from 'src/service/sale-batch.service';
+
+const TCGDEX_FALLBACK_CONCURRENCY = 6;
+
+/** `findById` castea a ObjectId (hex insensible a mayúsculas); el Map debe igualarlo. */
+function stockLookupKey(id: string | undefined): string {
+  return String(id ?? '')
+    .trim()
+    .toLowerCase();
+}
 
 @Controller('sales')
 export class SaleController {
@@ -342,58 +351,102 @@ export class SaleController {
     };
   }
 
+  /** Una sola query `$in` para todas las líneas de stock de las ventas. */
+  private async stockMapForSales(
+    sales: Array<{ stock_id: string }>,
+  ): Promise<Map<string, StockLean>> {
+    const stocks = await this.stockRepository.findByIdsLean(
+      sales.map((s) => s.stock_id),
+    );
+    return new Map(stocks.map((s) => [stockLookupKey(String(s._id)), s]));
+  }
+
+  /**
+   * Fallback TCGdex de nombre/imagen: una llamada por `card_id` distinto,
+   * con concurrencia limitada. `swallowErrors` → error por carta = sin datos.
+   */
+  private async tcgdexCardsById(
+    cardIds: Iterable<string | undefined>,
+    swallowErrors: boolean,
+  ): Promise<Map<string, CardDto | undefined>> {
+    const unique = [
+      ...new Set([...cardIds].filter((id): id is string => !!id)),
+    ];
+    const cards = await mapWithConcurrency(
+      unique,
+      TCGDEX_FALLBACK_CONCURRENCY,
+      async (cardId) => {
+        if (!swallowErrors) return this.tcgDexService.getCard(cardId);
+        try {
+          return await this.tcgDexService.getCard(cardId);
+        } catch {
+          return undefined;
+        }
+      },
+    );
+    return new Map(unique.map((id, i) => [id, cards[i]]));
+  }
+
+  /** Ventas con su línea de stock (descarta las que no la tienen) + nombre/imagen resueltos. */
+  private async joinSalesWithStock(sales: SaleLean[]) {
+    const stockById = await this.stockMapForSales(sales);
+    const joined = sales
+      .map((sale) => ({
+        sale,
+        stock: stockById.get(stockLookupKey(sale.stock_id)),
+      }))
+      .filter(
+        (row): row is { sale: SaleLean; stock: StockLean } => row.stock != null,
+      );
+    const cards = await this.tcgdexCardsById(
+      joined
+        .filter(({ stock }) => !stock.card_name || !stock.image_url)
+        .map(({ stock }) => stock.card_id),
+      false,
+    );
+    return joined.map(({ sale, stock }) => {
+      // El nombre y la imagen suelen venir de TCGDex en el listado de stock, no se persisten en DB
+      let cardName = stock.card_name || '';
+      let imageUrl = stock.image_url || '';
+      if (!cardName || !imageUrl) {
+        const card = cards.get(stock.card_id);
+        if (card) {
+          if (!cardName) cardName = card.name || '';
+          if (!imageUrl && card.images?.small) imageUrl = card.images.small;
+        }
+      }
+      // Calcular costo de compra (envio: costo = precio → ganancia 0)
+      const cardCost = effectiveSaleCostCop(
+        sale.card_id ?? stock.card_id,
+        sale.amount_cop,
+        stock.shipment / stock.cards_in_shipmet + stock.unity_cost,
+      );
+      return { sale, stock, cardName, imageUrl, cardCost };
+    });
+  }
+
   @Get('dashboard')
   async getSalesDashboard() {
-    const sales = await this.saleRepository.findActiveVentas();
-
-    // Obtener información del stock para cada venta (y nombre/imagen desde TCGDex si no están en DB)
-    const salesWithStockInfo = await Promise.all(
-      sales.map(async (sale: SaleDocument) => {
-        const stock = await this.stockRepository.findById(sale.stock_id);
-        if (!stock) {
-          return null;
-        }
-
-        // El nombre y la imagen suelen venir de TCGDex en el listado de stock, no se persisten en DB
-        let cardName = stock.card_name || '';
-        let imageUrl = stock.image_url || '';
-        if (!cardName || !imageUrl) {
-          const card = await this.tcgDexService.getCard(stock.card_id);
-          if (card) {
-            if (!cardName) cardName = card.name || '';
-            if (!imageUrl && card.images?.small) imageUrl = card.images.small;
-          }
-        }
-
-        // Calcular costo de compra (envio: costo = precio → ganancia 0)
-        const cardCost = effectiveSaleCostCop(
-          sale.card_id ?? stock.card_id,
-          sale.amount_cop,
-          stock.shipment / stock.cards_in_shipmet + stock.unity_cost,
-        );
-
-        return {
-          _id: sale._id.toString(),
-          stock_id: sale.stock_id,
-          card_id: sale.card_id,
-          type: sale.type,
-          amount_cop: sale.amount_cop,
-          notes: sale.notes || '',
-          created_at: sale.created_at,
-          stock_info: {
-            card_name: cardName,
-            image_url: imageUrl,
-            card_cost: cardCost,
-            currency: stock.currency,
-            shipment: stock.shipment,
-            cards_in_shipmet: stock.cards_in_shipmet,
-            unity_cost: stock.unity_cost,
-          },
-        };
-      }),
-    );
-
-    return salesWithStockInfo.filter((sale) => sale !== null);
+    const sales = await this.saleRepository.findActiveVentasLean();
+    const rows = await this.joinSalesWithStock(sales);
+    return rows.map(({ sale, stock, cardName, imageUrl, cardCost }) => ({
+      _id: sale._id.toString(),
+      stock_id: sale.stock_id,
+      card_id: sale.card_id,
+      type: sale.type,
+      amount_cop: sale.amount_cop,
+      notes: sale.notes || '',
+      created_at: sale.created_at,
+      stock_info: {
+        card_name: cardName,
+        image_url: imageUrl,
+        card_cost: cardCost,
+        currency: stock.currency,
+        shipment: stock.shipment,
+        cards_in_shipmet: stock.cards_in_shipmet,
+        unity_cost: stock.unity_cost,
+      },
+    }));
   }
 
   @Post('close-cycle')
@@ -435,86 +488,69 @@ export class SaleController {
 
   @Get('history')
   async getSalesHistory() {
-    const sales = await this.saleRepository.findHistoricalVentas();
-
-    const salesWithStockInfo = await Promise.all(
-      sales.map(async (sale: SaleDocument) => {
-        const stock = await this.stockRepository.findById(sale.stock_id);
-        if (!stock) {
-          return null;
-        }
-
-        let cardName = stock.card_name || '';
-        let imageUrl = stock.image_url || '';
-        if (!cardName || !imageUrl) {
-          const card = await this.tcgDexService.getCard(stock.card_id);
-          if (card) {
-            if (!cardName) cardName = card.name || '';
-            if (!imageUrl && card.images?.small) imageUrl = card.images.small;
-          }
-        }
-
-        const cardCost = effectiveSaleCostCop(
-          sale.card_id ?? stock.card_id,
-          sale.amount_cop,
-          stock.shipment / stock.cards_in_shipmet + stock.unity_cost,
-        );
-
-        return {
-          _id: sale._id.toString(),
-          stock_id: sale.stock_id,
-          card_id: sale.card_id,
-          type: sale.type,
-          amount_cop: sale.amount_cop,
-          notes: sale.notes || '',
-          created_at: sale.created_at,
-          cycle_closed_at: (sale as any).cycle_closed_at ?? null,
-          stock_info: {
-            card_name: cardName,
-            image_url: imageUrl,
-            card_cost: cardCost,
-            currency: stock.currency,
-            language: String(stock.language ?? stock.languaje ?? '').trim(),
-            shipment: stock.shipment,
-            cards_in_shipmet: stock.cards_in_shipmet,
-            unity_cost: stock.unity_cost,
-          },
-        };
-      }),
-    );
-
-    return salesWithStockInfo.filter((sale) => sale !== null);
+    const sales = await this.saleRepository.findHistoricalVentasLean();
+    const rows = await this.joinSalesWithStock(sales);
+    return rows.map(({ sale, stock, cardName, imageUrl, cardCost }) => ({
+      _id: sale._id.toString(),
+      stock_id: sale.stock_id,
+      card_id: sale.card_id,
+      type: sale.type,
+      amount_cop: sale.amount_cop,
+      notes: sale.notes || '',
+      created_at: sale.created_at,
+      cycle_closed_at: sale.cycle_closed_at ?? null,
+      stock_info: {
+        card_name: cardName,
+        image_url: imageUrl,
+        card_cost: cardCost,
+        currency: stock.currency,
+        language: String(stock.language ?? stock.languaje ?? '').trim(),
+        shipment: stock.shipment,
+        cards_in_shipmet: stock.cards_in_shipmet,
+        unity_cost: stock.unity_cost,
+      },
+    }));
   }
 
-  private async enrichVentaClienteRow(sale: SaleDocument) {
-    const stock = await this.stockRepository.findById(sale.stock_id);
-    let cardName = stock?.card_name ?? '';
-    let imageUrl = stock?.image_url ?? '';
-    const cardId = sale.card_id ?? stock?.card_id ?? '';
-    if ((!cardName || !imageUrl) && cardId) {
-      try {
-        const card = await this.tcgDexService.getCard(cardId);
+  private async enrichVentasClienteRows(sales: SaleLean[]) {
+    const stockById = await this.stockMapForSales(sales);
+    const base = sales.map((sale) => {
+      const stock = stockById.get(stockLookupKey(sale.stock_id));
+      return {
+        sale,
+        cardName: stock?.card_name ?? '',
+        imageUrl: stock?.image_url ?? '',
+        cardId: sale.card_id ?? stock?.card_id ?? '',
+      };
+    });
+    const cards = await this.tcgdexCardsById(
+      base
+        .filter((r) => (!r.cardName || !r.imageUrl) && r.cardId)
+        .map((r) => r.cardId),
+      true,
+    );
+    return base.map(({ sale, cardName, imageUrl, cardId }) => {
+      if ((!cardName || !imageUrl) && cardId) {
+        const card = cards.get(cardId);
         if (card) {
           if (!cardName) cardName = card.name ?? '';
           if (!imageUrl && card.images?.small) imageUrl = card.images.small;
         }
-      } catch {
-        /* opcional */
       }
-    }
-    return {
-      _id: (sale as any)._id.toString(),
-      stock_id: sale.stock_id,
-      card_id: cardId,
-      card_name: cardName || undefined,
-      image_url: imageUrl || undefined,
-      type: sale.type,
-      amount_cop: sale.amount_cop,
-      notes: sale.notes ?? '',
-      created_at: sale.created_at,
-      cycle_closed_at: (sale as any).cycle_closed_at ?? null,
-      client_id: sale.client_id,
-    };
+      return {
+        _id: sale._id.toString(),
+        stock_id: sale.stock_id,
+        card_id: cardId,
+        card_name: cardName || undefined,
+        image_url: imageUrl || undefined,
+        type: sale.type,
+        amount_cop: sale.amount_cop,
+        notes: sale.notes ?? '',
+        created_at: sale.created_at,
+        cycle_closed_at: sale.cycle_closed_at ?? null,
+        client_id: sale.client_id,
+      };
+    });
   }
 
   @Get('by-client/:clientId')
@@ -532,10 +568,10 @@ export class SaleController {
     let limit = parseInt(String(limitRaw ?? '50'), 10);
     if (Number.isNaN(limit) || limit < 1) limit = 50;
     limit = Math.min(Math.max(limit, 1), 200);
-    const sales = await this.saleRepository.findVentasByClientId(clientId, {
+    const sales = await this.saleRepository.findVentasByClientIdLean(clientId, {
       limit,
     });
-    return Promise.all(sales.map((sale) => this.enrichVentaClienteRow(sale)));
+    return this.enrichVentasClienteRows(sales);
   }
 
   @Post('reopen/:id')

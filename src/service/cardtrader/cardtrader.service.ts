@@ -13,9 +13,14 @@ import {
   isCardTraderGameId,
 } from 'src/constants/cardtrader-games';
 import { readBlueprintImageUrl } from 'src/utils/novedad-card-resolve';
+import { TtlCache } from 'src/utils/ttl-cache';
 
 const DEFAULT_BASE = 'https://api.cardtrader.com/api/v2';
 const REQUEST_TIMEOUT_MS = 25_000;
+/** Lista completa de expansiones (todos los juegos); se filtra por juego al responder. */
+const EXPANSIONS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const BLUEPRINTS_EXPORT_CACHE_TTL_MS = 45 * 60 * 1000;
+const BLUEPRINTS_EXPORT_CACHE_MAX = 50;
 
 export type CardTraderAddress = {
   name: string;
@@ -43,6 +48,14 @@ export type CardTraderCartRemovePayload = {
 export class CardTraderService {
   private readonly baseUrl: string;
   private readonly marketplaceProductCache = new Map<number, any>();
+  private readonly expansionsCache = new TtlCache<unknown>({
+    ttlMs: EXPANSIONS_CACHE_TTL_MS,
+    maxEntries: 1,
+  });
+  private readonly blueprintsExportCache = new TtlCache<unknown>({
+    ttlMs: BLUEPRINTS_EXPORT_CACHE_TTL_MS,
+    maxEntries: BLUEPRINTS_EXPORT_CACHE_MAX,
+  });
 
   constructor() {
     this.baseUrl = (
@@ -209,7 +222,13 @@ export class CardTraderService {
       gameId != null && Number.isInteger(gameId) && gameId >= 1
         ? gameId
         : cardTraderGameIdForTcg(getCurrentTcg());
-    const raw = await this.requestJson('GET', 'expansions');
+    // Datos públicos (iguales para cualquier token); se valida el token del owner igual.
+    this.getToken();
+    const raw = await this.expansionsCache.getOrLoad(
+      'all',
+      () => this.requestJson('GET', 'expansions'),
+      (value) => Array.isArray(value),
+    );
     if (!Array.isArray(raw)) {
       return [];
     }
@@ -351,9 +370,15 @@ export class CardTraderService {
   }
 
   async getBlueprintsExport(expansionId: number): Promise<unknown> {
-    return this.requestJson('GET', 'blueprints/export', {
-      query: { expansion_id: String(expansionId) },
-    });
+    this.getToken();
+    return this.blueprintsExportCache.getOrLoad(
+      String(expansionId),
+      () =>
+        this.requestJson('GET', 'blueprints/export', {
+          query: { expansion_id: String(expansionId) },
+        }),
+      (value) => Array.isArray(value),
+    );
   }
 
   async getBlueprintById(blueprintId: number): Promise<unknown> {

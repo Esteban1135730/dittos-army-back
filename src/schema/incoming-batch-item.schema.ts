@@ -52,3 +52,5 @@ export class IncomingBatchItem {
 
 export const IncomingBatchItemSchema =
   SchemaFactory.createForClass(IncomingBatchItem);
+IncomingBatchItemSchema.index({ batch_id: 1 });
+IncomingBatchItemSchema.index({ remaining_quantity: 1 });

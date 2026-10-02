@@ -32,3 +32,4 @@ export class IncomingShipRoundItem {
 export const IncomingShipRoundItemSchema = SchemaFactory.createForClass(
   IncomingShipRoundItem,
 );
+IncomingShipRoundItemSchema.index({ ship_round_id: 1, batch_item_id: 1 });

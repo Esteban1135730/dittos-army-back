@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { RequestMethod } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import * as compression from 'compression';
 import { mkdirSync } from 'fs';
 import { AppModule } from './app.module';
 import { resolveCardImagesRoot } from './pokemon';
@@ -19,12 +20,11 @@ async function bootstrap() {
   app.useBodyParser('json', { limit: '12mb' });
   app.useBodyParser('urlencoded', { limit: '12mb', extended: true });
 
+  // gzip/deflate de respuestas compresibles (JSON grandes como /stock); las PNG se omiten por tipo.
+  app.use(compression());
   // Product API under /pokemon; health (Render) y static /card-images/ stay at root.
   app.setGlobalPrefix('pokemon', {
-    exclude: [
-      { path: 'health', method: RequestMethod.GET },
-      { path: 'yugioh/*path', method: RequestMethod.ALL },
-    ],
+    exclude: [{ path: 'health', method: RequestMethod.GET }],
   });
 
   app.useStaticAssets(imagesDir, { prefix: '/card-images/' });

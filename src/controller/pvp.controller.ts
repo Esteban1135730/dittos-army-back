@@ -40,7 +40,7 @@ export class PvpController {
 
   @Get()
   async getAllPvp(): Promise<Pvp[]> {
-    return await this.pvpRepository.findAll();
+    return await this.pvpRepository.findAllLean();
   }
 
   @Get(':card_id')

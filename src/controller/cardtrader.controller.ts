@@ -21,13 +21,13 @@ import {
   type QuoteLineInput,
 } from 'src/service/cardtrader/cardtrader-quote-resolve.service';
 import { CardTraderQuoteSessionService } from 'src/service/cardtrader/cardtrader-quote-session.service';
-import { CardTraderYugiohSearchService } from 'src/service/cardtrader/cardtrader-yugioh-search.service';
+import { CardTraderCatalogSearchService } from 'src/service/cardtrader/cardtrader-catalog-search.service';
 import { RequireFeature } from 'src/owner/feature-acl.guard';
 import {
-  CARDTRADER_POKEMON_GAME_ID,
-  CARDTRADER_YUGIOH_GAME_ID,
+  CARDTRADER_SUPPORTED_GAME_IDS,
   cardTraderGameIdForTcg,
   isCardTraderGameId,
+  tcgForCardTraderGameId,
 } from 'src/constants/cardtrader-games';
 import { getCurrentTcg } from 'src/owner/tcg-context';
 
@@ -55,7 +55,7 @@ export class CardTraderController {
     private readonly tcgdxResolve: CardTraderTcgdexResolveService,
     private readonly quoteResolve: CardTraderQuoteResolveService,
     private readonly quoteSessions: CardTraderQuoteSessionService,
-    private readonly yugiohSearch: CardTraderYugiohSearchService,
+    private readonly catalogSearch: CardTraderCatalogSearchService,
   ) {}
 
   @Get('expansions')
@@ -103,23 +103,21 @@ export class CardTraderController {
     if (query.length < 2 || query.length > 80) {
       throw new BadRequestException('q debe tener entre 2 y 80 caracteres');
     }
-    let game = cardTraderGameIdForTcg(getCurrentTcg());
+    let game: number = cardTraderGameIdForTcg(getCurrentTcg());
     if (gameId !== undefined && gameId.trim() !== '') {
       const g = Number(gameId);
       if (!Number.isInteger(g) || !isCardTraderGameId(g)) {
         throw new BadRequestException(
-          `game_id debe ser ${CARDTRADER_POKEMON_GAME_ID} (Pokémon) o ${CARDTRADER_YUGIOH_GAME_ID} (Yu-Gi-Oh)`,
+          `game_id debe ser uno de: ${CARDTRADER_SUPPORTED_GAME_IDS.join(', ')}`,
         );
       }
       game = g;
     }
-    if (game === CARDTRADER_POKEMON_GAME_ID) {
+    const tcg = tcgForCardTraderGameId(game) ?? 'pokemon';
+    if (tcg === 'pokemon') {
       return this.quoteResolve.searchBlueprintsByName(query);
     }
-    if (game === CARDTRADER_YUGIOH_GAME_ID) {
-      return this.yugiohSearch.searchBlueprintsByName(query);
-    }
-    return this.cardTrader.searchBlueprintsByName(query, game);
+    return this.catalogSearch.searchBlueprintsByName(query, tcg);
   }
 
   @Get('blueprints/item/:blueprintId')

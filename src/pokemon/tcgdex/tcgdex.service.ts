@@ -17,6 +17,7 @@ import {
   tcgdexJaSwordShieldCdnUrlFromCardId,
 } from '../../utils/card-image-url';
 import type { TCGdexCardApiResponse } from './dto/tcgdex-api.types';
+import { InFlightDedupe, TtlCache } from '../../utils/ttl-cache';
 import { CardResumeDto, mapCardResume } from './dto/card.resume.dto';
 import { SetNameHomologsService } from './set-name-homologs.service';
 import { LocalCardImagesService } from './local-card-images.service';
@@ -91,10 +92,12 @@ export function resolveTcgdexApiBaseUrl(): string {
   return TCGDEX_PRODUCTION_API_BASE;
 }
 
-type CacheEntry<T> = {
-  expiresAt: number;
-  value: T;
-};
+/** Timeout de cada petición HTTP directa a TCGdex (fetch). */
+export const TCGDEX_HTTP_TIMEOUT_MS = 8_000;
+/** TTL de "carta inexistente" (404) para no repetir la cadena de candidatos × locales. */
+export const TTL_CARD_NOT_FOUND_MS = 20 * 60 * 1000;
+const CACHE_MAX_ENTRIES = 5_000;
+const NOT_FOUND_MAX_ENTRIES = 20_000;
 
 @Injectable()
 export class TCGDexService {
@@ -110,7 +113,18 @@ export class TCGDexService {
   }
 
   private readonly clients = new Map<TcgDexLocale, TCGdex>();
-  private readonly cache = new Map<string, CacheEntry<unknown>>();
+  private readonly cache = new TtlCache<unknown>({
+    ttlMs: 24 * 60 * 60 * 1000,
+    maxEntries: CACHE_MAX_ENTRIES,
+  });
+  private readonly notFound = new TtlCache<true>({
+    ttlMs: TTL_CARD_NOT_FOUND_MS,
+    maxEntries: NOT_FOUND_MAX_ENTRIES,
+  });
+  private readonly cardInFlight = new InFlightDedupe<CardDto | undefined>();
+  private readonly imageStatusInFlight = new InFlightDedupe<
+    { status: 'found'; url: string } | { status: 'missing' } | { status: 'error' }
+  >();
 
   private readonly TTL_SETS_MS = 24 * 60 * 60 * 1000;
   private readonly TTL_SET_CARDS_MS = 24 * 60 * 60 * 1000;
@@ -147,19 +161,11 @@ export class TCGDexService {
   }
 
   private getCached<T>(key: string): T | undefined {
-    const entry = this.cache.get(key) as CacheEntry<T> | undefined;
-    if (!entry) {
-      return undefined;
-    }
-    if (Date.now() >= entry.expiresAt) {
-      this.cache.delete(key);
-      return undefined;
-    }
-    return entry.value;
+    return this.cache.get(key) as T | undefined;
   }
 
   private setCached<T>(key: string, value: T, ttlMs: number): T {
-    this.cache.set(key, { expiresAt: Date.now() + ttlMs, value });
+    this.cache.set(key, value, ttlMs);
     return value;
   }
 
@@ -328,12 +334,28 @@ export class TCGDexService {
     if (cached !== undefined) {
       return cached;
     }
+    if (this.notFound.has(cacheKey)) {
+      return undefined;
+    }
+    return this.cardInFlight.run(cacheKey, () =>
+      this.fetchCardForLocaleUncached(id, normalizedLocale, cacheKey),
+    );
+  }
 
+  private async fetchCardForLocaleUncached(
+    id: string,
+    normalizedLocale: TcgDexLocale,
+    cacheKey: string,
+  ): Promise<CardDto | undefined> {
     const url = `${this.apiBaseUrl}/${normalizedLocale}/cards/${encodeURIComponent(id)}`;
     try {
-      const res = await fetch(url);
+      const res = await fetch(url, {
+        signal: AbortSignal.timeout(TCGDEX_HTTP_TIMEOUT_MS),
+      });
       if (!res.ok) {
-        return this.cacheCelebrationEnergy(cacheKey, id, normalizedLocale);
+        const local = this.cacheCelebrationEnergy(cacheKey, id, normalizedLocale);
+        if (!local && res.status === 404) this.notFound.set(cacheKey, true);
+        return local;
       }
       const raw = (await res.json()) as TCGdexCardApiResponse;
       if (!raw || typeof raw !== 'object' || !raw.name) {
@@ -494,10 +516,25 @@ export class TCGDexService {
       { status: 'found'; url: string } | { status: 'missing' }
     >(cacheKey);
     if (cached) return cached;
+    return this.imageStatusInFlight.run(cacheKey, () =>
+      this.fetchProductionImageStatusUncached(id, normalizedLocale, cacheKey),
+    );
+  }
 
+  private async fetchProductionImageStatusUncached(
+    id: string,
+    normalizedLocale: TcgDexLocale,
+    cacheKey: string,
+  ): Promise<
+    | { status: 'found'; url: string }
+    | { status: 'missing' }
+    | { status: 'error' }
+  > {
     const url = `${TCGDEX_PRODUCTION_API_BASE}/${normalizedLocale}/cards/${encodeURIComponent(id)}`;
     try {
-      const res = await fetch(url);
+      const res = await fetch(url, {
+        signal: AbortSignal.timeout(TCGDEX_HTTP_TIMEOUT_MS),
+      });
       if (res.status === 404) {
         return this.setCached(
           cacheKey,
@@ -545,7 +582,10 @@ export class TCGDexService {
 
   private async probePublicImageUrl(url: string): Promise<boolean> {
     try {
-      const res = await fetch(url, { method: 'HEAD' });
+      const res = await fetch(url, {
+        method: 'HEAD',
+        signal: AbortSignal.timeout(TCGDEX_HTTP_TIMEOUT_MS),
+      });
       return res.ok;
     } catch {
       return false;

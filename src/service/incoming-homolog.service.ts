@@ -66,9 +66,25 @@ import {
 } from '../config/owners.config';
 import { runWithOwnerAsync } from '../owner/owner-context';
 import type { HomologCreatedStockRef } from '../schema/incoming-homolog-session.schema';
+import { InFlightDedupe, TtlCache } from '../utils/ttl-cache';
+import { firstAcceptedInOrder } from '../utils/concurrency';
+
+const TCGDEX_CDN_TIMEOUT_MS = 8000;
+const TCGDEX_CDN_HIT_TTL_MS = 24 * 60 * 60 * 1000;
+/** 404: la carta no existe en TCGdex. */
+export const TCGDEX_CDN_MISS_TTL_MS = 20 * 60 * 1000;
+/** La carta existe pero aún sin imagen usable: TCGdex suele publicarla pronto. */
+export const TCGDEX_CDN_NO_IMAGE_TTL_MS = 5 * 60 * 1000;
+const TCGDEX_CDN_CACHE_MAX = 5000;
 
 @Injectable()
 export class IncomingHomologService {
+  private readonly tcgdexCdnImageCache = new TtlCache<string>({
+    ttlMs: TCGDEX_CDN_HIT_TTL_MS,
+    maxEntries: TCGDEX_CDN_CACHE_MAX,
+  });
+  private readonly tcgdexCdnImageInFlight = new InFlightDedupe<string>();
+
   constructor(
     private readonly cardTraderService: CardTraderService,
     private readonly sentUnitRepository: CardtraderSentUnitRepository,
@@ -96,8 +112,10 @@ export class IncomingHomologService {
     if (!session)
       return { session: null, panel_items: [], batches_summary: [] };
     const enriched = await this.enrichSessionUnits(session);
-    const panelItems = await this.loadPanelItems({ units: enriched });
-    const batchesSummary = await this.loadBatchesSummary();
+    const [panelItems, batchesSummary] = await Promise.all([
+      this.loadPanelItems({ units: enriched }),
+      this.loadBatchesSummary(),
+    ]);
     return {
       session: this.serializeSession({
         ...(typeof session.toObject === 'function'
@@ -125,8 +143,10 @@ export class IncomingHomologService {
   async getSession(sessionId: string) {
     const session = await this.requireSession(sessionId);
     const enriched = await this.enrichSessionUnits(session);
-    const panelItems = await this.loadPanelItems({ units: enriched });
-    const batchesSummary = await this.loadBatchesSummary();
+    const [panelItems, batchesSummary] = await Promise.all([
+      this.loadPanelItems({ units: enriched }),
+      this.loadBatchesSummary(),
+    ]);
     return {
       session: this.serializeSession({
         ...(typeof session.toObject === 'function'
@@ -249,7 +269,10 @@ export class IncomingHomologService {
     if (!updated) throw new NotFoundException('Sesión no encontrada');
 
     const enriched = await this.enrichSessionUnits(updated);
-    const panelItems = await this.loadPanelItems({ units: enriched });
+    const [panelItems, batchesSummary] = await Promise.all([
+      this.loadPanelItems({ units: enriched }),
+      this.loadBatchesSummary(),
+    ]);
     return {
       session: this.serializeSession({
         ...(typeof updated.toObject === 'function'
@@ -258,7 +281,7 @@ export class IncomingHomologService {
         units: enriched,
       }),
       panel_items: panelItems,
-      batches_summary: await this.loadBatchesSummary(),
+      batches_summary: batchesSummary,
       synced_count: parsed.length,
     };
   }
@@ -311,7 +334,7 @@ export class IncomingHomologService {
         if (!candidates.length) continue;
         for (const candidate of candidates) {
           try {
-            await this.verifyUnit(
+            await this.verifyUnitCore(
               sessionId,
               unit.sent_unit_key,
               candidate._id.toString(),
@@ -356,7 +379,7 @@ export class IncomingHomologService {
         if (!candidates.length) continue;
         for (const candidate of candidates) {
           try {
-            await this.verifyUnit(
+            await this.verifyUnitCore(
               sessionId,
               unit.sent_unit_key,
               candidate._id.toString(),
@@ -373,7 +396,10 @@ export class IncomingHomologService {
 
     const finalSession = await this.requireSession(sessionId);
     const enriched = await this.enrichSessionUnits(finalSession);
-    const panelItems = await this.loadPanelItems({ units: enriched });
+    const [panelItems, batchesSummary] = await Promise.all([
+      this.loadPanelItems({ units: enriched }),
+      this.loadBatchesSummary(),
+    ]);
     return {
       session: this.serializeSession({
         ...(typeof finalSession.toObject === 'function'
@@ -382,7 +408,7 @@ export class IncomingHomologService {
         units: enriched,
       }),
       panel_items: panelItems,
-      batches_summary: await this.loadBatchesSummary(),
+      batches_summary: batchesSummary,
       auto_verified: byProductId + byBlueprintId,
       by_product_id: byProductId,
       by_blueprint_id: byBlueprintId,
@@ -456,13 +482,25 @@ export class IncomingHomologService {
   } | null> {
     const id = lineId?.trim();
     if (!id) return null;
-    for (const owner of this.allOwnerKeys()) {
-      const line = await runWithOwnerAsync(owner, () =>
-        this.transitLineRepository.findById(id),
-      );
-      if (line) return { line, owner };
-    }
-    return null;
+    const hit = await this.firstHitAcrossOwners(() =>
+      this.transitLineRepository.findById(id),
+    );
+    return hit ? { line: hit.value, owner: hit.owner } : null;
+  }
+
+  /**
+   * Consulta todas las DBs de owner en paralelo y devuelve el primer resultado
+   * no nulo en el orden de `allOwnerKeys()`. Un error solo se propaga si ningún
+   * owner anterior tuvo resultado (misma semántica que el recorrido secuencial).
+   */
+  private async firstHitAcrossOwners<T>(
+    query: () => Promise<T | null | undefined>,
+  ): Promise<{ value: T; owner: OwnerKey } | null> {
+    const owners = this.allOwnerKeys();
+    const hit = await firstAcceptedInOrder(
+      owners.map((owner) => runWithOwnerAsync(owner, query)),
+    );
+    return hit ? { value: hit.value as T, owner: owners[hit.index] } : null;
   }
 
   private async findTransitLotAcrossOwners(lotId: string): Promise<{
@@ -471,16 +509,47 @@ export class IncomingHomologService {
   } | null> {
     const id = lotId?.trim();
     if (!id) return null;
-    for (const owner of this.allOwnerKeys()) {
-      const lot = await runWithOwnerAsync(owner, () =>
-        this.transitLotRepository.findById(id),
-      );
-      if (lot) return { lot, owner };
-    }
-    return null;
+    const hit = await this.firstHitAcrossOwners(() =>
+      this.transitLotRepository.findById(id),
+    );
+    return hit ? { lot: hit.value, owner: hit.owner } : null;
   }
 
   async verifyUnit(
+    sessionId: string,
+    sentUnitKey: string,
+    transitLineId: string,
+    matchScore?: number,
+  ) {
+    const updated = await this.verifyUnitCore(
+      sessionId,
+      sentUnitKey,
+      transitLineId,
+      matchScore,
+    );
+    return this.buildSessionPanelResponse(updated);
+  }
+
+  /** Respuesta estándar tras mutar una unidad: sesión + panel + resumen (en paralelo). */
+  private async buildSessionPanelResponse(
+    updated: Parameters<IncomingHomologService['serializeSession']>[0],
+  ) {
+    const [panelItems, batchesSummary] = await Promise.all([
+      this.loadPanelItems(updated),
+      this.loadBatchesSummary(),
+    ]);
+    return {
+      session: this.serializeSession(updated),
+      panel_items: panelItems,
+      batches_summary: batchesSummary,
+    };
+  }
+
+  /**
+   * Valida y persiste la verificación de una unidad contra una línea de tránsito.
+   * No reconstruye panel ni resumen (lo hace el llamador una sola vez).
+   */
+  private async verifyUnitCore(
     sessionId: string,
     sentUnitKey: string,
     transitLineId: string,
@@ -555,13 +624,7 @@ export class IncomingHomologService {
       verified_at: new Date(),
       novedad_notes: '',
     });
-
-    const panelItems = await this.loadPanelItems(updated);
-    return {
-      session: this.serializeSession(updated),
-      panel_items: panelItems,
-      batches_summary: await this.loadBatchesSummary(),
-    };
+    return updated;
   }
 
   async markNovedad(
@@ -625,11 +688,7 @@ export class IncomingHomologService {
       );
     }
 
-    return {
-      session: this.serializeSession(updated),
-      panel_items: await this.loadPanelItems(updated),
-      batches_summary: await this.loadBatchesSummary(),
-    };
+    return this.buildSessionPanelResponse(updated);
   }
 
   async undoUnit(sessionId: string, sentUnitKey: string) {
@@ -660,11 +719,7 @@ export class IncomingHomologService {
       verified_at: null,
     });
 
-    return {
-      session: this.serializeSession(updated),
-      panel_items: await this.loadPanelItems(updated),
-      batches_summary: await this.loadBatchesSummary(),
-    };
+    return this.buildSessionPanelResponse(updated);
   }
 
   async listNovedades() {
@@ -1178,10 +1233,14 @@ export class IncomingHomologService {
       ReturnType<CardtraderTransitLineRepository['findByRemainingQuantityGreaterThanZero']>
     > = [];
     const seenLineIds = new Set<string>();
-    for (const owner of this.allOwnerKeys()) {
-      const lines = await runWithOwnerAsync(owner, () =>
-        this.transitLineRepository.findByRemainingQuantityGreaterThanZero(),
-      );
+    const linesPerOwner = await Promise.all(
+      this.allOwnerKeys().map((owner) =>
+        runWithOwnerAsync(owner, () =>
+          this.transitLineRepository.findByRemainingQuantityGreaterThanZero(),
+        ),
+      ),
+    );
+    for (const lines of linesPerOwner) {
       for (const line of lines) {
         const id = line._id.toString();
         if (seenLineIds.has(id)) continue;
@@ -1595,16 +1654,39 @@ export class IncomingHomologService {
         .trim()
         .toLowerCase() || 'en';
     const url = `https://api.tcgdex.net/v2/${encodeURIComponent(loc)}/cards/${encodeURIComponent(cardId)}`;
+    if (this.tcgdexCdnImageCache.has(url)) {
+      return this.tcgdexCdnImageCache.get(url) ?? '';
+    }
+    return this.tcgdexCdnImageInFlight.run(url, async () => {
+      const { value, ttlMs } = await this.fetchTcgdexCdnImageUrlUncached(url);
+      if (ttlMs > 0) this.tcgdexCdnImageCache.set(url, value, ttlMs);
+      return value;
+    });
+  }
+
+  /** `ttlMs` 0 = no cachear (error de red / 5xx). */
+  private async fetchTcgdexCdnImageUrlUncached(
+    url: string,
+  ): Promise<{ value: string; ttlMs: number }> {
     try {
-      const res = await fetch(url);
-      if (!res.ok) return '';
+      const res = await fetch(url, {
+        signal: AbortSignal.timeout(TCGDEX_CDN_TIMEOUT_MS),
+      });
+      if (!res.ok) {
+        return {
+          value: '',
+          ttlMs: res.status === 404 ? TCGDEX_CDN_MISS_TTL_MS : 0,
+        };
+      }
       const raw = (await res.json()) as { image?: string; name?: string };
       const base = String(raw?.image ?? '').trim();
-      if (!base) return '';
+      if (!base) return { value: '', ttlMs: TCGDEX_CDN_NO_IMAGE_TTL_MS };
       const normalized = normalizeTcgdexCdnImageUrl(base);
-      return isUsableStockImageUrl(normalized) ? normalized : '';
+      return isUsableStockImageUrl(normalized)
+        ? { value: normalized, ttlMs: TCGDEX_CDN_HIT_TTL_MS }
+        : { value: '', ttlMs: TCGDEX_CDN_NO_IMAGE_TTL_MS };
     } catch {
-      return '';
+      return { value: '', ttlMs: 0 };
     }
   }
 
@@ -1865,29 +1947,36 @@ export class IncomingHomologService {
 
   private async loadPanelItems(session: { units?: IncomingHomologUnit[] }) {
     type LineDoc = Awaited<
-      ReturnType<CardtraderTransitLineRepository['findByRemainingQuantityGreaterThanZero']>
+      ReturnType<
+        CardtraderTransitLineRepository['findByRemainingQuantityGreaterThanZeroLean']
+      >
     >[number];
-    type LotDoc = NonNullable<
-      Awaited<ReturnType<CardtraderTransitLotRepository['findById']>>
-    >;
+    type LotDoc = Awaited<
+      ReturnType<CardtraderTransitLotRepository['findByIds']>
+    >[number];
 
+    const perOwner = await Promise.all(
+      this.allOwnerKeys().map((owner) =>
+        runWithOwnerAsync(owner, async () => {
+          const lines =
+            await this.transitLineRepository.findByRemainingQuantityGreaterThanZeroLean();
+          const lots = await this.transitLotRepository.findByIds(
+            lines.map((line) => line.lot_id),
+          );
+          return { lines, lots };
+        }),
+      ),
+    );
+
+    // Mismo orden y precedencia que el recorrido secuencial por owner.
     const transitLines: LineDoc[] = [];
     const lotMap = new Map<string, LotDoc>();
-
-    for (const owner of this.allOwnerKeys()) {
-      await runWithOwnerAsync(owner, async () => {
-        const lines =
-          await this.transitLineRepository.findByRemainingQuantityGreaterThanZero();
-        transitLines.push(...lines);
-        const lotIds = [...new Set(lines.map((line) => line.lot_id))];
-        await Promise.all(
-          lotIds.map(async (id) => {
-            if (lotMap.has(id)) return;
-            const lot = await this.transitLotRepository.findById(id);
-            if (lot) lotMap.set(id, lot);
-          }),
-        );
-      });
+    for (const { lines, lots } of perOwner) {
+      transitLines.push(...lines);
+      for (const lot of lots) {
+        const id = lot._id.toString();
+        if (!lotMap.has(id)) lotMap.set(id, lot);
+      }
     }
 
     const verifiedCountByLine = new Map<string, number>();
@@ -1944,22 +2033,50 @@ export class IncomingHomologService {
       Awaited<ReturnType<CardtraderTransitLotRepository['findOpenLots']>>
     >[number];
 
-    const lots: LotDoc[] = [];
-    for (const owner of this.allOwnerKeys()) {
-      const open = await runWithOwnerAsync(owner, () =>
-        this.transitLotRepository.findOpenLots(),
-      );
-      lots.push(...open);
+    const lots: LotDoc[] = (
+      await Promise.all(
+        this.allOwnerKeys().map((owner) =>
+          runWithOwnerAsync(owner, () =>
+            this.transitLotRepository.findOpenLots(),
+          ),
+        ),
+      )
+    ).flat();
+
+    const lotOwnerOf = (lot: LotDoc): OwnerKey =>
+      isOwnerKey(lot.owner) ? lot.owner : OWNERS_CONFIG.defaultOwner;
+
+    // Líneas de cada lote leídas en la DB de `lot.owner` (una query por owner).
+    const lotIdsByOwner = new Map<OwnerKey, string[]>();
+    for (const lot of lots) {
+      const owner = lotOwnerOf(lot);
+      const ids = lotIdsByOwner.get(owner) ?? [];
+      ids.push(lot._id.toString());
+      lotIdsByOwner.set(owner, ids);
     }
+    const linesByOwnerAndLot = new Map<
+      string,
+      Awaited<ReturnType<CardtraderTransitLineRepository['findByLotIdsLean']>>
+    >();
+    await Promise.all(
+      [...lotIdsByOwner].map(async ([owner, ids]) => {
+        const lines = await runWithOwnerAsync(owner, () =>
+          this.transitLineRepository.findByLotIdsLean(ids),
+        );
+        for (const line of lines) {
+          const key = `${owner}:${line.lot_id}`;
+          const list = linesByOwnerAndLot.get(key) ?? [];
+          list.push(line);
+          linesByOwnerAndLot.set(key, list);
+        }
+      }),
+    );
 
     const summaries = await Promise.all(
       lots.map(async (lot) => {
-        const lotOwner = isOwnerKey(lot.owner)
-          ? lot.owner
-          : OWNERS_CONFIG.defaultOwner;
-        const items = await runWithOwnerAsync(lotOwner, () =>
-          this.transitLineRepository.findByLotId(lot._id.toString()),
-        );
+        const items =
+          linesByOwnerAndLot.get(`${lotOwnerOf(lot)}:${lot._id.toString()}`) ??
+          [];
         const remainingTotal = items.reduce(
           (sum, it) => sum + (it.remaining_quantity ?? 0),
           0,

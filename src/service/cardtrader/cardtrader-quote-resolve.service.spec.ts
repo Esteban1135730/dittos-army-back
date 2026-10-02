@@ -291,6 +291,45 @@ describe('CardTraderQuoteResolveService', () => {
     expect(results[1].error).toBe('blueprint_not_found');
   });
 
+  it('lote grande: conserva el orden, limita concurrencia y pide el export una sola vez', async () => {
+    let active = 0;
+    let peak = 0;
+    const cardTrader = {
+      getBlueprintsExport: jest.fn().mockImplementation(async () => {
+        active++;
+        peak = Math.max(peak, active);
+        await new Promise((r) => setTimeout(r, 5));
+        active--;
+        return [
+          {
+            id: 99,
+            name: 'Shroomish',
+            fixed_properties: { collector_number: 'RC2' },
+          },
+        ];
+      }),
+    } as unknown as CardTraderService;
+    const svc = new CardTraderQuoteResolveService(cardTrader);
+    svc.replaceExpansionIndex(index);
+    const lines = Array.from({ length: 12 }, (_, i) =>
+      i % 3 === 0
+        ? { name: 'X', expansion: 'Set Inventado', collector_number: '1' }
+        : {
+            name: 'Shroomish',
+            expansion: 'Generations',
+            collector_number: i % 2 ? 'RC2' : 'ZZZ',
+          },
+    );
+    const { results } = await svc.resolveLines(lines);
+    expect(results.map((r) => r.index)).toEqual(lines.map((_, i) => i));
+    const expected = await Promise.all(
+      lines.map((l, i) => svc.resolveLine(l, i)),
+    );
+    expect(results).toEqual(expected);
+    expect(cardTrader.getBlueprintsExport).toHaveBeenCalledTimes(1);
+    expect(peak).toBe(1);
+  });
+
   it('ambiguous si hay varios blueprints del mismo número y nombre distinto', async () => {
     const svc = serviceWith([
       { id: 1, name: 'Alpha', fixed_properties: { collector_number: 'RC2' } },

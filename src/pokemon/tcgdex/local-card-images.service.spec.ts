@@ -149,6 +149,85 @@ describe('LocalCardImagesService', () => {
     expect(existsSync(join(root, 'pl2', 'pl2-84.png'))).toBe(true);
   });
 
+  describe('cachés de índice y existencia', () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fs = require('fs') as typeof import('fs');
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('lee card-index.json de la raíz una sola vez entre lookups y no lee PNG', () => {
+      const { service, root } = createFixture();
+      const readSpy = jest.spyOn(fs, 'readFileSync');
+      for (let i = 0; i < 5; i++) {
+        expect(service.findRelativePath('swsh3-136', 'en')).toBe(
+          'swsh3/swsh3-136.png',
+        );
+        expect(service.findRelativePath('SV9a-001', 'zh-tw', 'SV9a')).toBe(
+          'SV9a-zh/SV9a-001.png',
+        );
+      }
+      const paths = readSpy.mock.calls.map((c) => String(c[0]));
+      expect(
+        paths.filter((p) => p === join(root, 'card-index.json')),
+      ).toHaveLength(1);
+      expect(paths.some((p) => p.endsWith('.png'))).toBe(false);
+    });
+
+    it('archivo vacío (0 bytes) no cuenta como existente', () => {
+      const { service, root } = createFixture();
+      mkdirSync(join(root, 'empty1'), { recursive: true });
+      writeFileSync(join(root, 'empty1', 'empty1-1.png'), Buffer.alloc(0));
+      jest.spyOn(service, 'legacyImagesRoots').mockReturnValue([]);
+      expect(service.findRelativePath('empty1-1', 'en')).toBeUndefined();
+    });
+
+    it('cachea el negativo y saveBuffer lo invalida al momento', () => {
+      const { service } = createFixture();
+      const statSpy = jest.spyOn(fs, 'statSync');
+      expect(service.findRelativePath('base1-7', 'en')).toBeUndefined();
+      const statsAfterFirst = statSpy.mock.calls.length;
+      expect(service.findRelativePath('base1-7', 'en')).toBeUndefined();
+      expect(statSpy.mock.calls.length).toBe(statsAfterFirst);
+
+      service.saveBuffer('base1/base1-7.png', Buffer.alloc(32));
+      expect(service.findRelativePath('base1-7', 'en')).toBe(
+        'base1/base1-7.png',
+      );
+    });
+
+    it('unlinkRelative invalida el positivo', () => {
+      const { service } = createFixture();
+      expect(service.findRelativePath('swsh3-136', 'en')).toBe(
+        'swsh3/swsh3-136.png',
+      );
+      expect(service.unlinkRelative('swsh3/swsh3-136.png')).toBe(true);
+      expect(service.findRelativePath('swsh3-136', 'en')).toBeUndefined();
+    });
+
+    it('altas externas (archivo + índice) se ven al vencer TTL / recheck', () => {
+      const { service, root } = createFixture();
+      let now = Date.now();
+      jest.spyOn(Date, 'now').mockImplementation(() => now);
+      expect(service.findRelativePath('ext1-1', 'en')).toBeUndefined();
+
+      mkdirSync(join(root, 'custom'), { recursive: true });
+      writeFileSync(join(root, 'custom', 'ext1-1.png'), Buffer.alloc(16));
+      const index = JSON.parse(
+        fs.readFileSync(join(root, 'card-index.json'), 'utf8'),
+      );
+      index['ext1-1'] = { file: 'custom/ext1-1.png' };
+      writeFileSync(join(root, 'card-index.json'), JSON.stringify(index));
+
+      expect(service.findRelativePath('ext1-1', 'en')).toBeUndefined();
+      now += 31_000;
+      expect(service.findRelativePath('ext1-1', 'en')).toBe(
+        'custom/ext1-1.png',
+      );
+    });
+  });
+
   it('deleteFilesForCardId borra solo ese cardId', () => {
     const { service, root } = createFixture();
     mkdirSync(join(root, 'base1'), { recursive: true });

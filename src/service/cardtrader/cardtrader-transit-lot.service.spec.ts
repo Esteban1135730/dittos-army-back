@@ -13,6 +13,7 @@ describe('CardtraderTransitLotService', () => {
   const lineRepository = {
     createMany: jest.fn(),
     findByLotId: jest.fn(),
+    findByLotIdsLean: jest.fn(),
     findByCt0ItemIds: jest.fn(),
     setNotArrivedAtIfUnset: jest.fn(),
     findById: jest.fn(),
@@ -244,13 +245,73 @@ describe('CardtraderTransitLotService', () => {
         owner: 'esteban',
       },
     ]);
-    lineRepository.findByLotId.mockResolvedValue([]);
+    lineRepository.findByLotIdsLean.mockResolvedValue([]);
 
     const rows = await service.listOpenLots();
 
     expect(lotRepository.backfillMissingOwner).toHaveBeenCalled();
     expect(rows[0].owner).toBe('pablo');
     expect(rows[1].owner).toBe('esteban');
+  });
+
+  it('listOpenLots: líneas en una sola query y backfill una vez por owner', async () => {
+    lotRepository.backfillMissingOwner.mockResolvedValue(0);
+    lotRepository.findOpenLots.mockResolvedValue([
+      {
+        _id: { toString: () => 'lot-a' },
+        status: 'open',
+        source: 'ct0',
+        purchase_date: new Date('2026-06-01'),
+        created_at: new Date('2026-06-01'),
+        total_fx_cards_cost: 1,
+        total_cop_cards_cost: 1000,
+        cards_cost_currency: 'USD',
+      },
+      {
+        _id: { toString: () => 'lot-b' },
+        status: 'open',
+        source: 'ct0',
+        purchase_date: new Date('2026-06-02'),
+        created_at: new Date('2026-06-02'),
+        total_fx_cards_cost: 1,
+        total_cop_cards_cost: 1000,
+        cards_cost_currency: 'USD',
+      },
+    ]);
+    lineRepository.findByLotIdsLean.mockResolvedValue([
+      { lot_id: 'lot-a', remaining_quantity: 2 },
+      { lot_id: 'lot-a', remaining_quantity: 3 },
+      { lot_id: 'lot-b', remaining_quantity: 0 },
+    ]);
+
+    const rows = await service.listOpenLots();
+    await service.listOpenLots();
+    const { runWithOwner } = await import('src/owner/owner-context');
+    await runWithOwner('esteban', () => service.listOpenLots());
+
+    expect(rows.map((r) => [r.lot_id, r.remaining_total_quantity])).toEqual([
+      ['lot-a', 5],
+      ['lot-b', 0],
+    ]);
+    expect(lineRepository.findByLotIdsLean).toHaveBeenCalledWith([
+      'lot-a',
+      'lot-b',
+    ]);
+    expect(lineRepository.findByLotId).not.toHaveBeenCalled();
+    expect(lotRepository.backfillMissingOwner).toHaveBeenCalledTimes(2);
+  });
+
+  it('listOpenLots reintenta el backfill si falló', async () => {
+    lotRepository.backfillMissingOwner
+      .mockRejectedValueOnce(new Error('db down'))
+      .mockResolvedValue(0);
+    lotRepository.findOpenLots.mockResolvedValue([]);
+
+    await expect(service.listOpenLots()).rejects.toThrow('db down');
+    await service.listOpenLots();
+    await service.listOpenLots();
+
+    expect(lotRepository.backfillMissingOwner).toHaveBeenCalledTimes(2);
   });
 
   it('getLot incluye owner con fallback pablo', async () => {

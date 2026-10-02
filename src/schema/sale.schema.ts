@@ -61,3 +61,6 @@ export class Sale {
 
 export const SaleSchema = SchemaFactory.createForClass(Sale);
 SaleSchema.index({ type: 1, created_at: 1 });
+SaleSchema.index({ stock_id: 1 });
+SaleSchema.index({ client_id: 1, created_at: -1 });
+SaleSchema.index({ type: 1, cycle_closed_at: -1, created_at: -1 });

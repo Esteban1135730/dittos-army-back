@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { OwnerModelsService } from '../owner/owner-models.service';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import {
   ReservaIncoming,
   ReservaIncomingDocument,
 } from '../schema/reserva-incoming.schema';
+import { applyLeanDefaults } from '../utils/lean-defaults';
+
+export type ReservaIncomingLean = ReservaIncoming & { _id: Types.ObjectId };
 
 @Injectable()
 export class ReservaIncomingRepository {
@@ -105,6 +108,18 @@ export class ReservaIncomingRepository {
     return this.model.find(q).sort({ created_at: -1 }).exec();
   }
 
+  /** Igual que `findAll` en objetos planos con defaults (solo lectura). */
+  async findAllLean(
+    clientId?: string,
+    projection?: string,
+  ): Promise<ReservaIncomingLean[]> {
+    const q = clientId ? { client_id: clientId } : {};
+    const query = this.model.find(q).sort({ created_at: -1 });
+    if (projection) query.select(projection);
+    const rows = await query.lean<ReservaIncomingLean[]>().exec();
+    return applyLeanDefaults(this.model, rows);
+  }
+
   async deleteById(id: string): Promise<boolean> {
     const r = await this.model.deleteOne({ _id: id }).exec();
     return (r.deletedCount ?? 0) > 0;
@@ -114,9 +129,11 @@ export class ReservaIncomingRepository {
    * Consume una unidad pendiente FIFO por batch_item_id.
    * Devuelve client_id si hubo fila y decremento atómico; null si no hay cupo pendiente.
    */
-  async consumeOneFifo(
-    batchItemId: string,
-  ): Promise<{ client_id: string; precio_cop: number | null } | null> {
+  async consumeOneFifo(batchItemId: string): Promise<{
+    client_id: string;
+    precio_cop: number | null;
+    created_at?: Date;
+  } | null> {
     for (let attempt = 0; attempt < 10; attempt++) {
       const doc = await this.model
         .findOne({ batch_item_id: batchItemId, quantity: { $gt: 0 } })
@@ -136,9 +153,41 @@ export class ReservaIncomingRepository {
         if (updated.quantity <= 0) {
           await this.model.deleteOne({ _id: updated._id }).exec();
         }
-        return { client_id: doc.client_id, precio_cop: doc.precio_cop ?? null };
+        return {
+          client_id: doc.client_id,
+          precio_cop: doc.precio_cop ?? null,
+          created_at: doc.created_at,
+        };
       }
     }
     throw new Error('consumeOneFifo: demasiados reintentos por concurrencia');
+  }
+
+  /**
+   * Devuelve una unidad consumida por `consumeOneFifo` (compensación): incrementa
+   * la fila del cliente en la línea o la recrea con su `created_at` original si
+   * se borró al llegar a 0, conservando su posición FIFO.
+   */
+  async restoreFifoSlot(slot: {
+    batch_item_id: string;
+    client_id: string;
+    precio_cop: number | null;
+    created_at?: Date;
+  }): Promise<void> {
+    const now = new Date();
+    await this.model
+      .updateOne(
+        { client_id: slot.client_id, batch_item_id: slot.batch_item_id },
+        {
+          $inc: { quantity: 1 },
+          $set: { updated_at: now },
+          $setOnInsert: {
+            precio_cop: slot.precio_cop,
+            created_at: slot.created_at ?? now,
+          },
+        },
+        { upsert: true },
+      )
+      .exec();
   }
 }

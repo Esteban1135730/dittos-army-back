@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { OwnerModelsService } from '../owner/owner-models.service';
 import { Model } from 'mongoose';
 import { ReservaDto } from 'src/Dto/reserva.dto';
+import { applyLeanDefaults } from 'src/utils/lean-defaults';
 
 /** Reservas de stock que nunca se ligaron a un Pedido (legado o materializadas desde incoming). */
 export const RESERVA_ORPHAN_PEDIDO_QUERY = {
@@ -31,6 +32,36 @@ export class ReservaRepository {
     return created.save();
   }
 
+  /**
+   * Igual que `create` para varias reservas en un solo `insertMany` (ordenado).
+   * `created_at` crece 1 ms por fila para conservar el orden de entrada al ordenar.
+   */
+  async createMany(dtos: ReservaDto[]): Promise<Reserva[]> {
+    if (!dtos.length) return [];
+    const base = Date.now();
+    return this.reservaModel.insertMany(
+      dtos.map((dto, i) => {
+        const at = new Date(base + i);
+        return {
+          ...dto,
+          currency: dto.currency ?? 'COP',
+          created_at: at,
+          updated_at: at,
+        };
+      }),
+      { ordered: true },
+    ) as unknown as Promise<Reserva[]>;
+  }
+
+  async deleteManyByStockIds(stockIds: string[]): Promise<number> {
+    const ids = stockIds.filter((id) => id?.trim());
+    if (!ids.length) return 0;
+    const result = await this.reservaModel
+      .deleteMany({ stock_id: { $in: ids } })
+      .exec();
+    return result.deletedCount ?? 0;
+  }
+
   async findAll(): Promise<Reserva[]> {
     return this.reservaModel.find().sort({ created_at: -1 }).exec();
   }
@@ -40,6 +71,24 @@ export class ReservaRepository {
       .find({ client_id: clientId })
       .sort({ created_at: -1 })
       .exec();
+  }
+
+  /** Igual que `findAll` en objetos planos con defaults (solo lectura). */
+  async findAllLean(projection?: string): Promise<Reserva[]> {
+    const query = this.reservaModel.find().sort({ created_at: -1 });
+    if (projection) query.select(projection);
+    const rows = await query.lean<Reserva[]>().exec();
+    return applyLeanDefaults(this.reservaModel, rows);
+  }
+
+  /** Igual que `findByClientId` en objetos planos con defaults (solo lectura). */
+  async findByClientIdLean(clientId: string): Promise<Reserva[]> {
+    const rows = await this.reservaModel
+      .find({ client_id: clientId })
+      .sort({ created_at: -1 })
+      .lean<Reserva[]>()
+      .exec();
+    return applyLeanDefaults(this.reservaModel, rows);
   }
 
   async findByPedidoId(pedidoId: string): Promise<Reserva[]> {

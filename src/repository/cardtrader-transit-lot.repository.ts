@@ -53,6 +53,13 @@ export class CardtraderTransitLotRepository {
     return this.lotModel.findById(id).exec();
   }
 
+  /** Una sola query por muchos `_id` (evita N× findById). */
+  async findByIds(ids: string[]): Promise<CardtraderTransitLotDocument[]> {
+    const unique = [...new Set(ids.filter((id) => id))];
+    if (!unique.length) return [];
+    return this.lotModel.find({ _id: { $in: unique } }).exec();
+  }
+
   async findByCt0PackageKey(
     packageKey: string,
   ): Promise<CardtraderTransitLotDocument | null> {

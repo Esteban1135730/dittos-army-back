@@ -185,17 +185,17 @@ export class IncomingController {
 
     const batchIds = batches.map((b) => b._id.toString());
     const itemsByBatchId = new Map<string, number>();
-    await Promise.all(
-      batchIds.map(async (batchId) => {
-        const items =
-          await this.incomingBatchItemRepository.findByBatchId(batchId);
-        const remainingTotal = items.reduce(
-          (sum, i) => sum + (i.remaining_quantity || 0),
-          0,
-        );
-        itemsByBatchId.set(batchId, remainingTotal);
-      }),
+    const items = await this.incomingBatchItemRepository.findByBatchIdsLean(
+      batchIds,
+      'batch_id remaining_quantity',
     );
+    for (const item of items) {
+      const batchId = String(item.batch_id);
+      itemsByBatchId.set(
+        batchId,
+        (itemsByBatchId.get(batchId) ?? 0) + (item.remaining_quantity || 0),
+      );
+    }
 
     return batches.map((b) => ({
       batch_id: b._id.toString(),

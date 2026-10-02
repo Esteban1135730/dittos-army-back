@@ -1,18 +1,26 @@
 /** Máx. nombres canónicos a consultar en CardTrader (rate limit). */
-export const YUGIOH_CT_NAME_LOOKUP_LIMIT = 8;
+export const CATALOG_CT_NAME_LOOKUP_LIMIT = 8;
 
 /** Máx. blueprints en la respuesta de cotizar. */
-export const YUGIOH_CT_SEARCH_RESULT_LIMIT = 40;
+export const CATALOG_CT_SEARCH_RESULT_LIMIT = 40;
+
+/**
+ * Quita sufijos de variante del catálogo (`Zoro-Juurou (SP)` → `Zoro-Juurou`):
+ * CardTrader nombra el blueprint sin ellos.
+ */
+export function stripCatalogVariantSuffix(name: string): string {
+  return name.replace(/\s*\([^()]*\)\s*$/, '').trim() || name.trim();
+}
 
 /**
  * Ordena nombres de carta para búsqueda CT (nombre exacto).
  * Prioriza coincidencia exacta → prefijo → substring; desempata por longitud.
  * Siempre incluye `query` como primer candidato (búsqueda CT directa).
  */
-export function rankYugiohNamesForCardTraderSearch(
+export function rankCatalogNamesForCardTraderSearch(
   query: string,
   catalogNames: string[],
-  limit: number = YUGIOH_CT_NAME_LOOKUP_LIMIT,
+  limit: number = CATALOG_CT_NAME_LOOKUP_LIMIT,
 ): string[] {
   const qRaw = query.trim();
   if (!qRaw || limit < 1) return [];
