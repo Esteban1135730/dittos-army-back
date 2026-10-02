@@ -7,10 +7,12 @@ import {
 } from './tcg-context';
 
 describe('tcg-context', () => {
-  it('acepta pokemon y yugioh', () => {
+  it('acepta los TCG configurados', () => {
     expect(isActiveTcg('pokemon')).toBe(true);
     expect(isActiveTcg('yugioh')).toBe(true);
-    expect(isActiveTcg('magic')).toBe(false);
+    expect(isActiveTcg('magic')).toBe(true);
+    expect(isActiveTcg('onepiece')).toBe(true);
+    expect(isActiveTcg('lorcana')).toBe(false);
   });
 
   it('prioriza header X-Tcg', () => {
@@ -25,10 +27,11 @@ describe('tcg-context', () => {
   it('infiere yugioh desde el path', () => {
     expect(resolveTcgFromRequest({ path: '/yugioh/sets' })).toBe('yugioh');
     expect(resolveTcgFromRequest({ path: '/pokemon/stock' })).toBe('pokemon');
+    expect(resolveTcgFromRequest({ path: '/onepiece/stock' })).toBe('onepiece');
   });
 
   it('rechaza TCG inválido', () => {
-    expect(resolveTcgFromRequest({ header: 'magic' })).toBeNull();
+    expect(resolveTcgFromRequest({ header: 'lorcana' })).toBeNull();
   });
 
   it('runWithTcg fija el ALS', () => {

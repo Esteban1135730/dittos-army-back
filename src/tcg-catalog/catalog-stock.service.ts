@@ -3,7 +3,7 @@ import { Model } from 'mongoose';
 import { OwnerModelsService } from '../owner/owner-models.service';
 import { Stock, type StockDocument } from '../schema/stock.schema';
 
-export type CreateYugiohStockInput = {
+export type CreateCatalogStockInput = {
   card_id?: unknown;
   card_name?: unknown;
   set_name?: unknown;
@@ -32,18 +32,18 @@ function asNumber(value: unknown): number {
 }
 
 /**
- * Alta rápida desde el catálogo Yu-Gi-Oh. Escribe en la colección `stocks`
- * de `yugioh-{owner}` (mismo schema que el panel de stock).
+ * Alta rápida desde un catálogo externo (Yu-Gi-Oh, Magic, One Piece). Escribe
+ * en `stocks` de `{tcg}-{owner}` (mismo schema que el panel de stock).
  */
 @Injectable()
-export class YugiohStockService {
+export class CatalogStockService {
   constructor(private readonly ownerModels: OwnerModelsService) {}
 
   private model(): Model<StockDocument> {
     return this.ownerModels.getModel<StockDocument>(Stock.name);
   }
 
-  async create(input: CreateYugiohStockInput): Promise<{ saved: number }> {
+  async create(input: CreateCatalogStockInput): Promise<{ saved: number }> {
     const cardId = asText(input.card_id);
     const cardName = asText(input.card_name);
     const unityCost = asNumber(input.unity_cost);

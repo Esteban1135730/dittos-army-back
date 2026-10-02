@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from 'async_hooks';
+import { isTcgKey, TCG_KEYS, type TcgKey } from '../config/owners.config';
 
-export type ActiveTcg = 'pokemon' | 'yugioh';
+export type ActiveTcg = TcgKey;
 
 type TcgStore = { tcg: ActiveTcg };
 
@@ -15,7 +16,7 @@ export function runWithTcg<T>(tcg: ActiveTcg, fn: () => T): T {
 }
 
 export function isActiveTcg(value: unknown): value is ActiveTcg {
-  return value === 'pokemon' || value === 'yugioh';
+  return isTcgKey(value);
 }
 
 /**
@@ -35,8 +36,10 @@ export function resolveTcgFromRequest(input: {
     return raw;
   }
   const path = input.path ?? '';
-  if (path === '/yugioh' || path.startsWith('/yugioh/')) {
-    return 'yugioh';
+  for (const tcg of TCG_KEYS) {
+    if (path === `/${tcg}` || path.startsWith(`/${tcg}/`)) {
+      return tcg;
+    }
   }
   return 'pokemon';
 }

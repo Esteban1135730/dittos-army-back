@@ -5,7 +5,7 @@ import { CardTraderService } from 'src/service/cardtrader/cardtrader.service';
 import { CardTraderTcgdexResolveService } from 'src/service/cardtrader/cardtrader-tcgdex-resolve.service';
 import { CardTraderQuoteResolveService } from 'src/service/cardtrader/cardtrader-quote-resolve.service';
 import { CardTraderQuoteSessionService } from 'src/service/cardtrader/cardtrader-quote-session.service';
-import { CardTraderYugiohSearchService } from 'src/service/cardtrader/cardtrader-yugioh-search.service';
+import { CardTraderCatalogSearchService } from 'src/service/cardtrader/cardtrader-catalog-search.service';
 
 describe('CardTraderController quote-lines/resolve', () => {
   async function setup() {
@@ -21,7 +21,7 @@ describe('CardTraderController quote-lines/resolve', () => {
         { provide: CardTraderTcgdexResolveService, useValue: {} },
         { provide: CardTraderQuoteResolveService, useValue: quoteResolve },
         { provide: CardTraderQuoteSessionService, useValue: {} },
-        { provide: CardTraderYugiohSearchService, useValue: {} },
+        { provide: CardTraderCatalogSearchService, useValue: {} },
       ],
     }).compile();
 
@@ -107,7 +107,7 @@ describe('CardTraderController blueprints/search', () => {
         { provide: CardTraderTcgdexResolveService, useValue: {} },
         { provide: CardTraderQuoteResolveService, useValue: quoteResolve },
         { provide: CardTraderQuoteSessionService, useValue: {} },
-        { provide: CardTraderYugiohSearchService, useValue: {} },
+        { provide: CardTraderCatalogSearchService, useValue: {} },
       ],
     }).compile();
     return {
@@ -124,10 +124,10 @@ describe('CardTraderController blueprints/search', () => {
     expect(quoteResolve.searchBlueprintsByName).not.toHaveBeenCalled();
   });
 
-  it('400 si game_id no es Pokémon ni Yu-Gi-Oh', async () => {
+  it('400 si game_id no es un TCG soportado', async () => {
     const { controller } = await setup();
     await expect(
-      controller.searchBlueprints('Pikachu', '1'),
+      controller.searchBlueprints('Pikachu', '2'),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
@@ -156,18 +156,61 @@ describe('CardTraderController blueprints/search', () => {
         { provide: CardTraderTcgdexResolveService, useValue: {} },
         { provide: CardTraderQuoteResolveService, useValue: quoteResolve },
         { provide: CardTraderQuoteSessionService, useValue: {} },
-        { provide: CardTraderYugiohSearchService, useValue: yugiohSearch },
+        { provide: CardTraderCatalogSearchService, useValue: yugiohSearch },
       ],
     }).compile();
     const controller = moduleRef.get(CardTraderController);
     const out = await controller.searchBlueprints('Dark Magician', '4');
     expect(yugiohSearch.searchBlueprintsByName).toHaveBeenCalledWith(
       'Dark Magician',
+      'yugioh',
     );
     expect(quoteResolve.searchBlueprintsByName).not.toHaveBeenCalled();
     expect(out).toEqual({
       items: [{ blueprint_id: 9, expansion_id: 8, name: 'Dark Magician' }],
     });
+  });
+
+  it.each([
+    ['1', 'magic'],
+    ['15', 'onepiece'],
+  ])('game_id %s delega al catálogo %s', async (gameId, tcg) => {
+    const catalogSearch = {
+      searchBlueprintsByName: jest.fn().mockResolvedValue({ items: [] }),
+    };
+    const moduleRef = await Test.createTestingModule({
+      controllers: [CardTraderController],
+      providers: [
+        { provide: CardTraderService, useValue: {} },
+        { provide: CardTraderTcgdexResolveService, useValue: {} },
+        { provide: CardTraderQuoteResolveService, useValue: {} },
+        { provide: CardTraderQuoteSessionService, useValue: {} },
+        { provide: CardTraderCatalogSearchService, useValue: catalogSearch },
+      ],
+    }).compile();
+    const controller = moduleRef.get(CardTraderController);
+    await controller.searchBlueprints('Luffy', gameId);
+    expect(catalogSearch.searchBlueprintsByName).toHaveBeenCalledWith(
+      'Luffy',
+      tcg,
+    );
+  });
+
+  it('rechaza game_id no soportado', async () => {
+    const moduleRef = await Test.createTestingModule({
+      controllers: [CardTraderController],
+      providers: [
+        { provide: CardTraderService, useValue: {} },
+        { provide: CardTraderTcgdexResolveService, useValue: {} },
+        { provide: CardTraderQuoteResolveService, useValue: {} },
+        { provide: CardTraderQuoteSessionService, useValue: {} },
+        { provide: CardTraderCatalogSearchService, useValue: {} },
+      ],
+    }).compile();
+    const controller = moduleRef.get(CardTraderController);
+    await expect(controller.searchBlueprints('X', '99')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
   });
 });
 
@@ -183,7 +226,7 @@ describe('CardTraderController quote-sessions', () => {
         { provide: CardTraderTcgdexResolveService, useValue: {} },
         { provide: CardTraderQuoteResolveService, useValue: {} },
         { provide: CardTraderQuoteSessionService, useValue: quoteSessions },
-        { provide: CardTraderYugiohSearchService, useValue: {} },
+        { provide: CardTraderCatalogSearchService, useValue: {} },
       ],
     }).compile();
     const controller = moduleRef.get(CardTraderController);

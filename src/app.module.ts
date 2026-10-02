@@ -6,8 +6,11 @@ import {
 } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ESTEBAN_CONNECTION_NAME, OWNERS_CONFIG } from './config/owners.config';
-import { YUGIOH_TEFA_CONNECTION, YUGIOH_TEFA_DB } from './yugioh/yugioh.constants';
+import {
+  connectionNameFor,
+  OWNER_KEYS,
+  OWNERS_CONFIG,
+} from './config/owners.config';
 import { OwnerMiddleware } from './owner/owner.middleware';
 import { OwnerModelsService } from './owner/owner-models.service';
 import { FeatureAclGuard } from './owner/feature-acl.guard';
@@ -50,7 +53,7 @@ import { IncomingBatchItemRepository } from './repository/incoming-batch-item.re
 import { IncomingRoundRepository } from './repository/incoming-round.repository';
 import { IncomingRoundItemRepository } from './repository/incoming-round-item.repository';
 import { PokemonModule } from './pokemon';
-import { YugiohModule } from './yugioh/yugioh.module';
+import { TcgCatalogModule } from './tcg-catalog/tcg-catalog.module';
 import { StockCardImagesSyncService } from './service/stock-card-images-sync.service';
 import { StoreInventoryService } from './service/store-inventory.service';
 import { OpenedSealedStockService } from './service/opened-sealed-stock.service';
@@ -168,7 +171,7 @@ import {
 } from './schema/cardtrader-quote-session.schema';
 import { CardtraderQuoteSessionRepository } from './repository/cardtrader-quote-session.repository';
 import { CardTraderQuoteSessionService } from './service/cardtrader/cardtrader-quote-session.service';
-import { CardTraderYugiohSearchService } from './service/cardtrader/cardtrader-yugioh-search.service';
+import { CardTraderCatalogSearchService } from './service/cardtrader/cardtrader-catalog-search.service';
 import { PedidoRepository } from './repository/pedido.repository';
 import { PedidoAbonoRepository } from './repository/pedido-abono.repository';
 import { PedidoService } from './service/pedido.service';
@@ -300,55 +303,29 @@ const MONGOOSE_FEATURE_MODELS = [
     EnvioGeocodeService,
     CardtraderQuoteSessionRepository,
     CardTraderQuoteSessionService,
-    CardTraderYugiohSearchService,
+    CardTraderCatalogSearchService,
   ],
   imports: [
-    MongooseModule.forRootAsync({
-      useFactory: () => {
-        const uri = process.env.MONGO_URI?.trim();
-        if (!uri) {
-          throw new Error(
-            'MONGO_URI is required (set in .env). No embedded Mongo URI fallback.',
-          );
-        }
-        return {
-          uri,
-          dbName: OWNERS_CONFIG.owners.pablo.dbName,
-        };
-      },
-    }),
-    MongooseModule.forRootAsync({
-      connectionName: ESTEBAN_CONNECTION_NAME,
-      useFactory: () => {
-        const uri = process.env.MONGO_URI?.trim();
-        if (!uri) {
-          throw new Error(
-            'MONGO_URI is required (set in .env). No embedded Mongo URI fallback.',
-          );
-        }
-        return {
-          uri,
-          dbName: OWNERS_CONFIG.owners.esteban.dbName,
-        };
-      },
-    }),
-    MongooseModule.forRootAsync({
-      connectionName: YUGIOH_TEFA_CONNECTION,
-      useFactory: () => {
-        const uri = process.env.MONGO_URI?.trim();
-        if (!uri) {
-          throw new Error(
-            'MONGO_URI is required (set in .env). No embedded Mongo URI fallback.',
-          );
-        }
-        return { uri, dbName: YUGIOH_TEFA_DB };
-      },
-    }),
-    MongooseModule.forFeature(MONGOOSE_FEATURE_MODELS),
-    MongooseModule.forFeature(MONGOOSE_FEATURE_MODELS, ESTEBAN_CONNECTION_NAME),
-    MongooseModule.forFeature(MONGOOSE_FEATURE_MODELS, YUGIOH_TEFA_CONNECTION),
+    ...OWNER_KEYS.flatMap((owner) => [
+      MongooseModule.forRootAsync({
+        connectionName: connectionNameFor(owner),
+        useFactory: () => {
+          const uri = process.env.MONGO_URI?.trim();
+          if (!uri) {
+            throw new Error(
+              'MONGO_URI is required (set in .env). No embedded Mongo URI fallback.',
+            );
+          }
+          return { uri, dbName: OWNERS_CONFIG.owners[owner].dbName };
+        },
+      }),
+      MongooseModule.forFeature(
+        MONGOOSE_FEATURE_MODELS,
+        connectionNameFor(owner),
+      ),
+    ]),
     PokemonModule,
-    YugiohModule,
+    TcgCatalogModule,
   ],
 })
 export class AppModule implements NestModule {

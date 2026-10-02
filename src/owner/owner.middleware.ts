@@ -4,13 +4,17 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-import { coerceOwnerForTcg } from '../config/owners.config';
+import {
+  coerceOwnerForTcg,
+  OWNER_KEYS,
+  TCG_KEYS,
+} from '../config/owners.config';
 import { resolveOwnerFromRequest, runWithOwner } from './owner-context';
 import { resolveTcgFromRequest, runWithTcg } from './tcg-context';
 
 /**
  * Sets owner + TCG ALS for the request lifetime.
- * Owner: X-Owner / ?owner=. TCG: X-Tcg / ?tcg= / path `/yugioh`.
+ * Owner: X-Owner / ?owner=. TCG: X-Tcg / ?tcg= / path `/{tcg}`.
  * Si el owner no pertenece al TCG, se corrige al default de ese TCG.
  */
 @Injectable()
@@ -23,7 +27,7 @@ export class OwnerMiddleware implements NestMiddleware {
     if (resolvedOwner == null) {
       next(
         new BadRequestException(
-          'Owner inválido. Use X-Owner o ?owner= con valor pablo | esteban | tefa',
+          `Owner inválido. Use X-Owner o ?owner= con valor ${OWNER_KEYS.join(' | ')}`,
         ),
       );
       return;
@@ -36,7 +40,7 @@ export class OwnerMiddleware implements NestMiddleware {
     if (tcg == null) {
       next(
         new BadRequestException(
-          'TCG inválido. Use X-Tcg o ?tcg= con valor pokemon | yugioh',
+          `TCG inválido. Use X-Tcg o ?tcg= con valor ${TCG_KEYS.join(' | ')}`,
         ),
       );
       return;

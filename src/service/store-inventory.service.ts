@@ -11,7 +11,12 @@ import { isSyntheticQuantityCardId } from '../constants/bulk-product';
 import { sanitizeCardImageUrl } from '../utils/card-image-url';
 import { TCGDexService } from '../pokemon';
 import { LocalCardImagesService } from '../pokemon';
-import { OWNERS_CONFIG, ownersForTcg, type OwnerKey } from '../config/owners.config';
+import {
+  OWNER_KEYS,
+  OWNERS_CONFIG,
+  ownersForTcg,
+  type OwnerKey,
+} from '../config/owners.config';
 import { runWithOwnerAsync } from '../owner/owner-context';
 import {
   effectiveOperationalRarezaFromStock,
@@ -75,11 +80,9 @@ type PvpByCard = Map<string, PvpLike[]>;
 type PvpByOwner = Record<OwnerKey, PvpByCard>;
 
 function emptyPvpByOwner(): PvpByOwner {
-  return {
-    pablo: new Map(),
-    esteban: new Map(),
-    tefa: new Map(),
-  };
+  return Object.fromEntries(
+    OWNER_KEYS.map((owner) => [owner, new Map()]),
+  ) as PvpByOwner;
 }
 
 function isStoreExportSellable(stock: {

@@ -1,34 +1,38 @@
 import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection, Model } from 'mongoose';
-import {
-  ESTEBAN_CONNECTION_NAME,
-  type OwnerKey,
-} from '../config/owners.config';
-import { YUGIOH_TEFA_CONNECTION } from '../yugioh/yugioh.constants';
+import { connectionNameFor, type OwnerKey } from '../config/owners.config';
 import { getCurrentOwner } from './owner-context';
 import type { ActiveTcg } from './tcg-context';
 
 /**
  * Returns Mongoose models bound to the active owner's database.
  * Pokémon: Pablo → `test`, Esteban → `esteban`.
- * Yu-Gi-Oh: Tefa → `yugioh-tefa`.
+ * Yu-Gi-Oh: Tefa → `yugioh-tefa`. Magic: Pablo → `magic-pablo`.
+ * One Piece: Ali → `onepiece-ali`.
  */
 @Injectable()
 export class OwnerModelsService {
+  private readonly connections: Record<OwnerKey, Connection>;
+
   constructor(
-    @InjectConnection() private readonly pokemonPablo: Connection,
-    @InjectConnection(ESTEBAN_CONNECTION_NAME)
-    private readonly pokemonEsteban: Connection,
-    @InjectConnection(YUGIOH_TEFA_CONNECTION)
-    private readonly yugiohTefa: Connection,
-  ) {}
+    @InjectConnection() pablo: Connection,
+    @InjectConnection(connectionNameFor('esteban')) esteban: Connection,
+    @InjectConnection(connectionNameFor('tefa')) tefa: Connection,
+    @InjectConnection(connectionNameFor('pablo-magic')) pabloMagic: Connection,
+    @InjectConnection(connectionNameFor('ali')) ali: Connection,
+  ) {
+    this.connections = {
+      pablo,
+      esteban,
+      tefa,
+      'pablo-magic': pabloMagic,
+      ali,
+    };
+  }
 
   getConnection(owner?: OwnerKey, _tcg?: ActiveTcg): Connection {
-    const key = owner ?? getCurrentOwner();
-    if (key === 'tefa') return this.yugiohTefa;
-    if (key === 'esteban') return this.pokemonEsteban;
-    return this.pokemonPablo;
+    return this.connections[owner ?? getCurrentOwner()] ?? this.connections.pablo;
   }
 
   getModel<T>(name: string, owner?: OwnerKey, tcg?: ActiveTcg): Model<T> {

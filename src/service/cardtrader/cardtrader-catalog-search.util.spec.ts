@@ -1,10 +1,20 @@
 import {
-  rankYugiohNamesForCardTraderSearch,
-} from './cardtrader-yugioh-search.util';
+  rankCatalogNamesForCardTraderSearch,
+  stripCatalogVariantSuffix,
+} from './cardtrader-catalog-search.util';
 
-describe('rankYugiohNamesForCardTraderSearch', () => {
+describe('stripCatalogVariantSuffix', () => {
+  it('quita el sufijo de variante final', () => {
+    expect(stripCatalogVariantSuffix('Zoro-Juurou (SP)')).toBe('Zoro-Juurou');
+    expect(stripCatalogVariantSuffix('Monkey.D.Luffy (Parallel)')).toBe('Monkey.D.Luffy');
+    expect(stripCatalogVariantSuffix('Lightning Bolt')).toBe('Lightning Bolt');
+    expect(stripCatalogVariantSuffix('(SP)')).toBe('(SP)');
+  });
+});
+
+describe('rankCatalogNamesForCardTraderSearch', () => {
   it('incluye el query como primer candidato', () => {
-    const out = rankYugiohNamesForCardTraderSearch('Ash Blossom', [
+    const out = rankCatalogNamesForCardTraderSearch('Ash Blossom', [
       'Ash Blossom & Joyous Spring',
       'Other Card',
     ]);
@@ -13,7 +23,7 @@ describe('rankYugiohNamesForCardTraderSearch', () => {
   });
 
   it('prioriza prefijo sobre substring y limita', () => {
-    const out = rankYugiohNamesForCardTraderSearch(
+    const out = rankCatalogNamesForCardTraderSearch(
       'Blue-Eyes',
       [
         'Something Blue-Eyes End',
@@ -30,7 +40,7 @@ describe('rankYugiohNamesForCardTraderSearch', () => {
   });
 
   it('deduplica por case-insensitive', () => {
-    const out = rankYugiohNamesForCardTraderSearch('exodia', [
+    const out = rankCatalogNamesForCardTraderSearch('exodia', [
       'Exodia',
       'EXODIA',
       'Exodia the Forbidden One',

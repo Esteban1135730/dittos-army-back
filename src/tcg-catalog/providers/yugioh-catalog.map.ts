@@ -1,20 +1,6 @@
-export type YugiohSet = {
-  code: string;
-  name: string;
-  cardCount: number;
-  releasedAt: string | null;
-};
+import type { CatalogCard, CatalogSet } from '../tcg-catalog.types';
 
-export type YugiohCard = {
-  id: string;
-  name: string;
-  type: string;
-  number: string;
-  rarity: string;
-  setName: string;
-  image: string;
-  imageLarge: string;
-};
+export const YGOPRODECK_API = 'https://db.ygoprodeck.com/api/v7';
 
 type YgoSetRaw = {
   set_name?: string;
@@ -37,7 +23,7 @@ type YgoCardRaw = {
   card_images?: Array<{ image_url?: string; image_url_small?: string }>;
 };
 
-export function mapYugiohSet(raw: YgoSetRaw): YugiohSet | null {
+export function mapYugiohSet(raw: YgoSetRaw): CatalogSet | null {
   const code = raw.set_code?.trim() ?? '';
   const name = raw.set_name?.trim() ?? '';
   if (!code || !name) return null;
@@ -49,7 +35,7 @@ export function mapYugiohSet(raw: YgoSetRaw): YugiohSet | null {
   };
 }
 
-export function mapYugiohCard(raw: YgoCardRaw, setName: string): YugiohCard | null {
+export function mapYugiohCard(raw: YgoCardRaw, setName: string): CatalogCard | null {
   if (raw.id == null || !raw.name?.trim()) return null;
   const wanted = setName.trim().toLowerCase();
   const rows = raw.card_sets ?? [];
@@ -67,13 +53,4 @@ export function mapYugiohCard(raw: YgoCardRaw, setName: string): YugiohCard | nu
     image: image?.image_url_small || image?.image_url || '',
     imageLarge: image?.image_url || image?.image_url_small || '',
   };
-}
-
-export function filterYugiohSets(sets: YugiohSet[], query: string): YugiohSet[] {
-  const q = query.trim().toLowerCase();
-  if (!q) return sets;
-  return sets.filter(
-    (set) =>
-      set.name.toLowerCase().includes(q) || set.code.toLowerCase().includes(q),
-  );
 }
