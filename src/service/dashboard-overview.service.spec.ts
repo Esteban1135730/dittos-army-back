@@ -484,5 +484,18 @@ describe('DashboardOverviewService', () => {
       await Promise.all([service.getOverview(), service.getOverview()]);
       expect(stockRepository.findAllLean).toHaveBeenCalledTimes(1);
     });
+
+    it('invalidateCache fuerza recálculo para todos los owners', async () => {
+      mockEmptyBase();
+      const { runWithOwner } = await import('../owner/owner-context');
+      await runWithOwner('pablo', () => service.getOverview());
+      await runWithOwner('esteban', () => service.getOverview());
+      expect(stockRepository.findAllLean).toHaveBeenCalledTimes(2);
+
+      service.invalidateCache();
+      await runWithOwner('pablo', () => service.getOverview());
+      await runWithOwner('esteban', () => service.getOverview());
+      expect(stockRepository.findAllLean).toHaveBeenCalledTimes(4);
+    });
   });
 });

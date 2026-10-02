@@ -12,6 +12,7 @@ import {
   OWNERS_CONFIG,
 } from './config/owners.config';
 import { OwnerMiddleware } from './owner/owner.middleware';
+import { AnalyticsCacheInvalidationMiddleware } from './owner/analytics-cache-invalidation.middleware';
 import { OwnerModelsService } from './owner/owner-models.service';
 import { FeatureAclGuard } from './owner/feature-acl.guard';
 import { SyncTokenGuard } from './guard/sync-token.guard';
@@ -334,5 +335,6 @@ export class AppModule implements NestModule {
       .apply(OwnerMiddleware)
       .exclude({ path: 'health', method: RequestMethod.GET })
       .forRoutes('*');
+    consumer.apply(AnalyticsCacheInvalidationMiddleware).forRoutes('*');
   }
 }

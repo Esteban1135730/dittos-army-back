@@ -66,10 +66,12 @@ describe('IncomingReservationService.materializeForNewStockLines', () => {
       consumeOneFifo: jest
         .fn()
         .mockResolvedValue({ client_id: 'c1', precio_cop: 5000 }),
+      restoreFifoSlot: jest.fn().mockResolvedValue(undefined),
     };
     const reservaRepository = {
       create: jest.fn().mockResolvedValue({}),
       createMany: jest.fn().mockResolvedValue([]),
+      deleteManyByStockIds: jest.fn().mockResolvedValue(0),
     };
     const stockRepository = {
       updateCardState: jest.fn().mockResolvedValue({}),
@@ -204,6 +206,127 @@ describe('IncomingReservationService.materializeForNewStockLines', () => {
 
     expect(reservaRepository.createMany).not.toHaveBeenCalled();
     expect(stockRepository.updateCardStateMany).not.toHaveBeenCalled();
+  });
+
+  describe('compensación si falla la escritura en bloque', () => {
+    const t1 = new Date('2026-01-01T00:00:00Z');
+    const t2 = new Date('2026-01-02T00:00:00Z');
+    const stocks = [
+      { _id: 's1', card_id: 'sv1-1', card_state: 'disponible' },
+      { _id: 's2', card_id: 'sv1-1', card_state: 'disponible' },
+      { _id: 's3', card_id: 'sv1-2', card_state: 'disponible' },
+    ] as any;
+
+    function setup() {
+      const ctx = makeMaterializeService({ pedidoId: null });
+      ctx.reservaIncomingRepo.consumeOneFifo
+        .mockReset()
+        .mockResolvedValueOnce({
+          client_id: 'c1',
+          precio_cop: 5000,
+          created_at: t1,
+        })
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          client_id: 'c2',
+          precio_cop: null,
+          created_at: t2,
+        });
+      jest
+        .spyOn((ctx.svc as any).logger, 'error')
+        .mockImplementation(() => undefined);
+      return ctx;
+    }
+
+    it('insertMany falla → borra reservas parciales, devuelve cupos y relanza', async () => {
+      const { svc, reservaRepository, reservaIncomingRepo, stockRepository } =
+        setup();
+      reservaRepository.createMany.mockRejectedValueOnce(new Error('E11000'));
+
+      await expect(
+        svc.materializeForNewStockLines(stocks, ['l1', 'l1', 'l2']),
+      ).rejects.toThrow('E11000');
+
+      expect(reservaRepository.deleteManyByStockIds).toHaveBeenCalledWith([
+        's1',
+        's3',
+      ]);
+      expect(reservaIncomingRepo.restoreFifoSlot.mock.calls).toEqual([
+        [
+          {
+            client_id: 'c2',
+            precio_cop: null,
+            created_at: t2,
+            batch_item_id: 'l2',
+          },
+        ],
+        [
+          {
+            client_id: 'c1',
+            precio_cop: 5000,
+            created_at: t1,
+            batch_item_id: 'l1',
+          },
+        ],
+      ]);
+      expect(stockRepository.updateCardStateMany).not.toHaveBeenCalled();
+    });
+
+    it('updateMany de estado falla → revierte estado, borra reservas y devuelve cupos', async () => {
+      const { svc, reservaRepository, reservaIncomingRepo, stockRepository } =
+        setup();
+      stockRepository.updateCardStateMany
+        .mockRejectedValueOnce(new Error('net'))
+        .mockResolvedValue(2);
+
+      await expect(
+        svc.materializeForNewStockLines(stocks, ['l1', 'l1', 'l2']),
+      ).rejects.toThrow('net');
+
+      expect(stockRepository.updateCardStateMany).toHaveBeenNthCalledWith(
+        2,
+        ['s1', 's3'],
+        'disponible',
+      );
+      expect(reservaRepository.deleteManyByStockIds).toHaveBeenCalledWith([
+        's1',
+        's3',
+      ]);
+      expect(reservaIncomingRepo.restoreFifoSlot).toHaveBeenCalledTimes(2);
+    });
+
+    it('fallo al consumir un cupo devuelve los ya consumidos sin tocar reservas', async () => {
+      const { svc, reservaRepository, reservaIncomingRepo } = setup();
+      reservaIncomingRepo.consumeOneFifo
+        .mockReset()
+        .mockResolvedValueOnce({
+          client_id: 'c1',
+          precio_cop: 5000,
+          created_at: t1,
+        })
+        .mockRejectedValueOnce(new Error('reintentos'));
+
+      await expect(
+        svc.materializeForNewStockLines(stocks, ['l1', 'l1', 'l2']),
+      ).rejects.toThrow('reintentos');
+
+      expect(reservaRepository.createMany).not.toHaveBeenCalled();
+      expect(reservaRepository.deleteManyByStockIds).not.toHaveBeenCalled();
+      expect(reservaIncomingRepo.restoreFifoSlot).toHaveBeenCalledTimes(1);
+    });
+
+    it('si no se pueden borrar las reservas no devuelve cupos (evita duplicar) y relanza el error original', async () => {
+      const { svc, reservaRepository, reservaIncomingRepo } = setup();
+      reservaRepository.createMany.mockRejectedValueOnce(new Error('E11000'));
+      reservaRepository.deleteManyByStockIds.mockRejectedValueOnce(
+        new Error('db down'),
+      );
+
+      await expect(
+        svc.materializeForNewStockLines(stocks, ['l1', 'l1', 'l2']),
+      ).rejects.toThrow('E11000');
+      expect(reservaIncomingRepo.restoreFifoSlot).not.toHaveBeenCalled();
+    });
   });
 });
 

@@ -71,7 +71,10 @@ import { firstAcceptedInOrder } from '../utils/concurrency';
 
 const TCGDEX_CDN_TIMEOUT_MS = 8000;
 const TCGDEX_CDN_HIT_TTL_MS = 24 * 60 * 60 * 1000;
-const TCGDEX_CDN_MISS_TTL_MS = 6 * 60 * 60 * 1000;
+/** 404: la carta no existe en TCGdex. */
+export const TCGDEX_CDN_MISS_TTL_MS = 20 * 60 * 1000;
+/** La carta existe pero aún sin imagen usable: TCGdex suele publicarla pronto. */
+export const TCGDEX_CDN_NO_IMAGE_TTL_MS = 5 * 60 * 1000;
 const TCGDEX_CDN_CACHE_MAX = 5000;
 
 @Injectable()
@@ -1677,11 +1680,11 @@ export class IncomingHomologService {
       }
       const raw = (await res.json()) as { image?: string; name?: string };
       const base = String(raw?.image ?? '').trim();
-      if (!base) return { value: '', ttlMs: TCGDEX_CDN_MISS_TTL_MS };
+      if (!base) return { value: '', ttlMs: TCGDEX_CDN_NO_IMAGE_TTL_MS };
       const normalized = normalizeTcgdexCdnImageUrl(base);
       return isUsableStockImageUrl(normalized)
         ? { value: normalized, ttlMs: TCGDEX_CDN_HIT_TTL_MS }
-        : { value: '', ttlMs: TCGDEX_CDN_MISS_TTL_MS };
+        : { value: '', ttlMs: TCGDEX_CDN_NO_IMAGE_TTL_MS };
     } catch {
       return { value: '', ttlMs: 0 };
     }

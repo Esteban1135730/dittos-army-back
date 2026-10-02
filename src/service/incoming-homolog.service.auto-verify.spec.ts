@@ -1,5 +1,9 @@
 import { NotFoundException } from '@nestjs/common';
-import { IncomingHomologService } from './incoming-homolog.service';
+import {
+  IncomingHomologService,
+  TCGDEX_CDN_MISS_TTL_MS,
+  TCGDEX_CDN_NO_IMAGE_TTL_MS,
+} from './incoming-homolog.service';
 import { getCurrentOwner } from '../owner/owner-context';
 import type { IncomingHomologUnit } from '../schema/incoming-homolog-session.schema';
 
@@ -338,6 +342,39 @@ describe('IncomingHomologService auto-verify / verifyUnit', () => {
       expect(
         (fetchMock.mock.calls[0] as unknown[])[1] as { signal?: unknown },
       ).toEqual(expect.objectContaining({ signal: expect.anything() }));
+    });
+
+    it('negativos expiran: 404 a los 20 min, carta sin imagen a los 5 min', async () => {
+      expect(TCGDEX_CDN_MISS_TTL_MS).toBe(20 * 60 * 1000);
+      expect(TCGDEX_CDN_NO_IMAGE_TTL_MS).toBe(5 * 60 * 1000);
+      let now = 1_000_000;
+      const nowSpy = jest.spyOn(Date, 'now').mockImplementation(() => now);
+      try {
+        const fetchMock = jest.fn(async (url: string) => {
+          if (url.includes('missing')) return { ok: false, status: 404 };
+          return { ok: true, status: 200, json: async () => ({ image: '' }) };
+        });
+        global.fetch = fetchMock as unknown as typeof fetch;
+        const service = makeService() as any;
+        const count = (part: string) =>
+          fetchMock.mock.calls.filter((c) => String(c[0]).includes(part))
+            .length;
+
+        await service.fetchTcgdexCdnImageUrl('missing', 'en');
+        await service.fetchTcgdexCdnImageUrl('noimg', 'en');
+
+        now += TCGDEX_CDN_NO_IMAGE_TTL_MS + 1;
+        await service.fetchTcgdexCdnImageUrl('missing', 'en');
+        await service.fetchTcgdexCdnImageUrl('noimg', 'en');
+        expect(count('missing')).toBe(1);
+        expect(count('noimg')).toBe(2);
+
+        now += TCGDEX_CDN_MISS_TTL_MS;
+        await service.fetchTcgdexCdnImageUrl('missing', 'en');
+        expect(count('missing')).toBe(2);
+      } finally {
+        nowSpy.mockRestore();
+      }
     });
   });
 

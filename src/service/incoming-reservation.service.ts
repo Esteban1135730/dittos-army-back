@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ReservaIncomingRepository } from '../repository/reserva-incoming.repository';
@@ -42,6 +43,8 @@ type ReservationLineSnapshot = {
   remaining_quantity: number;
 };
 
+type ConsumedSlot = Parameters<ReservaIncomingRepository['restoreFifoSlot']>[0];
+
 type VariantCandidate = {
   lineId: string;
   remaining: number;
@@ -51,6 +54,8 @@ type VariantCandidate = {
 
 @Injectable()
 export class IncomingReservationService {
+  private readonly logger = new Logger(IncomingReservationService.name);
+
   constructor(
     private readonly reservaIncomingRepo: ReservaIncomingRepository,
     private readonly transitLineRepo: CardtraderTransitLineRepository,
@@ -79,44 +84,112 @@ export class IncomingReservationService {
     const pedidoIdByClient = new Map<string, string | null>();
     const reservasToCreate: Parameters<ReservaRepository['createMany']>[0] = [];
     const reservedStockIds: string[] = [];
+    const consumedSlots: ConsumedSlot[] = [];
+    const previousStateByStockId = new Map<string, string | undefined>();
+    let reservasAttempted = false;
+    let statesAttempted = false;
 
-    // El consumo FIFO de cupos sigue siendo secuencial (orden de llegada por línea).
-    for (let i = 0; i < createdStocks.length; i++) {
-      const stockDoc = createdStocks[i];
-      const lineId = batchItemIds[i];
-      const stockId = String(stockDoc._id);
+    try {
+      // El consumo FIFO de cupos sigue siendo secuencial (orden de llegada por línea).
+      for (let i = 0; i < createdStocks.length; i++) {
+        const stockDoc = createdStocks[i];
+        const lineId = batchItemIds[i];
+        const stockId = String(stockDoc._id);
 
-      const slot = await this.reservaIncomingRepo.consumeOneFifo(lineId);
-      if (!slot) continue;
+        const slot = await this.reservaIncomingRepo.consumeOneFifo(lineId);
+        if (!slot) continue;
+        consumedSlots.push({ ...slot, batch_item_id: lineId });
+        previousStateByStockId.set(stockId, stockDoc.card_state);
 
-      const rarezaLine = effectiveOperationalRarezaFromStock(stockDoc as any);
-      const linePvps = pvpMap.get(stockDoc.card_id) ?? [];
-      const resolved = resolvePvpForLine(linePvps as any, rarezaLine);
-      let precioCop = 0;
-      const currency = 'COP';
-      if (slot.precio_cop != null && slot.precio_cop > 0) {
-        precioCop = slot.precio_cop;
-      } else if (resolved) {
-        precioCop = precioToCop(resolved.pvp, resolved.pvp_currency);
+        const rarezaLine = effectiveOperationalRarezaFromStock(stockDoc as any);
+        const linePvps = pvpMap.get(stockDoc.card_id) ?? [];
+        const resolved = resolvePvpForLine(linePvps as any, rarezaLine);
+        let precioCop = 0;
+        const currency = 'COP';
+        if (slot.precio_cop != null && slot.precio_cop > 0) {
+          precioCop = slot.precio_cop;
+        } else if (resolved) {
+          precioCop = precioToCop(resolved.pvp, resolved.pvp_currency);
+        }
+
+        const pedidoId = await this.reservadoPedidoIdForClient(
+          slot.client_id,
+          pedidoIdByClient,
+        );
+        reservasToCreate.push({
+          client_id: slot.client_id,
+          stock_id: stockId,
+          precio: precioCop,
+          currency,
+          ...(pedidoId ? { pedido_id: pedidoId } : {}),
+        });
+        reservedStockIds.push(stockId);
       }
 
-      const pedidoId = await this.reservadoPedidoIdForClient(
-        slot.client_id,
-        pedidoIdByClient,
+      if (!reservasToCreate.length) return;
+      reservasAttempted = true;
+      await this.reservaRepository.createMany(reservasToCreate);
+      statesAttempted = true;
+      await this.stockRepository.updateCardStateMany(
+        reservedStockIds,
+        'reserva',
       );
-      reservasToCreate.push({
-        client_id: slot.client_id,
-        stock_id: stockId,
-        precio: precioCop,
-        currency,
-        ...(pedidoId ? { pedido_id: pedidoId } : {}),
+    } catch (err) {
+      await this.compensateMaterialize({
+        consumedSlots,
+        reservedStockIds: reservasAttempted ? reservedStockIds : [],
+        previousStateByStockId: statesAttempted
+          ? previousStateByStockId
+          : new Map<string, string | undefined>(),
       });
-      reservedStockIds.push(stockId);
+      throw err;
+    }
+  }
+
+  /**
+   * Deshace un `materializeForNewStockLines` fallido: estados de stock, reservas
+   * insertadas (insertMany ordenado puede dejar parciales) y cupos FIFO consumidos.
+   * Best-effort: un fallo aquí se registra y no oculta el error original.
+   * Los cupos solo se devuelven si las reservas se borraron (si no, se duplicarían).
+   */
+  private async compensateMaterialize(input: {
+    consumedSlots: ConsumedSlot[];
+    reservedStockIds: string[];
+    previousStateByStockId: Map<string, string | undefined>;
+  }): Promise<void> {
+    const logFailure = (step: string, err: unknown) =>
+      this.logger.error(
+        `materializeForNewStockLines: compensación incompleta (${step})`,
+        err instanceof Error ? err.stack : undefined,
+      );
+
+    try {
+      const idsByState = new Map<string, string[]>();
+      for (const [stockId, state] of input.previousStateByStockId) {
+        if (!state) continue;
+        const ids = idsByState.get(state) ?? [];
+        ids.push(stockId);
+        idsByState.set(state, ids);
+      }
+      for (const [state, ids] of idsByState) {
+        await this.stockRepository.updateCardStateMany(ids, state);
+      }
+    } catch (err) {
+      logFailure('estado de stock', err);
     }
 
-    if (!reservasToCreate.length) return;
-    await this.reservaRepository.createMany(reservasToCreate);
-    await this.stockRepository.updateCardStateMany(reservedStockIds, 'reserva');
+    try {
+      if (input.reservedStockIds.length) {
+        await this.reservaRepository.deleteManyByStockIds(
+          input.reservedStockIds,
+        );
+      }
+      for (const slot of [...input.consumedSlots].reverse()) {
+        await this.reservaIncomingRepo.restoreFifoSlot(slot);
+      }
+    } catch (err) {
+      logFailure(`reservas/cupos (${input.consumedSlots.length} cupos)`, err);
+    }
   }
 
   private async reservadoPedidoIdForClient(

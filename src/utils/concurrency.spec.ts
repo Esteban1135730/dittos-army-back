@@ -41,6 +41,20 @@ describe('mapWithConcurrency', () => {
     ).rejects.toThrow('boom');
   });
 
+  it('tras el primer rechazo no arranca elementos nuevos', async () => {
+    const started: number[] = [];
+    await expect(
+      mapWithConcurrency([0, 1, 2, 3, 4, 5], 2, async (n) => {
+        started.push(n);
+        if (n === 0) throw new Error('boom');
+        await new Promise((r) => setTimeout(r, 10));
+        return n;
+      }),
+    ).rejects.toThrow('boom');
+    await new Promise((r) => setTimeout(r, 30));
+    expect(started).toEqual([0, 1]);
+  });
+
   it('límite inválido (0) se trata como 1', async () => {
     const out = await mapWithConcurrency([1, 2], 0, async (n) => n * 2);
     expect(out).toEqual([2, 4]);

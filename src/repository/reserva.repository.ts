@@ -32,19 +32,34 @@ export class ReservaRepository {
     return created.save();
   }
 
-  /** Igual que `create` para varias reservas en un solo `insertMany` (ordenado). */
+  /**
+   * Igual que `create` para varias reservas en un solo `insertMany` (ordenado).
+   * `created_at` crece 1 ms por fila para conservar el orden de entrada al ordenar.
+   */
   async createMany(dtos: ReservaDto[]): Promise<Reserva[]> {
     if (!dtos.length) return [];
-    const now = new Date();
+    const base = Date.now();
     return this.reservaModel.insertMany(
-      dtos.map((dto) => ({
-        ...dto,
-        currency: dto.currency ?? 'COP',
-        created_at: now,
-        updated_at: now,
-      })),
+      dtos.map((dto, i) => {
+        const at = new Date(base + i);
+        return {
+          ...dto,
+          currency: dto.currency ?? 'COP',
+          created_at: at,
+          updated_at: at,
+        };
+      }),
       { ordered: true },
     ) as unknown as Promise<Reserva[]>;
+  }
+
+  async deleteManyByStockIds(stockIds: string[]): Promise<number> {
+    const ids = stockIds.filter((id) => id?.trim());
+    if (!ids.length) return 0;
+    const result = await this.reservaModel
+      .deleteMany({ stock_id: { $in: ids } })
+      .exec();
+    return result.deletedCount ?? 0;
   }
 
   async findAll(): Promise<Reserva[]> {

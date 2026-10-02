@@ -1,4 +1,8 @@
-import { buildCardLocaleFallbackChain, TCGDexService } from './tcgdex.service';
+import {
+  buildCardLocaleFallbackChain,
+  TCGDexService,
+  TTL_CARD_NOT_FOUND_MS,
+} from './tcgdex.service';
 import type { SetNameHomologsService } from './set-name-homologs.service';
 import type { LocalCardImagesService } from './local-card-images.service';
 
@@ -46,6 +50,21 @@ describe('TCGDexService.getCardExact (caché negativa, dedupe, timeout)', () => 
     await expect(svc.getCardExact('zz9-999', 'en')).resolves.toBeUndefined();
     await expect(svc.getCardExact('zz9-999', 'en')).resolves.toBeUndefined();
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('el 404 cacheado expira a los 20 minutos', async () => {
+    expect(TTL_CARD_NOT_FOUND_MS).toBe(20 * 60 * 1000);
+    let now = 1_000_000;
+    jest.spyOn(Date, 'now').mockImplementation(() => now);
+    fetchMock.mockResolvedValue(jsonResponse(404, {}));
+    const svc = makeService();
+    await svc.getCardExact('zz9-998', 'en');
+    now += TTL_CARD_NOT_FOUND_MS - 1;
+    await svc.getCardExact('zz9-998', 'en');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    now += 2;
+    await svc.getCardExact('zz9-998', 'en');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it('5xx o error de red no se cachean como inexistente', async () => {

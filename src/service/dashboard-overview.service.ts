@@ -186,6 +186,11 @@ export class DashboardOverviewService {
     return this.overviewCache.getOrLoad(key, () => this.computeOverview());
   }
 
+  /** Vacía la caché de todos los owners/TCG (hay escrituras que cruzan owners). */
+  invalidateCache(): void {
+    this.overviewCache.clear();
+  }
+
   private async computeOverview(): Promise<DashboardOverviewResponse> {
     const [
       stockItems,

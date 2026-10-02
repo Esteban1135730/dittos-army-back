@@ -79,6 +79,22 @@ describe('TtlCache', () => {
     await expect(cache.getOrLoad('s', sync)).rejects.toThrow('sync');
     await expect(cache.getOrLoad('s', async () => 7)).resolves.toBe(7);
   });
+
+  it('clear() descarta cargas en vuelo iniciadas antes (no guarda datos viejos)', async () => {
+    const cache = new TtlCache<string>({ ttlMs: 10_000, maxEntries: 10 });
+    let release!: (v: string) => void;
+    const stale = cache.getOrLoad(
+      'k',
+      () => new Promise<string>((r) => (release = r)),
+    );
+    await Promise.resolve();
+    cache.clear();
+    const fresh = cache.getOrLoad('k', async () => 'nuevo');
+    release('viejo');
+    await expect(stale).resolves.toBe('viejo');
+    await expect(fresh).resolves.toBe('nuevo');
+    expect(cache.get('k')).toBe('nuevo');
+  });
 });
 
 describe('InFlightDedupe', () => {

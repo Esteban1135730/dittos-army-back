@@ -1,7 +1,8 @@
 /**
  * Ejecuta `fn` sobre cada elemento con como mucho `limit` promesas en vuelo.
  * El resultado conserva el orden de `items`. Si alguna promesa rechaza, se
- * rechaza con el primer error (las ya iniciadas terminan en segundo plano).
+ * rechaza con el primer error y no se arrancan elementos nuevos (las ya
+ * iniciadas terminan en segundo plano).
  */
 export async function mapWithConcurrency<T, R>(
   items: readonly T[],
@@ -12,10 +13,16 @@ export async function mapWithConcurrency<T, R>(
   if (items.length === 0) return results;
   const workers = Math.max(1, Math.min(Math.floor(limit) || 1, items.length));
   let next = 0;
+  let failed = false;
   const run = async (): Promise<void> => {
-    while (next < items.length) {
+    while (!failed && next < items.length) {
       const i = next++;
-      results[i] = await fn(items[i], i);
+      try {
+        results[i] = await fn(items[i], i);
+      } catch (e) {
+        failed = true;
+        throw e;
+      }
     }
   };
   await Promise.all(Array.from({ length: workers }, () => run()));

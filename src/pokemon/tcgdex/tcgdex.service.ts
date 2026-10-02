@@ -95,7 +95,7 @@ export function resolveTcgdexApiBaseUrl(): string {
 /** Timeout de cada petición HTTP directa a TCGdex (fetch). */
 export const TCGDEX_HTTP_TIMEOUT_MS = 8_000;
 /** TTL de "carta inexistente" (404) para no repetir la cadena de candidatos × locales. */
-const TTL_CARD_NOT_FOUND_MS = 6 * 60 * 60 * 1000;
+export const TTL_CARD_NOT_FOUND_MS = 20 * 60 * 1000;
 const CACHE_MAX_ENTRIES = 5_000;
 const NOT_FOUND_MAX_ENTRIES = 20_000;
 

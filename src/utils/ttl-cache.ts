@@ -8,6 +8,8 @@ type Entry<V> = { value: V; expiresAt: number };
 export class TtlCache<V> {
   private readonly entries = new Map<string, Entry<V>>();
   private readonly inFlight = new Map<string, Promise<V>>();
+  /** Se incrementa en `clear()`: las cargas iniciadas antes no se guardan. */
+  private generation = 0;
 
   constructor(
     private readonly opts: {
@@ -59,6 +61,7 @@ export class TtlCache<V> {
   }
 
   clear(): void {
+    this.generation += 1;
     this.entries.clear();
     this.inFlight.clear();
   }
@@ -77,14 +80,17 @@ export class TtlCache<V> {
     if (hit !== undefined) return hit;
     const pending = this.inFlight.get(key);
     if (pending) return pending;
-    const p = Promise.resolve()
+    const generation = this.generation;
+    const p: Promise<V> = Promise.resolve()
       .then(loader)
       .then((value) => {
-        if (shouldCache(value)) this.set(key, value);
+        if (generation === this.generation && shouldCache(value)) {
+          this.set(key, value);
+        }
         return value;
       })
       .finally(() => {
-        this.inFlight.delete(key);
+        if (this.inFlight.get(key) === p) this.inFlight.delete(key);
       });
     this.inFlight.set(key, p);
     return p;

@@ -238,6 +238,11 @@ export class MetricsAnalyticsService {
     maxEntries: ANALYTICS_CACHE_MAX,
   });
 
+  /** Vacía la caché de todos los owners/TCG/periodos (hay escrituras que cruzan owners). */
+  invalidateCache(): void {
+    this.analyticsCache.clear();
+  }
+
   async getAnalytics(query: {
     from?: string;
     to?: string;

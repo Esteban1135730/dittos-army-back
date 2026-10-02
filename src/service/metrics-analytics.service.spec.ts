@@ -85,6 +85,22 @@ describe('MetricsAnalyticsService', () => {
     expect(stockRepository.findAllLean).toHaveBeenCalledTimes(4);
   });
 
+  it('invalidateCache fuerza recálculo de todos los owners y periodos', async () => {
+    saleRepository.findVentasInPeriodLean.mockResolvedValue([]);
+    stockRepository.findAllLean.mockResolvedValue([]);
+    const period = { from: '2026-01-01', to: '2026-01-31' };
+    const { runWithOwner } = await import('../owner/owner-context');
+
+    await service.getAnalytics(period);
+    await runWithOwner('esteban', () => service.getAnalytics(period));
+    expect(stockRepository.findAllLean).toHaveBeenCalledTimes(2);
+
+    service.invalidateCache();
+    await service.getAnalytics(period);
+    await runWithOwner('esteban', () => service.getAnalytics(period));
+    expect(stockRepository.findAllLean).toHaveBeenCalledTimes(4);
+  });
+
   it('summary con snapshot vs fallback de costo', async () => {
     saleRepository.findVentasInPeriodLean.mockResolvedValue([
       {
