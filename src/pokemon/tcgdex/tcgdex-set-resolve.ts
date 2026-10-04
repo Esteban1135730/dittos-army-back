@@ -84,13 +84,13 @@ export function usesPaddedLocalIds(locale: string | null | undefined): boolean {
   return ['ja', 'ko', 'jp', 'kr', 'zh-cn', 'zh-tw', 'zh'].includes(loc);
 }
 
-/** Normaliza collector CardTrader (p. ej. 115/149 → 115). */
+/** Normaliza collector CardTrader (p. ej. 115/149 → 115, 103a/147 → 103a). */
 export function normalizeCollectorNumberForTcgdex(
   raw: string | null | undefined,
 ): string | null {
   const s = String(raw ?? '').trim();
   if (!s) return null;
-  const slashMatch = /^(\d+)\s*\/\s*\d+$/.exec(s);
+  const slashMatch = /^(\d+[a-zA-Z]?)\s*\/\s*\d+$/.exec(s);
   if (slashMatch) return slashMatch[1];
   // Gem Pack zh: 03-06/09 → 03-06_09 (TCGdex CBB1C)
   const gemPackMatch = /^(\d{2}-\d{2})\/(\d{2})$/.exec(s);
@@ -141,7 +141,7 @@ export function expansionLookupKeys(expansionName?: string): string[] {
   return [...keys];
 }
 
-/** Sets SV/ME y promos SV usan localId numérico a 3 dígitos en TCGdex. */
+/** Sets SV/ME, Brilliant Stars en adelante (swsh9+) y promos SV usan localId numérico a 3 dígitos. */
 export function usesPaddedLocalIdsForSet(
   setId: string | null | undefined,
 ): boolean {
@@ -153,10 +153,12 @@ export function usesPaddedLocalIdsForSet(
   }
   if (lower === '30th' || lower === '30th-c') return true;
   if (/^sv[\d.]/i.test(id) || id === 'Svpromo') return true;
+  // swsh1–swsh8 van sin ceros (swsh1-1). Desde Brilliant Stars (swsh9) van a 3 dígitos.
+  if (/^swsh(?:9|1[0-2])(?:\.|$)/i.test(id)) return true;
   return false;
 }
 
-/** Promos SWSH usan prefijo SWSH + número (swshp-SWSH222). */
+/** Promos SWSH usan prefijo SWSH + número a 3 dígitos (swshp-SWSH011, swshp-SWSH222). */
 export function formatPromoLocalIdForSet(
   setId: string | null | undefined,
   localId: string,
@@ -164,18 +166,23 @@ export function formatPromoLocalIdForSet(
   const setLower = String(setId ?? '')
     .trim()
     .toLowerCase();
-  if (setLower === 'swshp' && /^\d+$/.test(localId)) {
-    return `SWSH${localId.replace(/^0+/, '') || '0'}`;
-  }
-  return localId;
+  if (setLower !== 'swshp') return localId;
+
+  const digitsOnly = /^\d+$/.test(localId)
+    ? localId
+    : /^SWSH(\d+)$/i.exec(localId)?.[1];
+  if (!digitsOnly) return localId;
+
+  const digits = digitsOnly.replace(/^0+/, '') || '0';
+  return `SWSH${digits.padStart(3, '0')}`;
 }
 
 /** CardTrader lista Trainer Gallery bajo el set padre (Lost Origin + #TG23). */
 const SWSH_TRAINER_GALLERY_BY_PARENT: Record<string, string> = {
-  swsh9: 'swsh9.5tg',
-  swsh10: 'swsh10.5tg',
-  swsh11: 'swsh11.5tg',
-  swsh12: 'swsh12.5tg',
+  swsh9: 'swsh9tg',
+  swsh10: 'swsh10tg',
+  swsh11: 'swsh11tg',
+  swsh12: 'swsh12tg',
 };
 
 export function isTrainerGalleryLocalId(
@@ -309,7 +316,7 @@ export function resolveKnownCardTraderPrint(args: {
   return null;
 }
 
-/** swsh11 + TG23 → swsh11.5tg (catálogo local). */
+/** swsh11 + TG23 → swsh11tg. */
 export function remapSetIdForTrainerGallery(
   setId: string,
   localId: string | null | undefined,
@@ -329,13 +336,25 @@ export function remapSetIdForGalarianGallery(
   return SWSH_GALARIAN_GALLERY_BY_PARENT[lower] ?? setId;
 }
 
-/** Subset TG/GG de un set padre SWSH (orden: TG primero, luego GG). */
+/** Shining Fates Shiny Vault: swsh4.5 + #SV035 → swsh4.5sv. */
+export function remapSetIdForShinyVault(
+  setId: string,
+  localId: string | null | undefined,
+): string {
+  if (!/^SV\d+/i.test(String(localId ?? '').trim())) return setId;
+  return setId.trim().toLowerCase() === 'swsh4.5' ? 'swsh4.5sv' : setId;
+}
+
+/** Subset TG/GG/SV de un set padre SWSH (orden: TG, GG, Shiny Vault). */
 export function remapSetIdForGallerySubset(
   setId: string,
   localId: string | null | undefined,
 ): string {
-  return remapSetIdForGalarianGallery(
-    remapSetIdForTrainerGallery(setId, localId),
+  return remapSetIdForShinyVault(
+    remapSetIdForGalarianGallery(
+      remapSetIdForTrainerGallery(setId, localId),
+      localId,
+    ),
     localId,
   );
 }
@@ -421,6 +440,7 @@ export function trainerGallerySetIdAliases(setId: string): string[] {
   const gallery = SWSH_TRAINER_GALLERY_BY_PARENT[lower];
   if (gallery) {
     push(gallery);
+    push(gallery.replace(/tg$/i, '.5tg'));
     push(gallery.replace('.5tg', 'tg'));
   }
   return aliases;

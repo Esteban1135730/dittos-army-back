@@ -18,14 +18,14 @@ describe('CardTraderTcgdexResolveService', () => {
     expect(hit.error).toBeNull();
   });
 
-  it('resuelve Lost Origin #TG23 → swsh11.5tg-TG23', async () => {
+  it('resuelve Lost Origin #TG23 → swsh11tg-TG23', async () => {
     const byName = await service.resolveTcgdexCardId({
       expansionName: 'Lost Origin',
       collectorNumber: 'TG23',
       language: 'it',
     });
-    expect(byName.tcgdex_set_id).toBe('swsh11.5tg');
-    expect(byName.tcgdex_card_id).toBe('swsh11.5tg-TG23');
+    expect(byName.tcgdex_set_id).toBe('swsh11tg');
+    expect(byName.tcgdex_card_id).toBe('swsh11tg-TG23');
     expect(byName.error).toBeNull();
 
     const regular = await service.resolveTcgdexCardId({
@@ -33,7 +33,30 @@ describe('CardTraderTcgdexResolveService', () => {
       collectorNumber: '075',
       language: 'it',
     });
-    expect(regular.tcgdex_card_id).toBe('swsh11-75');
+    expect(regular.tcgdex_card_id).toBe('swsh11-075');
+  });
+
+  it('resuelve Lost Origin #004, Aquapolis #103a/147 y promo SWSH #011', async () => {
+    const paras = await service.resolveTcgdexCardId({
+      expansionName: 'Lost Origin',
+      collectorNumber: '004',
+      language: 'en',
+    });
+    expect(paras.tcgdex_card_id).toBe('swsh11-004');
+
+    const porygon = await service.resolveTcgdexCardId({
+      expansionName: 'Aquapolis',
+      collectorNumber: '103a/147',
+      language: 'it',
+    });
+    expect(porygon.tcgdex_card_id).toBe('ecard2-103a');
+
+    const wooloo = await service.resolveTcgdexCardId({
+      expansionName: 'SWSH Black Star Promos',
+      collectorNumber: '011',
+      language: 'en',
+    });
+    expect(wooloo.tcgdex_card_id).toBe('swshp-SWSH011');
   });
 
   it('resuelve Platinum Arceus #082 → pl4-82', async () => {

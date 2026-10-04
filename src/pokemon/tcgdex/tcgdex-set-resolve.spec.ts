@@ -76,16 +76,31 @@ describe('tcgdex-set-resolve', () => {
   it('normaliza collector con fracción CardTrader', () => {
     expect(normalizeCollectorNumberForTcgdex('115/149')).toBe('115');
     expect(formatLocalIdForLocale('115/149', 'en', 'sm1')).toBe('115');
+    expect(normalizeCollectorNumberForTcgdex('103a/147')).toBe('103a');
+    expect(formatLocalIdForLocale('103a/147', 'en', 'ecard2')).toBe('103a');
   });
 
-  it('formatea promos swshp con prefijo SWSH', () => {
+  it('rellena a 3 dígitos desde Brilliant Stars (swsh9)', () => {
+    expect(usesPaddedLocalIdsForSet('swsh9')).toBe(true);
+    expect(usesPaddedLocalIdsForSet('swsh11')).toBe(true);
+    expect(usesPaddedLocalIdsForSet('swsh12.5')).toBe(true);
+    expect(usesPaddedLocalIdsForSet('swsh8')).toBe(false);
+    expect(formatLocalIdForLocale('004', 'en', 'swsh11')).toBe('004');
+    expect(formatLocalIdForLocale('075', 'en', 'swsh11')).toBe('075');
+    expect(formatLocalIdForLocale('1', 'en', 'swsh8')).toBe('1');
+  });
+
+  it('formatea promos swshp con prefijo SWSH a 3 dígitos', () => {
     expect(formatLocalIdForLocale('222', 'en', 'swshp')).toBe('SWSH222');
     expect(formatLocalIdForLocale('255', 'en', 'swshp')).toBe('SWSH255');
+    expect(formatLocalIdForLocale('011', 'en', 'swshp')).toBe('SWSH011');
+    expect(formatLocalIdForLocale('9', 'en', 'swshp')).toBe('SWSH009');
+    expect(formatLocalIdForLocale('SWSH11', 'en', 'swshp')).toBe('SWSH011');
   });
 
   it('remapea Trainer Gallery SWSH del set padre al subset TG', () => {
-    expect(remapSetIdForTrainerGallery('swsh11', 'TG23')).toBe('swsh11.5tg');
-    expect(remapSetIdForTrainerGallery('swsh9', 'TG01')).toBe('swsh9.5tg');
+    expect(remapSetIdForTrainerGallery('swsh11', 'TG23')).toBe('swsh11tg');
+    expect(remapSetIdForTrainerGallery('swsh9', 'TG01')).toBe('swsh9tg');
     expect(remapSetIdForTrainerGallery('swsh11', '75')).toBe('swsh11');
     expect(trainerGallerySetIdAliases('swsh11.5tg')).toEqual(
       expect.arrayContaining(['swsh11.5tg', 'swsh11tg', 'swsh11']),
@@ -103,6 +118,8 @@ describe('tcgdex-set-resolve', () => {
     expect(remapSetIdForGalarianGallery('swsh12.5', 'GG64')).toBe('swsh12.5gg');
     expect(remapSetIdForGalarianGallery('swsh12.5', '043')).toBe('swsh12.5');
     expect(remapSetIdForGallerySubset('swsh12.5', 'GG64')).toBe('swsh12.5gg');
+    expect(remapSetIdForGallerySubset('swsh4.5', 'SV035')).toBe('swsh4.5sv');
+    expect(remapSetIdForGallerySubset('swsh4.5', '72')).toBe('swsh4.5');
     expect(galarianGallerySetIdAliases('swsh12.5gg')).toEqual(
       expect.arrayContaining(['swsh12.5gg', 'swsh12.5']),
     );
