@@ -4,19 +4,26 @@ import { mapWithConcurrency } from '../../utils/concurrency';
 import { TtlCache } from '../../utils/ttl-cache';
 import { TCGDexService } from '../../pokemon';
 import {
+  matchBlueprintsByNameThenNumber,
   matchBlueprintsForQuoteLine,
+  type QuoteExpansionBlueprints,
   normalizeBlueprintsExport,
   type QuoteBlueprintCandidate,
 } from './cardtrader-quote-blueprint-match';
 import {
   listExpansionsForTcgdexSet,
   loadQuoteExpansionIndex,
-  resolveExpansionByTcgdexSetId,
   resolveQuoteExpansion,
   tcgdexSetIdFromCardResume,
   type QuoteExpansionHit,
   type QuoteExpansionIndex,
 } from './cardtrader-quote-homolog';
+import {
+  buildLiveExpansionIndex,
+  matchLiveExpansions,
+  type LiveExpansionIndex,
+} from './cardtrader-quote-live-expansion';
+import { CARDTRADER_POKEMON_GAME_ID } from '../../constants/cardtrader-games';
 import {
   adjustSetIdForCatalog,
   normalizeMangledAsiaSetId,
@@ -53,6 +60,9 @@ const BLUEPRINT_CACHE_TTL_MS = 45 * 60 * 1000;
 const BLUEPRINT_CACHE_MAX = 100;
 const RESOLVE_LINES_CONCURRENCY = 5;
 const SEARCH_MAX_ITEMS = 40;
+const LIVE_EXPANSION_INDEX_TTL_MS = 30 * 60 * 1000;
+const LIVE_EXPANSION_MAX_HITS = 6;
+const AMBIGUOUS_MAX_CANDIDATES = 24;
 
 export function searchLocaleOrder(q: string): string[] {
   if (/[\u3040-\u30ff]/.test(q)) {
@@ -70,6 +80,10 @@ export class CardTraderQuoteResolveService {
   private readonly blueprintCache = new TtlCache<unknown>({
     ttlMs: BLUEPRINT_CACHE_TTL_MS,
     maxEntries: BLUEPRINT_CACHE_MAX,
+  });
+  private readonly liveExpansionIndexCache = new TtlCache<LiveExpansionIndex>({
+    ttlMs: LIVE_EXPANSION_INDEX_TTL_MS,
+    maxEntries: 1,
   });
 
   constructor(
@@ -126,61 +140,60 @@ export class CardTraderQuoteResolveService {
       };
     }
 
-    const expansionHit = resolveQuoteExpansion(this.index, expansion);
-    if (expansionHit === 'ambiguous') {
-      return {
-        ...base,
-        status: 'ambiguous',
-        blueprint_id: null,
-        expansion_id: null,
-        expansion_name: expansion,
-        error: null,
-      };
+    const homolog = resolveQuoteExpansion(this.index, expansion);
+    const expansionHits: QuoteExpansionHit[] = [];
+    const homologHit = homolog && homolog !== 'ambiguous' ? [homolog] : [];
+    for (const hit of [
+      ...(await this.liveExpansionHits(expansion)),
+      ...homologHit,
+    ]) {
+      if (!expansionHits.some((x) => x.expansionId === hit.expansionId)) {
+        expansionHits.push(hit);
+      }
     }
-    if (!expansionHit) {
+
+    if (expansionHits.length === 0) {
       return {
         ...base,
-        status: 'not_found',
+        status: homolog === 'ambiguous' ? 'ambiguous' : 'not_found',
         blueprint_id: null,
         expansion_id: null,
         expansion_name: expansion,
-        error: 'expansion_not_mapped',
+        error: homolog === 'ambiguous' ? null : 'expansion_not_mapped',
       };
     }
 
-    const raw = await this.getBlueprintsCached(expansionHit.expansionId);
-    const matches = matchBlueprintsForQuoteLine({
-      blueprints: normalizeBlueprintsExport(raw),
-      expansionId: expansionHit.expansionId,
-      expansionName: expansionHit.expansionName,
-      collectorNumber: collector,
+    const { candidates, unique } = matchBlueprintsByNameThenNumber({
+      expansions: await this.loadExpansionBlueprints(expansionHits),
       cardName: name,
+      collectorNumber: collector,
     });
+    const primary = expansionHits[0];
 
-    if (matches.length === 0) {
+    if (candidates.length === 0) {
       return {
         ...base,
         status: 'not_found',
         blueprint_id: null,
-        expansion_id: expansionHit.expansionId,
-        expansion_name: expansionHit.expansionName,
+        expansion_id: primary.expansionId,
+        expansion_name: primary.expansionName,
         error: 'blueprint_not_found',
       };
     }
 
-    if (matches.length > 1) {
+    if (!unique) {
       return {
         ...base,
         status: 'ambiguous',
         blueprint_id: null,
-        expansion_id: expansionHit.expansionId,
-        expansion_name: expansionHit.expansionName,
-        candidates: matches,
+        expansion_id: primary.expansionId,
+        expansion_name: primary.expansionName,
+        candidates: candidates.slice(0, AMBIGUOUS_MAX_CANDIDATES),
         error: null,
       };
     }
 
-    const hit = matches[0];
+    const hit = candidates[0];
     return {
       ...base,
       status: 'matched',
@@ -264,6 +277,54 @@ export class CardTraderQuoteResolveService {
       }
     }
     return out;
+  }
+
+  /** Si una expansión falla se omite; solo se propaga el error si fallan todas. */
+  private async loadExpansionBlueprints(
+    hits: QuoteExpansionHit[],
+  ): Promise<QuoteExpansionBlueprints[]> {
+    const out: QuoteExpansionBlueprints[] = [];
+    let firstError: Error | null = null;
+    for (const hit of hits) {
+      try {
+        const raw = await this.getBlueprintsCached(hit.expansionId);
+        out.push({
+          expansionId: hit.expansionId,
+          expansionName: hit.expansionName,
+          blueprints: normalizeBlueprintsExport(raw),
+        });
+      } catch (e) {
+        firstError ??= e instanceof Error ? e : new Error(String(e));
+      }
+    }
+    if (out.length === 0 && firstError) throw firstError;
+    return out;
+  }
+
+  /** Sets que no están en la homologación: busca el nombre en `GET /expansions` de CardTrader. */
+  private async liveExpansionHits(
+    expansion: string,
+  ): Promise<QuoteExpansionHit[]> {
+    try {
+      const index = await this.liveExpansionIndexCache.getOrLoad(
+        String(CARDTRADER_POKEMON_GAME_ID),
+        async () =>
+          buildLiveExpansionIndex(
+            await this.cardTrader.getExpansions(
+              undefined,
+              undefined,
+              CARDTRADER_POKEMON_GAME_ID,
+            ),
+          ),
+        (idx) => idx.names.length > 0,
+      );
+      return matchLiveExpansions(index, expansion).slice(
+        0,
+        LIVE_EXPANSION_MAX_HITS,
+      );
+    } catch {
+      return [];
+    }
   }
 
   private async getBlueprintsCached(expansionId: number): Promise<unknown> {

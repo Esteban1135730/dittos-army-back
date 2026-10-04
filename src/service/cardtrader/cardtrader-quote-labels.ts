@@ -39,13 +39,19 @@ export function mapQuoteLanguageLabel(
   const key = foldQuoteLabel(label);
   if (!key) return null;
   if (key in LANGUAGE_LABEL_TO_CT) return LANGUAGE_LABEL_TO_CT[key];
-  return null;
+  if (key.includes('no importa')) return null;
+  const languages = new Set<string>();
+  for (const word of key.split(/[^a-z]+/)) {
+    const lang = LANGUAGE_LABEL_TO_CT[word];
+    if (lang) languages.add(lang);
+  }
+  return languages.size === 1 ? [...languages][0] : null;
 }
 
 export function mapQuoteConditionLabel(
   label: string | null | undefined,
 ): string | null {
   const key = foldQuoteLabel(label);
-  if (key === 'perfecto') return 'Near Mint';
+  if (key.split(/[^a-z]+/).includes('perfecto')) return 'Near Mint';
   return null;
 }
