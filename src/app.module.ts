@@ -109,6 +109,7 @@ import { DashboardController } from './controller/dashboard.controller';
 import { DashboardOverviewService } from './service/dashboard-overview.service';
 import { MetricsController } from './controller/metrics.controller';
 import { MetricsAnalyticsService } from './service/metrics-analytics.service';
+import { StockPvpBenchmarkService } from './service/stock-pvp-benchmark.service';
 import { StockReviewController } from './controller/stock-review.controller';
 import { StockReviewService } from './service/stock-review.service';
 import { StockReviewSessionRepository } from './repository/stock-review-session.repository';
@@ -174,6 +175,7 @@ import {
 import { CardtraderQuoteSessionRepository } from './repository/cardtrader-quote-session.repository';
 import { CardTraderQuoteSessionService } from './service/cardtrader/cardtrader-quote-session.service';
 import { CardTraderCatalogSearchService } from './service/cardtrader/cardtrader-catalog-search.service';
+import { CardtraderOrdersHistorialService } from './service/cardtrader/cardtrader-orders-historial.service';
 import { PedidoRepository } from './repository/pedido.repository';
 import { PedidoAbonoRepository } from './repository/pedido-abono.repository';
 import { PedidoService } from './service/pedido.service';
@@ -286,6 +288,7 @@ const MONGOOSE_FEATURE_MODELS = [
     StockPhotoService,
     DashboardOverviewService,
     MetricsAnalyticsService,
+    StockPvpBenchmarkService,
     StockReviewService,
     StockReviewSessionRepository,
     IncomingHomologService,
@@ -307,6 +310,7 @@ const MONGOOSE_FEATURE_MODELS = [
     CardtraderQuoteSessionRepository,
     CardTraderQuoteSessionService,
     CardTraderCatalogSearchService,
+    CardtraderOrdersHistorialService,
   ],
   imports: [
     ...OWNER_KEYS.flatMap((owner) => [

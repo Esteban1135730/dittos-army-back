@@ -22,6 +22,8 @@ import {
 } from 'src/service/cardtrader/cardtrader-quote-resolve.service';
 import { CardTraderQuoteSessionService } from 'src/service/cardtrader/cardtrader-quote-session.service';
 import { CardTraderCatalogSearchService } from 'src/service/cardtrader/cardtrader-catalog-search.service';
+import { CardtraderOrdersHistorialService } from 'src/service/cardtrader/cardtrader-orders-historial.service';
+import type { HistorialOrderAs } from 'src/service/cardtrader/cardtrader-orders-historial.types';
 import { RequireFeature } from 'src/owner/feature-acl.guard';
 import {
   CARDTRADER_SUPPORTED_GAME_IDS,
@@ -56,7 +58,55 @@ export class CardTraderController {
     private readonly quoteResolve: CardTraderQuoteResolveService,
     private readonly quoteSessions: CardTraderQuoteSessionService,
     private readonly catalogSearch: CardTraderCatalogSearchService,
+    private readonly ordersHistorialService: CardtraderOrdersHistorialService,
   ) {}
+
+  @Get('orders-historial')
+  async ordersHistorial(
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('order_as') orderAs?: string,
+    @Query('owner') owner?: string,
+    @Query('q') q?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<unknown> {
+    const role = (orderAs?.trim() || 'all') as HistorialOrderAs;
+    if (!['buyer', 'seller', 'all'].includes(role)) {
+      throw new BadRequestException('order_as debe ser buyer, seller o all');
+    }
+    const p = page !== undefined && page !== '' ? Number(page) : 1;
+    const l = limit !== undefined && limit !== '' ? Number(limit) : 50;
+    return this.ordersHistorialService.listHistorial({
+      from,
+      to,
+      order_as: role,
+      owner,
+      q,
+      page: p,
+      limit: l,
+    });
+  }
+
+  @Get('orders-historial/:variantKey/events')
+  async ordersHistorialEvents(
+    @Param('variantKey') variantKey: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('order_as') orderAs?: string,
+    @Query('owner') owner?: string,
+  ): Promise<unknown> {
+    const role = (orderAs?.trim() || 'all') as HistorialOrderAs;
+    if (!['buyer', 'seller', 'all'].includes(role)) {
+      throw new BadRequestException('order_as debe ser buyer, seller o all');
+    }
+    return this.ordersHistorialService.listVariantEvents(variantKey, {
+      from,
+      to,
+      order_as: role,
+      owner,
+    });
+  }
 
   @Get('expansions')
   async expansions(
