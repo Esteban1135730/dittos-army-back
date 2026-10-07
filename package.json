@@ -30,7 +30,8 @@
     "script:migrate-stock-card-state": "ts-node -r tsconfig-paths/register scripts/migrate-stock-card-state-from-condition.ts",
     "script:migrate-stock-card-state:dry": "ts-node -r tsconfig-paths/register scripts/migrate-stock-card-state-from-condition.ts --dry-run",
     "script:backfill-pedidos": "ts-node -r tsconfig-paths/register scripts/backfill-pedidos-from-reservas.ts",
-    "script:backfill-pedidos:dry": "ts-node -r tsconfig-paths/register scripts/backfill-pedidos-from-reservas.ts --dry-run"
+    "script:backfill-pedidos:dry": "ts-node -r tsconfig-paths/register scripts/backfill-pedidos-from-reservas.ts --dry-run",
+    "script:db-init": "ts-node -r tsconfig-paths/register scripts/ensure-mongodb-collections.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

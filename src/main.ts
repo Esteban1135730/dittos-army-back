@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import * as dns from 'node:dns';
 import { RequestMethod } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -8,6 +9,10 @@ import { AppModule } from './app.module';
 import { resolveCardImagesRoot } from './pokemon';
 import { resolveStockPhotosRoot } from './utils/stock-photo-path';
 
+if (typeof dns.setDefaultResultOrder === 'function') {
+  dns.setDefaultResultOrder('ipv4first');
+}
+
 async function bootstrap() {
   const imagesDir = resolveCardImagesRoot();
   mkdirSync(imagesDir, { recursive: true });
@@ -16,13 +21,10 @@ async function bootstrap() {
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // Fotos inventario van en JSON base64; el default de Express (~100kb) devuelve 413.
   app.useBodyParser('json', { limit: '12mb' });
   app.useBodyParser('urlencoded', { limit: '12mb', extended: true });
 
-  // gzip/deflate de respuestas compresibles (JSON grandes como /stock); las PNG se omiten por tipo.
   app.use(compression());
-  // Product API under /pokemon; health (Render) y static /card-images/ stay at root.
   app.setGlobalPrefix('pokemon', {
     exclude: [{ path: 'health', method: RequestMethod.GET }],
   });
@@ -30,14 +32,25 @@ async function bootstrap() {
   app.useStaticAssets(imagesDir, { prefix: '/card-images/' });
   app.useStaticAssets(stockPhotosDir, { prefix: '/stock-photos/' });
 
-  // Configurar CORS
+  const frontendOrigin =
+    process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
+  const allowedOrigins = frontendOrigin
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+  const allowOnrender = process.env.CORS_ALLOW_ONRENDER === 'true';
+
   app.enableCors({
     origin: (origin, callback) => {
-      // Permitir sin origin (p.ej. Postman, misma origen) o cualquier localhost
-      if (!origin || /^https?:\/\/localhost(:\d+)?$/.test(origin)) {
+      if (
+        !origin ||
+        /^https?:\/\/localhost(:\d+)?$/.test(origin) ||
+        allowedOrigins.includes(origin) ||
+        (allowOnrender && /\.onrender\.com$/i.test(origin))
+      ) {
         callback(null, true);
       } else {
-        callback(null, true); // en desarrollo permitir todo; en prod restringir
+        callback(new Error('Origin not allowed by CORS'));
       }
     },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

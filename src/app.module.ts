@@ -183,6 +183,16 @@ import { PedidoAbonoService } from './service/pedido-abono.service';
 import { EnvioGeocodeService } from './service/envio-geocode.service';
 import { PedidoController } from './controller/pedido.controller';
 import { HealthController } from './controller/health.controller';
+import { IntegrationsModule } from './integrations/integrations.module';
+import { BillingBillableItemsService } from './service/billing-billable-items.service';
+import { BillingFactusService } from './service/billing-factus.service';
+import { ElectronicInvoiceRepository } from './repository/electronic-invoice.repository';
+import {
+  ElectronicInvoice,
+  ElectronicInvoiceSchema,
+} from './schema/electronic-invoice.schema';
+import { FactusBillingController } from './controller/factus-billing.controller';
+import { CorrelationIdMiddleware } from './middleware/correlation-id.middleware';
 
 const MONGOOSE_FEATURE_MODELS = [
   { name: Stock.name, schema: StockSchema },
@@ -228,6 +238,7 @@ const MONGOOSE_FEATURE_MODELS = [
     name: CardtraderQuoteSession.name,
     schema: CardtraderQuoteSessionSchema,
   },
+  { name: ElectronicInvoice.name, schema: ElectronicInvoiceSchema },
 ];
 
 @Module({
@@ -249,6 +260,7 @@ const MONGOOSE_FEATURE_MODELS = [
     CardtraderReceiptController,
     PedidoController,
     HealthController,
+    FactusBillingController,
   ],
   providers: [
     OwnerModelsService,
@@ -311,8 +323,12 @@ const MONGOOSE_FEATURE_MODELS = [
     CardTraderQuoteSessionService,
     CardTraderCatalogSearchService,
     CardtraderOrdersHistorialService,
+    BillingFactusService,
+    BillingBillableItemsService,
+    ElectronicInvoiceRepository,
   ],
   imports: [
+    IntegrationsModule,
     ...OWNER_KEYS.flatMap((owner) => [
       MongooseModule.forRootAsync({
         connectionName: connectionNameFor(owner),
@@ -337,6 +353,7 @@ const MONGOOSE_FEATURE_MODELS = [
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
     consumer
       .apply(OwnerMiddleware)
       .exclude({ path: 'health', method: RequestMethod.GET })
